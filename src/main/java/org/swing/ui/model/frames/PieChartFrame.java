@@ -10,11 +10,9 @@ import javafx.scene.chart.PieChart;
 import org.logic.models.misc.BalancesSet;
 import org.preferences.PreferenceManager;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.Map;
@@ -132,9 +130,7 @@ public class PieChartFrame extends SingleInstanceFrame {
                         removeInsignificant = true;
                         break;
                     }
-                    String key = entry.getKey() + " " + String.format("%.5f", entry.getValue().getBtc())
-                            + " BTC (" + String.format("%.2f", entry.getValue().getBtc() / btcSum * 100)
-                            + "%)\n" + String.format("%.4f", entry.getValue().getAmount());
+                    String key = makeKey(entry, btcSum);
                     data.setName(key);
                     data.setPieValue(btc);
                     put = true;
@@ -150,9 +146,7 @@ public class PieChartFrame extends SingleInstanceFrame {
                 continue;
             }
             if (!put) {
-                String key = entry.getKey() + " " + String.format("%.5f", entry.getValue().getBtc())
-                        + " BTC (" + String.format("%.2f", entry.getValue().getBtc() / btcSum * 100)
-                        + "%)\n" + String.format("%.4f", entry.getValue().getAmount());
+                String key = makeKey(entry, btcSum);
                 pieChartData.add(new PieChart.Data(key, btc));
             }
         }
@@ -190,5 +184,17 @@ public class PieChartFrame extends SingleInstanceFrame {
         jMenuBar.add(file);
         jMenuBar.add(settings);
         setJMenuBar(jMenuBar);
+    }
+
+    private String makeKey(Map.Entry<String, BalancesSet> entry, double btcSum) {
+        if (entry.getKey().equalsIgnoreCase("BTC")) {
+            return entry.getKey() + " " + String.format("%.4f", entry.getValue().getAmount()) + "\n" +
+                    "(" + String.format("%.2f", entry.getValue().getBtc() / btcSum * 100)
+                    + "%)";
+        }
+        return entry.getKey() + " " + String.format("%.4f", entry.getValue().getAmount()) + "\n" +
+                String.format("%.5f", entry.getValue().getBtc()) + " BTC\n" +
+                "(" + String.format("%.2f", entry.getValue().getBtc() / btcSum * 100)
+                + "%)";
     }
 }
