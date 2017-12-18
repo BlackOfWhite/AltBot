@@ -12,7 +12,6 @@ import org.logic.transactions.CancelOptionCollection;
 import org.logic.transactions.model.CancelOption;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
-import org.preferences.PersistenceManager;
 import org.preferences.PreferenceManager;
 import org.swing.ui.model.frames.MainFrame;
 import org.swing.ui.model.views.dialog.box.InfoDialog;
@@ -20,7 +19,6 @@ import org.swing.ui.model.views.dialog.box.InfoDialog;
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,13 +38,13 @@ public class MarketMonitor {
     private static final int SLEEP_TIME = 5;
     public volatile static boolean active = false;
 
+    private static volatile MarketOrder sharedMarketOrders;
+
     private static int ORDERS_COUNT = -1;
-    private static final String ADDRESSEE = "niewinskipiotr1993@gmail.com";
-    private static final String PASSWORD = "2009Goplana2010//";
+    private static final String ADDRESSEE = "niewinskidummymail@gmail.com";
+    private static final String PASSWORD = "asdf1234%";
     private static final String FROM = ADDRESSEE;
     private static final String SUBJECT = "Open orders status changed!";
-
-    private static MarketOrder openMarketOrders;
 
     private static MainFrame mainFrame;
 
@@ -75,15 +73,17 @@ public class MarketMonitor {
             public void run() {
                 logger.debug("\nNew run..");
                 try {
-                    openMarketOrders = ModelBuilder.buildAllOpenOrders();
+                    final MarketOrder openMarketOrders = ModelBuilder.buildAllOpenOrders();
+                    sharedMarketOrders = openMarketOrders;
                     final int size = openMarketOrders.getResult().size();
-                    updateMainFrameStatus(size, CancelOptionCollection.getCancelList().size());
+                    final int buyOrders = openMarketOrders.getBuyOrdersCount();
+                    updateMainFrameStatus(size, buyOrders, CancelOptionCollection.getCancelList().size());
 
                     MarketBalances marketBalances = ModelBuilder.buildMarketBalances();
                     updatePieChart(marketBalances);
 
                     sendNotification(size);
-                    cancelOrders();
+                    cancelOrders(openMarketOrders);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -150,15 +150,16 @@ public class MarketMonitor {
             Transport.send(message);
             logger.debug("Mail send to: " + ADDRESSEE);
         } catch (MessagingException e) {
+            new InfoDialog(mainFrame, "Failed to authenticate email " + ADDRESSEE);
             throw new RuntimeException(e);
         }
     }
 
-    public static MarketOrder getOpenMarketOrders() {
-        return openMarketOrders;
-    }
+//    public static MarketOrder getOpenMarketOrders() {
+//        return openMarketOrders;
+//    }
 
-    private static int cancelOrders() {
+    private static int cancelOrders(MarketOrder openMarketOrders) {
         List<CancelOption> cancelOptionList = CancelOptionCollection.getCancelList();
         for (CancelOption cancelOption : cancelOptionList) {
             for (MarketOrder.Result result : openMarketOrders.getResult()) {
@@ -190,8 +191,8 @@ public class MarketMonitor {
         return cancelOptionList.size();
     }
 
-    private static void updateMainFrameStatus(int openOrderCount, int stopLossCount) {
-        mainFrame.updateStatusBar(openOrderCount, openMarketOrders.getBuyOrdersCount(), stopLossCount);
+    private static void updateMainFrameStatus(int totalOrders, int buyOrders, int stopLossCount) {
+        mainFrame.updateStatusBar(totalOrders, buyOrders, stopLossCount);
     }
 
     private static void updatePieChart(final MarketBalances marketBalances) {
@@ -222,5 +223,9 @@ public class MarketMonitor {
             }
         }
         mainFrame.updatePieChartFrame(map);
+    }
+
+    public static MarketOrder getOpenMarketOrders() {
+        return sharedMarketOrders;
     }
 }
