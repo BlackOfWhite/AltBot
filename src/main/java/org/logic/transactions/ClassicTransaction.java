@@ -43,9 +43,9 @@ public class ClassicTransaction implements TransactionImpl {
             if (cancelAt > 0.0d) {
                 CancelOption cancelOption = new CancelOption(marketName, cancelAt, uuid);
                 if (CancelOptionCollection.getInstance().addCancelOption(cancelOption)) {
-                    message += " Stop-loss is set to: " + cancelOption + ".";
+                    message += "Stop-loss is set to: " + cancelOption + ".";
                 } else {
-                    message += " Failed to register stop-loss monitor.";
+                    message += "Failed to register stop-loss monitor.";
                 }
             }
         } catch (Exception e) {

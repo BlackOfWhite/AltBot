@@ -2,7 +2,7 @@ package org.ui.frames;
 
 import org.apache.log4j.Logger;
 import org.logic.transactions.ClassicTransaction;
-import org.logic.validators.NamePatternValidator;
+import org.logic.validators.PatternValidator;
 import org.preferences.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
 import org.ui.views.dialog.box.InfoDialog;
@@ -20,15 +20,13 @@ import static org.preferences.Params.MAX_INPUT_VALUE;
 public class ClassicTransactionFrame extends SingleInstanceFrame {
 
     private final static String[] ARR_MODES = {"Buy", "Sell"};
-    private JFrame parent;
     private JComboBox jComboBoxMode;
     private JLabel labelMarketName, labelAmount, labelRate, labelCancelAt;
     private HintTextField jtfMarketName, jtfAmount, jtfRate, jtfCancelAt;
     private JButton jbCreate;
     private Logger logger = Logger.getLogger(ClassicTransactionFrame.class);
 
-    public ClassicTransactionFrame(JFrame parent) {
-        this.parent = parent;
+    public ClassicTransactionFrame() {
         init();
     }
 
@@ -99,7 +97,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
             if (!jtfMarketName.isEmpty()) {
                 String marketName = jtfMarketName.getText();
                 marketName = marketName.toUpperCase().trim();
-                if (new NamePatternValidator().isMarketNameValid(marketName)) {
+                if (new PatternValidator().isMarketNameValid(marketName)) {
                     logger.debug("Market name: " + marketName + " is valid.");
                     ClassicTransaction classicTransaction = new ClassicTransaction(marketName, amount, rate, cancelAt,
                             jComboBoxMode.getSelectedIndex() == 0);

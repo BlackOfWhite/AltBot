@@ -23,13 +23,14 @@ public class MainFrame extends JFrame {
 
     private final static String[] ARR_MODES = {"Classic", "Buy&Sell", "Sequence"};
     private static Logger logger = Logger.getLogger(MainFrame.class);
-    private JLabel labelOpenOrdersStatus, labelStatusStopLoss;
+    private JLabel labelOpenOrdersStatus, labelEmailAddress;
     private JComboBox<String> jComboBoxMode;
     private JTextArea jtaStatusBar;
     private JScrollPane jScrollPane;
     private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
     private PieChartFrame pieChartFrame;
+    private EmailSetupFrame emailSetupFrame;
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -49,11 +50,11 @@ public class MainFrame extends JFrame {
         JPanel status1 = new JPanel();
         status1.setAlignmentX(Component.LEFT_ALIGNMENT);
         status1.add(labelOpenOrdersStatus);
-        labelStatusStopLoss = new JLabel();
-        labelStatusStopLoss.setText("Orders ready for stop loss : ?");
+        labelEmailAddress = new JLabel();
+        labelEmailAddress.setText(PreferenceManager.getEmailAddress());
         JPanel status2 = new JPanel();
         status2.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        status2.add(labelStatusStopLoss);
+        status2.add(labelEmailAddress);
         statusBar.add(status1);
         statusBar.add(status2);
         pMain.add(statusBar);
@@ -108,8 +109,27 @@ public class MainFrame extends JFrame {
         // Settings
         JMenu settings = new JMenu("Settings");
         file.setMnemonic(KeyEvent.VK_S);
-        JCheckBoxMenuItem jCheckBoxMenuItem = new JCheckBoxMenuItemEmailNotification("Email notifications");
+        JCheckBoxMenuItem jCheckBoxMenuItem = new JCheckBoxMenuItem("Email notifications");
+        jCheckBoxMenuItem.setState(PreferenceManager.isEmailNotificationEnabled());
+        jCheckBoxMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                PreferenceManager.changeEmailNotificationEnabled();
+                jCheckBoxMenuItem.setState(PreferenceManager.isEmailNotificationEnabled());
+            }
+        });
+        JMenuItem menuItem = new JMenuItem("Email setup");
+        menuItem.setToolTipText("Setup your email address to use notifications");
+        menuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (emailSetupFrame == null || emailSetupFrame.isClosed()) {
+                    emailSetupFrame = new EmailSetupFrame();
+                }
+            }
+        });
         settings.add(jCheckBoxMenuItem);
+        settings.add(menuItem);
 
         // Chart button
         JButton button = new JButton();
@@ -135,17 +155,23 @@ public class MainFrame extends JFrame {
         setJMenuBar(jMenuBar);
     }
 
-    public void updateStatusBar(int openOrders, int buyOrdersCount, int stopLossCount) {
+    public void updateStatusBar(int openOrders, int buyOrdersCount) {
         this.labelOpenOrdersStatus.setText("Open orders: " + openOrders + " / Buy: " + buyOrdersCount + " / Sell: " + (openOrders - buyOrdersCount));
         this.labelOpenOrdersStatus.validate();
-        this.labelStatusStopLoss.setText("Orders ready for stop loss : " + stopLossCount);
-        this.labelStatusStopLoss.validate();
-        logger.debug("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + labelStatusStopLoss.getText());
+
+        String email = PreferenceManager.getEmailAddress();
+        if (email.isEmpty()) {
+            this.labelEmailAddress.setText("Email address not found - go to Settings menu");
+        } else {
+            this.labelEmailAddress.setText("Welcome: " + email);
+        }
+        this.labelEmailAddress.validate();
+        logger.debug("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
     }
 
     private void openClassicTransactionView() {
         if (classicTransactionFrame == null || classicTransactionFrame.isClosed()) {
-            classicTransactionFrame = new ClassicTransactionFrame(this);
+            classicTransactionFrame = new ClassicTransactionFrame();
         }
     }
 
@@ -172,18 +198,6 @@ public class MainFrame extends JFrame {
 
     public boolean isPieChartVisible() {
         return pieChartFrame != null && !pieChartFrame.isClosed();
-    }
-
-    private class JCheckBoxMenuItemEmailNotification extends JCheckBoxMenuItem {
-        public JCheckBoxMenuItemEmailNotification(String message) {
-            super(message);
-            setMnemonic(KeyEvent.VK_N);
-            setToolTipText("Enable email notifications");
-            addActionListener((ActionEvent event) -> {
-                new EmailSetupFrame(this);
-            });
-            setState(PreferenceManager.isEmailNotificationEnabled());
-        }
     }
 }
 

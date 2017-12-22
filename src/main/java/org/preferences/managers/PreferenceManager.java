@@ -28,4 +28,28 @@ public class PreferenceManager {
         boolean value = prefs.getBoolean(HIDE_INSIGNIFICANT_ENABLED_KEY, false);
         prefs.putBoolean(HIDE_INSIGNIFICANT_ENABLED_KEY, !value);
     }
+
+    private static final String EMAIL_ADDRESS_KEY = "EMAIL_ADDRESS_KEY";
+    private static final String EMAIL_ADDRESS_PASSWORD_KEY = "EMAIL_ADDRESS_PASSWORD_KEY";
+
+    public static String getEmailAddress() {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        return prefs.get(EMAIL_ADDRESS_KEY, "");
+    }
+
+    public static void setEmailAddress(String email) {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        prefs.put(EMAIL_ADDRESS_KEY, email);
+    }
+
+    public static String getEmailPassword() {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        return prefs.get(EMAIL_ADDRESS_PASSWORD_KEY, "");
+    }
+
+    public static void setEmailPassword(String password) {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        prefs.put(EMAIL_ADDRESS_PASSWORD_KEY, password);
+    }
+
 }

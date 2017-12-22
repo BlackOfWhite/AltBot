@@ -1,6 +1,8 @@
 package org.logic.validators;
 
-public class NamePatternValidator {
+import org.apache.commons.validator.routines.EmailValidator;
+
+public class PatternValidator {
 
     public boolean isMarketNameValid(final String s) {
         if (s == null || s.isEmpty()) {
@@ -13,9 +15,16 @@ public class NamePatternValidator {
         if (count != 1) {
             return false;
         }
-        String s1 = s.replace("-","");
+        String s1 = s.replace("-", "");
         boolean allLetters = s1.chars().allMatch(Character::isLetter);
         return allLetters;
     }
 
+    public boolean isEmailValid(String email) {
+        if (email == null || email.isEmpty()) {
+            return false;
+        }
+        EmailValidator validator = EmailValidator.getInstance();
+        return validator.isValid(email);
+    }
 }
