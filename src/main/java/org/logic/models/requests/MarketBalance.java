@@ -2,7 +2,7 @@ package org.logic.models.requests;
 
 import com.google.gson.annotations.Expose;
 
-import static org.logic.Params.BALANCE_MINIMUM;
+import static org.preferences.Params.BALANCE_MINIMUM;
 
 public class MarketBalance {
 

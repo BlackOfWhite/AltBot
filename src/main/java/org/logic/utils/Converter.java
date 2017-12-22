@@ -1,6 +1,6 @@
 package org.logic.utils;
 
-import org.logic.Constants;
+import org.preferences.Constants;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;

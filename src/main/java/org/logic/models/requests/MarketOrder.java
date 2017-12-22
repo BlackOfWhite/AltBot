@@ -1,9 +1,12 @@
 package org.logic.models.requests;
 
 import com.google.gson.annotations.Expose;
-import org.swing.Constants;
+import org.preferences.Constants;
 
 import java.util.ArrayList;
+
+import static org.preferences.Params.ORDER_TYPE_BUY;
+import static org.preferences.Params.ORDER_TYPE_SELL;
 
 public class MarketOrder {
 
@@ -95,7 +98,7 @@ public class MarketOrder {
     public int getSellOrdersCount() {
         int sum = 0;
         for (Result result : result) {
-            if (result.OrderType.equals(org.logic.Constants.ORDER_TYPE_SELL)) {
+            if (result.OrderType.equals(ORDER_TYPE_SELL)) {
                 sum++;
             }
         }
@@ -105,7 +108,7 @@ public class MarketOrder {
     public int getBuyOrdersCount() {
         int sum = 0;
         for (Result result : result) {
-            if (result.OrderType.equals(org.logic.Constants.ORDER_TYPE_BUY)) {
+            if (result.OrderType.equals(ORDER_TYPE_BUY)) {
                 sum++;
             }
         }

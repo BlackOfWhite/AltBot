@@ -8,13 +8,13 @@ import org.logic.models.requests.MarketOrder;
 import org.logic.models.requests.MarketSummary;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
-import org.logic.transactions.CancelOptionCollection;
+import org.logic.transactions.model.CancelOptionCollection;
 import org.logic.transactions.model.CancelOption;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
-import org.preferences.PreferenceManager;
-import org.swing.ui.model.frames.MainFrame;
-import org.swing.ui.model.views.dialog.box.InfoDialog;
+import org.preferences.managers.PreferenceManager;
+import org.ui.frames.MainFrame;
+import org.ui.views.dialog.box.InfoDialog;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -27,7 +27,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.logic.Params.BALANCE_MINIMUM;
+import static org.preferences.Constants.ADDRESSEE;
+import static org.preferences.Constants.PASSWORD;
+import static org.preferences.Params.BALANCE_MINIMUM;
 
 public class MarketMonitor {
 
@@ -41,8 +43,6 @@ public class MarketMonitor {
     private static volatile MarketOrder sharedMarketOrders;
 
     private static int ORDERS_COUNT = -1;
-    private static final String ADDRESSEE = "niewinskidummymail@gmail.com";
-    private static final String PASSWORD = "asdf1234%";
     private static final String FROM = ADDRESSEE;
     private static final String SUBJECT = "Open orders status changed!";
 

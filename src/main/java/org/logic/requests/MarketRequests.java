@@ -9,7 +9,7 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static org.logic.Constants.API_KEY;
+import static org.preferences.Constants.*;
 
 public class MarketRequests {
 
@@ -84,10 +84,20 @@ public class MarketRequests {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
                             urlConnection.getInputStream()));
+            // SET REQUEST TIMEOUT
             String inputLine;
+            long endTimeMillis = System.currentTimeMillis() + (REQUEST_TIMEOUT_SECONDS * 1000);
             while ((inputLine = in.readLine()) != null) {
                 logger.debug(inputLine);
                 response = inputLine;
+                if (System.currentTimeMillis() > endTimeMillis) {
+                    return MSG_REQUEST_TIMEOUT;
+                }
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             in.close();
         } catch (IOException e) {

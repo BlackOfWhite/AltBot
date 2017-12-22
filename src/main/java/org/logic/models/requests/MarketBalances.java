@@ -4,7 +4,7 @@ import com.google.gson.annotations.Expose;
 
 import java.util.ArrayList;
 
-import static org.logic.Params.BALANCE_MINIMUM;
+import static org.preferences.Params.BALANCE_MINIMUM;
 
 public class MarketBalances {
 

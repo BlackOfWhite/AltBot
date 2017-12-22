@@ -2,7 +2,7 @@ package org;
 
 import org.apache.log4j.Logger;
 import org.logic.schedulers.MarketMonitor;
-import org.swing.ui.model.frames.MainFrame;
+import org.ui.frames.MainFrame;
 
 import javax.swing.*;
 

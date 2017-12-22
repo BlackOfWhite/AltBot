@@ -1,20 +1,18 @@
 package org.logic.models.responses;
 
 import com.google.gson.annotations.Expose;
+import com.sun.org.apache.xpath.internal.operations.Or;
 
 import java.util.ArrayList;
 
-public class OrderResponse {
+import static org.preferences.Constants.MSG_REQUEST_TIMEOUT;
 
+public class OrderResponse extends Response{
 
     @Expose
-    private boolean success;
-    @Expose
-    private String message;
-    @Expose
-    private ArrayList<Result> result;
+    private Result result;
 
-    public ArrayList<Result> getResult() {
+    public Result getResult() {
         return result;
     }
 
@@ -26,6 +24,7 @@ public class OrderResponse {
                 ", result=" + result +
                 '}';
     }
+
 
     public class Result {
         @Expose
@@ -42,6 +41,10 @@ public class OrderResponse {
         }
     }
 
+    public void setResponseTimedOut() {
+        this.success = false;
+        this.message = MSG_REQUEST_TIMEOUT;
+    }
 //    {
 //        "success" : true,
 //            "message" : "",

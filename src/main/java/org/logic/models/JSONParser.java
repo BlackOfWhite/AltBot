@@ -8,37 +8,43 @@ import org.logic.models.requests.MarketOrder;
 import org.logic.models.requests.MarketSummary;
 import org.logic.models.responses.OrderResponse;
 
+import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
+
 public class JSONParser {
 
-    public static MarketSummary parseMarketSummary (String json) {
+    public static MarketSummary parseMarketSummary(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         MarketSummary marketSummary = g.fromJson(json, MarketSummary.class);
         return marketSummary;
     }
 
-    public static MarketOrder parseMarketOrder (String json) {
+    public static MarketOrder parseMarketOrder(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         MarketOrder marketOrder = g.fromJson(json, MarketOrder.class);
         return marketOrder;
     }
 
-    public static MarketBalance parseMarketBalance (String json) {
+    public static MarketBalance parseMarketBalance(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         MarketBalance marketBalance = g.fromJson(json, MarketBalance.class);
         return marketBalance;
     }
 
-    public static MarketBalances parseMarketBalances (String json) {
+    public static MarketBalances parseMarketBalances(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         MarketBalances marketBalances = g.fromJson(json, MarketBalances.class);
         return marketBalances;
     }
 
-    public static OrderResponse parseOrderResponse (String json) {
+    public static OrderResponse parseOrderResponse(String json) {
+        if (json.equals(REQUEST_TIMEOUT_SECONDS)) {
+            OrderResponse orderResponse = new OrderResponse();
+            orderResponse.setResponseTimedOut();
+            return orderResponse;
+        }
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         return g.fromJson(json, OrderResponse.class);
     }
-
 
 
 }

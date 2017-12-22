@@ -15,7 +15,7 @@ public class TransactionValidator {
      * Checks if given market name exists in the list of open orders.
      * Apply this validator if only one order of this kind can be opened.
      */
-    public boolean isMarketValid() {
+    public boolean isOnlyOneOrderForGivenMarketName() {
         MarketOrder marketOrders = MarketMonitor.getInstance().getOpenMarketOrders();
         if (marketOrders == null) {
             return false;

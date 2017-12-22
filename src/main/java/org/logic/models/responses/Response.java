@@ -1,0 +1,43 @@
+package org.logic.models.responses;
+
+import com.google.gson.annotations.Expose;
+import com.sun.istack.internal.Nullable;
+
+import static org.preferences.Constants.*;
+
+public abstract class Response {
+
+    @Expose
+    protected boolean success;
+    @Expose
+    protected String message;
+
+    @Nullable
+    public String getMessage() {
+        switch (message) {
+            case MSG_MIN_TRADE_REQUIREMENT_NOT_MET:
+                return "Minimum trade requirement not met. Minimum order size is 0.00050000.";
+            case MSG_INSUFFICIENT_FUNDS:
+                return "Insufficient funds.";
+            case MSG_INVALID_MARKET:
+                return "Invalid market name.";
+            case MSG_ZERO_OR_NEGATIVE_NOT_ALLOWED:
+                return "Zero or negative value not allowed.";
+            case MSG_REQUEST_TIMEOUT:
+                return "Response timeout. Please try again.";
+        }
+        if (message.startsWith(MSG_REQUEST_PROCESSING_PROBLEM)) {
+            return "There was a problem processing your request.";
+        }
+        return "Unknown response";
+    }
+
+    @Nullable
+    protected String getPlainMessage() {
+        return message;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+}

@@ -9,7 +9,6 @@ import java.net.URLConnection;
 
 public class PublicRequests {
 
-    private static String URL;
     private static Logger logger = Logger.getLogger(PublicRequests.class);
 
     public static void getAllMarketSummaries() throws Exception{
@@ -41,7 +40,4 @@ public class PublicRequests {
         in.close();
         return response;
     }
-
-
-
 }
