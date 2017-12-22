@@ -6,6 +6,7 @@ import org.logic.validators.NamePatternValidator;
 import org.logic.validators.TransactionValidator;
 import org.swing.Constants;
 import org.swing.ui.model.HintTextField;
+import org.swing.ui.model.frames.util.SingleInstanceFrame;
 import org.swing.ui.model.views.dialog.box.InfoDialog;
 
 import javax.swing.*;

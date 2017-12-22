@@ -110,14 +110,7 @@ public class MainFrame extends JFrame {
         // Settings
         JMenu settings = new JMenu("Settings");
         file.setMnemonic(KeyEvent.VK_S);
-        JCheckBoxMenuItem jCheckBoxMenuItem = new JCheckBoxMenuItem("Email notifications");
-        jCheckBoxMenuItem.setMnemonic(KeyEvent.VK_N);
-        jCheckBoxMenuItem.setToolTipText("Enable email notifications");
-        jCheckBoxMenuItem.addActionListener((ActionEvent event) -> {
-            PreferenceManager.changeEmailNotificationEnabled();
-            jCheckBoxMenuItem.setState(PreferenceManager.isEmailNotificationEnabled());
-        });
-        jCheckBoxMenuItem.setState(PreferenceManager.isEmailNotificationEnabled());
+        JCheckBoxMenuItem jCheckBoxMenuItem = new JCheckBoxMenuItemEmailNotification("Email notifications");
         settings.add(jCheckBoxMenuItem);
 
         // Chart button
@@ -181,6 +174,18 @@ public class MainFrame extends JFrame {
 
     public boolean isPieChartVisible() {
         return pieChartFrame != null && !pieChartFrame.isClosed();
+    }
+
+    private class JCheckBoxMenuItemEmailNotification extends JCheckBoxMenuItem {
+        public JCheckBoxMenuItemEmailNotification(String message) {
+            super(message);
+            setMnemonic(KeyEvent.VK_N);
+            setToolTipText("Enable email notifications");
+            addActionListener((ActionEvent event) -> {
+                new EmailSetupFrame(this);
+            });
+            setState(PreferenceManager.isEmailNotificationEnabled());
+        }
     }
 }
 

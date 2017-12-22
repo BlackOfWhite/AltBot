@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import javafx.scene.chart.PieChart;
 import org.logic.models.misc.BalancesSet;
 import org.preferences.PreferenceManager;
+import org.swing.ui.model.frames.util.SingleInstanceFrame;
 
 import javax.swing.*;
 import java.awt.*;
