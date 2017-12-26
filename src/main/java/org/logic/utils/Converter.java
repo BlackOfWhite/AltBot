@@ -1,12 +1,12 @@
 package org.logic.utils;
 
-import org.preferences.Constants;
-
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+
+import static org.preferences.Params.API_SECRET_KEY;
 
 public class Converter {
 
@@ -16,10 +16,21 @@ public class Converter {
         this.uri = uri;
     }
 
+    public static String bytesToHex(byte[] bytes) {
+        final char[] hexArray = "0123456789ABCDEF".toCharArray();
+        char[] hexChars = new char[bytes.length * 2];
+        for (int j = 0; j < bytes.length; j++) {
+            int v = bytes[j] & 0xFF;
+            hexChars[j * 2] = hexArray[v >>> 4];
+            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+        }
+        return new String(hexChars);
+    }
+
     public String calculate() {
         Mac sha512_HMAC = null;
         String result = null;
-        String key = Constants.API_SECRET;
+        String key = API_SECRET_KEY;
 
         try {
             byte[] byteKey = key.getBytes("UTF-8");
@@ -45,16 +56,5 @@ public class Converter {
 //            System.out.println("Done");
         }
         return result;
-    }
-
-    public static String bytesToHex(byte[] bytes) {
-        final char[] hexArray = "0123456789ABCDEF".toCharArray();
-        char[] hexChars = new char[bytes.length * 2];
-        for (int j = 0; j < bytes.length; j++) {
-            int v = bytes[j] & 0xFF;
-            hexChars[j * 2] = hexArray[v >>> 4];
-            hexChars[j * 2 + 1] = hexArray[v & 0x0F];
-        }
-        return new String(hexChars);
     }
 }

@@ -18,19 +18,17 @@ import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.Map;
 
-import static org.preferences.Params.CHART_SIGNIFICANT_MINIMUM;
-import static org.preferences.ui.Constants.CHART_FRAME_HEIGHT;
-import static org.preferences.ui.Constants.CHART_FRAME_WIDTH;
+import static org.preferences.Constants.CHART_SIGNIFICANT_MINIMUM;
+import static org.ui.Constants.CHART_FRAME_HEIGHT;
+import static org.ui.Constants.CHART_FRAME_WIDTH;
 
 public class PieChartFrame extends SingleInstanceFrame {
 
     private static final String LOADING_MESSAGE = "Loading..";
     private static final String WALLET_EMPTY = "Wallet is empty";
     private static final String TITLE = "Wallet Pie Chart";
-
-    private ObservableList<PieChart.Data> pieChartData;
-
     private static PieChart pieChart = null;
+    private ObservableList<PieChart.Data> pieChartData;
 
     public PieChartFrame() {
         JFXPanel jfxPanel = new JFXPanel();

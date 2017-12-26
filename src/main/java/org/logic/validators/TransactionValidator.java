@@ -1,6 +1,6 @@
 package org.logic.validators;
 
-import org.logic.models.requests.MarketOrder;
+import org.logic.models.responses.MarketOrderResponse;
 import org.logic.schedulers.MarketMonitor;
 
 public class TransactionValidator {
@@ -16,11 +16,11 @@ public class TransactionValidator {
      * Apply this validator if only one order of this kind can be opened.
      */
     public boolean isOnlyOneOrderForGivenMarketName() {
-        MarketOrder marketOrders = MarketMonitor.getInstance().getOpenMarketOrders();
+        MarketOrderResponse marketOrders = MarketMonitor.getInstance().getOpenMarketOrders();
         if (marketOrders == null) {
             return false;
         }
-        for (MarketOrder.Result result : marketOrders.getResult()) {
+        for (MarketOrderResponse.Result result : marketOrders.getResult()) {
             if (result.getOrderType().equalsIgnoreCase(marketName)) {
                 return false;
             }

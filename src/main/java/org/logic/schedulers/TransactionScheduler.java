@@ -1,12 +1,12 @@
 package org.logic.schedulers;
 
+import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
-import org.logic.models.requests.MarketBalance;
-import org.logic.models.requests.MarketOrder;
-import org.logic.models.requests.MarketSummary;
+import org.logic.models.responses.MarketBalanceResponse;
+import org.logic.models.responses.MarketOrderResponse;
+import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
-import org.apache.log4j.Logger;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -17,15 +17,13 @@ import java.util.concurrent.TimeUnit;
 
 public class TransactionScheduler {
 
-    private static Logger logger = Logger.getLogger(TransactionScheduler.class);
-
-    private static TransactionScheduler instance;
-    private static ScheduledExecutorService ses;
     private static final int TIME = 10;
-    public volatile static boolean active = false;
-
     private static final String CURRENT_ALT_COIN = "OMG";
     private static final int PERCENT_GAIN = 5;
+    public volatile static boolean active = false;
+    private static Logger logger = Logger.getLogger(TransactionScheduler.class);
+    private static TransactionScheduler instance;
+    private static ScheduledExecutorService ses;
 
     private TransactionScheduler() {
     }
@@ -53,23 +51,23 @@ public class TransactionScheduler {
                 try {
                     // get alt info
                     String response = PublicRequests.getMarketSummary(CURRENT_ALT_COIN);
-                    MarketSummary marketSummary = JSONParser.parseMarketSummary(response);
+                    MarketSummaryResponse marketSummary = JSONParser.parseMarketSummary(response);
                     logger.debug(marketSummary);
                     // get orders for alt
                     response = MarketRequests.getOpenOrders("XMR");
-                    MarketOrder marketOrder = JSONParser.parseMarketOrder(response);
+                    MarketOrderResponse marketOrder = JSONParser.parseMarketOrder(response);
                     logger.debug(marketOrder);
                     // get alt balance
                     response = MarketRequests.getBalance("XMR");
-                    MarketBalance marketBalance = JSONParser.parseMarketBalance(response);
+                    MarketBalanceResponse marketBalance = JSONParser.parseMarketBalance(response);
                     logger.debug(marketBalance);
                     // get btc balance
                     response = MarketRequests.getBalance("BTC");
-                    MarketBalance marketBalanceBTC = JSONParser.parseMarketBalance(response);
+                    MarketBalanceResponse marketBalanceBTC = JSONParser.parseMarketBalance(response);
                     logger.debug(marketBalanceBTC);
                     // get order history
                     response = MarketRequests.getOrderHistory(CURRENT_ALT_COIN);
-                    MarketOrder marketOrderHistory = JSONParser.parseMarketOrder(response);
+                    MarketOrderResponse marketOrderHistory = JSONParser.parseMarketOrder(response);
                     logger.debug(marketOrderHistory);
 
                     placeOrder(marketSummary, marketOrder, marketBalance, marketBalanceBTC, marketOrderHistory);
@@ -95,9 +93,9 @@ public class TransactionScheduler {
         return active;
     }
 
-    private static void placeOrder(MarketSummary marketSummary, MarketOrder marketOrder,
-                                   MarketBalance marketBalance, MarketBalance marketBalanceBTC,
-                                   MarketOrder marketOrderHistory) {
+    private static void placeOrder(MarketSummaryResponse marketSummary, MarketOrderResponse marketOrder,
+                                   MarketBalanceResponse marketBalance, MarketBalanceResponse marketBalanceBTC,
+                                   MarketOrderResponse marketOrderHistory) {
         double high = marketSummary.getResult().get(0).getHigh();
         double low = marketSummary.getResult().get(0).getLow();
         double ask = marketSummary.getResult().get(0).getAsk(); // willing to sell

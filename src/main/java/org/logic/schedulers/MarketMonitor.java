@@ -3,9 +3,10 @@ package org.logic.schedulers;
 import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.misc.BalancesSet;
-import org.logic.models.requests.MarketBalances;
-import org.logic.models.requests.MarketOrder;
-import org.logic.models.requests.MarketSummary;
+import org.logic.models.responses.MarketBalancesResponse;
+import org.logic.models.responses.MarketOrderResponse;
+import org.logic.models.responses.MarketSummaryResponse;
+import org.logic.models.responses.Response;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
 import org.logic.smtp.MailSender;
@@ -13,8 +14,10 @@ import org.logic.transactions.model.CancelOption;
 import org.logic.transactions.model.CancelOptionCollection;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
+import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 import org.ui.frames.MainFrame;
+import org.ui.views.dialog.box.InfoDialog;
 
 import javax.mail.MessagingException;
 import java.util.HashMap;
@@ -24,19 +27,24 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.preferences.Params.BALANCE_MINIMUM;
+import static org.preferences.Constants.*;
 
 public class MarketMonitor {
 
     private static final int SLEEP_TIME = 5;
+
     private static final String SUBJECT = "Open orders status changed!";
     public volatile static boolean active = false;
     private static Logger logger = Logger.getLogger(MarketMonitor.class);
     private static MarketMonitor instance;
     private static ScheduledExecutorService ses;
-    private static volatile MarketOrder sharedMarketOrders;
+    private static volatile MarketOrderResponse sharedMarketOrders;
     private static int ORDERS_COUNT = -1;
     private static MainFrame mainFrame;
+
+    private static InfoDialog infoDialog;
+    public volatile static int COUNTER = -1;
+    private static int DIALOG_DELAY = 5; // show dialog every 5 runs
 
     private MarketMonitor() {
     }
@@ -63,19 +71,27 @@ public class MarketMonitor {
             public void run() {
                 logger.debug("\nNew run..");
                 try {
-                    final MarketOrder openMarketOrders = ModelBuilder.buildAllOpenOrders();
+                    COUNTER = (COUNTER + 1) % 10000;
+                    if (!loadAPIKeys()) {
+                        return;
+                    }
+                    final MarketOrderResponse openMarketOrders = ModelBuilder.buildAllOpenOrders();
+                    if (!validateResponse(openMarketOrders)) {
+                        return;
+                    }
+
                     sharedMarketOrders = openMarketOrders;
                     final int size = openMarketOrders.getResult().size();
                     final int buyOrders = openMarketOrders.getBuyOrdersCount();
                     updateMainFrameStatus(size, buyOrders);
 
-                    MarketBalances marketBalances = ModelBuilder.buildMarketBalances();
+                    MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
                     updatePieChart(marketBalances);
 
                     sendNotification(size);
                     cancelOrders(openMarketOrders);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
                 }
             }
         }, 0, SLEEP_TIME, TimeUnit.SECONDS);  // execute every x seconds
@@ -116,10 +132,10 @@ public class MarketMonitor {
         }
     }
 
-    private static int cancelOrders(MarketOrder openMarketOrders) {
+    private static int cancelOrders(MarketOrderResponse openMarketOrders) {
         List<CancelOption> cancelOptionList = CancelOptionCollection.getCancelList();
         for (CancelOption cancelOption : cancelOptionList) {
-            for (MarketOrder.Result result : openMarketOrders.getResult()) {
+            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
                 if (cancelOption.getMarketName().equalsIgnoreCase(result.getExchange())) {
                     String response = null;
                     try {
@@ -128,7 +144,7 @@ public class MarketMonitor {
                         logger.debug("Response is null");
                     }
                     if (response != null) {
-                        MarketSummary marketSummary = JSONParser.parseMarketSummary(response);
+                        MarketSummaryResponse marketSummary = JSONParser.parseMarketSummary(response);
                         logger.debug(marketSummary);
                         if (cancelOption.getCancelBelow() <= marketSummary.getResult().get(0).getLast()) {
                             try {
@@ -152,12 +168,12 @@ public class MarketMonitor {
         mainFrame.updateStatusBar(totalOrders, buyOrders);
     }
 
-    private static void updatePieChart(final MarketBalances marketBalances) {
+    private static void updatePieChart(final MarketBalancesResponse marketBalances) {
         if (!mainFrame.isPieChartVisible()) {
             return;
         }
         Map<String, BalancesSet> map = new HashMap<>();
-        for (MarketBalances.Result result : marketBalances.getResult()) {
+        for (MarketBalancesResponse.Result result : marketBalances.getResult()) {
             if (result.getBalance() < BALANCE_MINIMUM) {
                 continue;
             }
@@ -166,7 +182,7 @@ public class MarketMonitor {
                 if (marketName.equals("BTC")) {
                     map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
                 } else {
-                    MarketSummary marketSummary = ModelBuilder.buildMarketSummary(marketName);
+                    MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(marketName);
                     if (marketSummary != null) {
                         double btc = marketSummary.getResult().get(0).getLast() * result.getBalance();
                         if (marketName.equalsIgnoreCase("USDT-BTC")) {
@@ -182,7 +198,31 @@ public class MarketMonitor {
         mainFrame.updatePieChartFrame(map);
     }
 
-    public static MarketOrder getOpenMarketOrders() {
+    public static MarketOrderResponse getOpenMarketOrders() {
         return sharedMarketOrders;
+    }
+
+    private static boolean loadAPIKeys() {
+        if (COUNTER % DIALOG_DELAY != 0) {
+            return true;
+        }
+        Params.API_KEY = PreferenceManager.getApiKey(true);
+        Params.API_SECRET_KEY = PreferenceManager.getApiSecretKey(true);
+        if (Params.API_KEY.isEmpty() || Params.API_SECRET_KEY.isEmpty()) {
+            infoDialog = new InfoDialog(DIALOG_FAILED_TO_LOAD_API_KEYS);
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean validateResponse(Response response) {
+      if (COUNTER % DIALOG_DELAY != 0) {
+          return true;
+      }
+      if (!response.isSuccess() && response.getMessage().equals(MSG_APIKEY_INVALID)) {
+          infoDialog = new InfoDialog(DIALOG_INVALID_API_KEYS);
+          return false;
+      }
+      return true;
     }
 }

@@ -2,7 +2,10 @@ package org;
 
 import org.apache.log4j.Logger;
 import org.logic.schedulers.MarketMonitor;
+import org.preferences.Params;
+import org.preferences.managers.PreferenceManager;
 import org.ui.frames.MainFrame;
+import org.ui.views.dialog.box.InfoDialog;
 
 import javax.swing.*;
 

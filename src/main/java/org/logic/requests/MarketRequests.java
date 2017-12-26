@@ -9,7 +9,9 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static org.preferences.Constants.*;
+import static org.preferences.Constants.MSG_REQUEST_TIMEOUT;
+import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
+import static org.preferences.Params.API_KEY;
 
 public class MarketRequests {
 

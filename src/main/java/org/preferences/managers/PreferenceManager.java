@@ -1,11 +1,17 @@
 package org.preferences.managers;
 
+import org.logic.encryption.Base64Crypto;
+
 import java.util.prefs.Preferences;
 
 public class PreferenceManager {
 
     private static final String EMAIL_NOTIFICATION_ENABLED_KEY = "EMAIL_NOTIFICATION_ENABLED_KEY";
     private static final String HIDE_INSIGNIFICANT_ENABLED_KEY = "HIDE_INSIGNIFICANT_ENABLED_KEY";
+    private static final String EMAIL_ADDRESS_KEY = "EMAIL_ADDRESS_KEY";
+    private static final String EMAIL_ADDRESS_PASSWORD_KEY = "EMAIL_ADDRESS_PASSWORD_KEY";
+    private static final String API_KEY = "API_KEY";
+    private static final String API_SECRET_KEY = "API_SECRET_KEY";
 
     public static boolean isEmailNotificationEnabled() {
         Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
@@ -29,9 +35,6 @@ public class PreferenceManager {
         prefs.putBoolean(HIDE_INSIGNIFICANT_ENABLED_KEY, !value);
     }
 
-    private static final String EMAIL_ADDRESS_KEY = "EMAIL_ADDRESS_KEY";
-    private static final String EMAIL_ADDRESS_PASSWORD_KEY = "EMAIL_ADDRESS_PASSWORD_KEY";
-
     public static String getEmailAddress() {
         Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
         return prefs.get(EMAIL_ADDRESS_KEY, "");
@@ -42,14 +45,57 @@ public class PreferenceManager {
         prefs.put(EMAIL_ADDRESS_KEY, email);
     }
 
-    public static String getEmailPassword() {
+    public static String getEmailPassword(boolean decrypt) {
         Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
-        return prefs.get(EMAIL_ADDRESS_PASSWORD_KEY, "");
+        String s = prefs.get(EMAIL_ADDRESS_PASSWORD_KEY, "");
+        if (decrypt) {
+            return Base64Crypto.decode(s);
+        }
+        return s;
     }
 
-    public static void setEmailPassword(String password) {
+    public static void setEmailPassword(String password, boolean encrypt) {
         Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
-        prefs.put(EMAIL_ADDRESS_PASSWORD_KEY, password);
+        if (encrypt) {
+            prefs.put(EMAIL_ADDRESS_PASSWORD_KEY, Base64Crypto.encode(password));
+        } else {
+            prefs.put(EMAIL_ADDRESS_PASSWORD_KEY, password);
+        }
     }
 
+    public static String getApiKey(boolean decrypt) {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        String key = prefs.get(API_KEY, "");
+        if (decrypt) {
+            return Base64Crypto.decode(key).toString();
+        }
+        return key;
+    }
+
+    public static void setApiKey(String apiKey, boolean encrypt) {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        if (encrypt) {
+            prefs.put(API_KEY, Base64Crypto.encode(apiKey));
+        } else {
+            prefs.put(API_KEY, apiKey);
+        }
+    }
+
+    public static String getApiSecretKey(boolean decrypt) {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        String key = prefs.get(API_SECRET_KEY, "");
+        if (decrypt) {
+            return Base64Crypto.decode(key).toString();
+        }
+        return key;
+    }
+
+    public static void setApiSecretKey(String apiSecretKey, boolean encrypt) {
+        Preferences prefs = Preferences.userNodeForPackage(PreferenceManager.class);
+        if (encrypt) {
+            prefs.put(API_SECRET_KEY, Base64Crypto.encode(apiSecretKey));
+        } else {
+            prefs.put(API_SECRET_KEY, apiSecretKey);
+        }
+    }
 }

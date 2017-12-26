@@ -25,6 +25,8 @@ public abstract class Response {
                 return "Zero or negative value not allowed.";
             case MSG_REQUEST_TIMEOUT:
                 return "Response timeout. Please try again.";
+            case MSG_APIKEY_INVALID:
+                return DIALOG_FAILED_TO_LOAD_API_KEYS;
         }
         if (message.startsWith(MSG_REQUEST_PROCESSING_PROBLEM)) {
             return "There was a problem processing your request.";

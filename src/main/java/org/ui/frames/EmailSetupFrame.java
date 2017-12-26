@@ -4,13 +4,12 @@ import org.apache.log4j.Logger;
 import org.logic.smtp.MailSender;
 import org.logic.validators.PatternValidator;
 import org.preferences.managers.PreferenceManager;
-import org.preferences.ui.Constants;
+import org.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
 import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.textfield.HintTextField;
 
 import javax.mail.MessagingException;
-import javax.sound.sampled.Line;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
@@ -81,7 +80,7 @@ public class EmailSetupFrame extends SingleInstanceFrame {
                     mailSender.sendEmailNotification(address, password,"Mail sender - Test", "This is a verification email.");
                     logger.debug("New email and password setup correctly.");
                     PreferenceManager.setEmailAddress(address);
-                    PreferenceManager.setEmailPassword(password);
+                    PreferenceManager.setEmailPassword(password, true);
                     new InfoDialog("Authentication successful. Please check your mailbox for the test email.");
                 } catch (MessagingException e) {
                     logger.debug(e.getMessage() + " " + e.getStackTrace());

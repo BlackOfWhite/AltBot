@@ -15,7 +15,7 @@ public class MailSender {
 
     public void sendEmailNotification(String subject, final String messageText) throws MessagingException {
         final String addressee = PreferenceManager.getEmailAddress();
-        final String password = PreferenceManager.getEmailPassword();
+        final String password = PreferenceManager.getEmailPassword(true);
         sendEmailNotification(addressee, password, subject, messageText);
     }
 

@@ -2,37 +2,33 @@ package org.logic.models;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.logic.models.requests.MarketBalance;
-import org.logic.models.requests.MarketBalances;
-import org.logic.models.requests.MarketOrder;
-import org.logic.models.requests.MarketSummary;
-import org.logic.models.responses.OrderResponse;
+import org.logic.models.responses.*;
 
 import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
 
 public class JSONParser {
 
-    public static MarketSummary parseMarketSummary(String json) {
+    public static MarketSummaryResponse parseMarketSummary(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        MarketSummary marketSummary = g.fromJson(json, MarketSummary.class);
+        MarketSummaryResponse marketSummary = g.fromJson(json, MarketSummaryResponse.class);
         return marketSummary;
     }
 
-    public static MarketOrder parseMarketOrder(String json) {
+    public static MarketOrderResponse parseMarketOrder(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        MarketOrder marketOrder = g.fromJson(json, MarketOrder.class);
+        MarketOrderResponse marketOrder = g.fromJson(json, MarketOrderResponse.class);
         return marketOrder;
     }
 
-    public static MarketBalance parseMarketBalance(String json) {
+    public static MarketBalanceResponse parseMarketBalance(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        MarketBalance marketBalance = g.fromJson(json, MarketBalance.class);
+        MarketBalanceResponse marketBalance = g.fromJson(json, MarketBalanceResponse.class);
         return marketBalance;
     }
 
-    public static MarketBalances parseMarketBalances(String json) {
+    public static MarketBalancesResponse parseMarketBalances(String json) {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
-        MarketBalances marketBalances = g.fromJson(json, MarketBalances.class);
+        MarketBalancesResponse marketBalances = g.fromJson(json, MarketBalancesResponse.class);
         return marketBalances;
     }
 

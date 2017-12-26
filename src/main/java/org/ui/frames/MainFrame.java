@@ -4,7 +4,7 @@ import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
 import org.preferences.managers.PreferenceManager;
-import org.preferences.ui.Constants;
+import org.ui.Constants;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -31,6 +31,7 @@ public class MainFrame extends JFrame {
     private ClassicTransactionFrame classicTransactionFrame;
     private PieChartFrame pieChartFrame;
     private EmailSetupFrame emailSetupFrame;
+    private APISetupFrame apiSetupFrame;
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -118,9 +119,9 @@ public class MainFrame extends JFrame {
                 jCheckBoxMenuItem.setState(PreferenceManager.isEmailNotificationEnabled());
             }
         });
-        JMenuItem menuItem = new JMenuItem("Email setup");
-        menuItem.setToolTipText("Setup your email address to use notifications");
-        menuItem.addActionListener(new ActionListener() {
+        JMenuItem emailSetupMenuItem = new JMenuItem("Email setup");
+        emailSetupMenuItem.setToolTipText("Setup your email address to use notifications");
+        emailSetupMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (emailSetupFrame == null || emailSetupFrame.isClosed()) {
@@ -128,8 +129,19 @@ public class MainFrame extends JFrame {
                 }
             }
         });
+        JMenuItem apiSetupMenuItem = new JMenuItem("API setup");
+        apiSetupMenuItem.setToolTipText("Setup your API keys");
+        apiSetupMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (apiSetupFrame == null || apiSetupFrame.isClosed()) {
+                    apiSetupFrame = new APISetupFrame();
+                }
+            }
+        });
+        settings.add(apiSetupMenuItem);
         settings.add(jCheckBoxMenuItem);
-        settings.add(menuItem);
+        settings.add(emailSetupMenuItem);
 
         // Chart button
         JButton button = new JButton();

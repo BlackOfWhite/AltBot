@@ -3,7 +3,7 @@ package org.ui.frames;
 import org.apache.log4j.Logger;
 import org.logic.transactions.ClassicTransaction;
 import org.logic.validators.PatternValidator;
-import org.preferences.ui.Constants;
+import org.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
 import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.textfield.HintTextField;
@@ -15,7 +15,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import static org.preferences.Params.MAX_INPUT_VALUE;
+import static org.preferences.Constants.MAX_INPUT_VALUE;
 
 public class ClassicTransactionFrame extends SingleInstanceFrame {
 

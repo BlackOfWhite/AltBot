@@ -4,8 +4,8 @@ import javax.swing.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-import static org.preferences.Params.MAX_INPUT_VALUE;
-import static org.preferences.ui.Constants.DOUBLE_FIELD_INVALID;
+import static org.preferences.Constants.MAX_INPUT_VALUE;
+import static org.ui.Constants.DOUBLE_FIELD_INVALID;
 
 public class HintTextField extends JTextField implements FocusListener {
 

@@ -1,5 +1,7 @@
 package org.ui.views.dialog.box;
 
+import org.ui.frames.util.SingleInstanceFrame;
+
 import javax.swing.*;
 
 public class InfoDialog {
