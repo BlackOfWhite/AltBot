@@ -19,6 +19,9 @@ public class Constants {
     public static final String ORDER_TYPE_SELL = "LIMIT_SELL";
     public static final String ORDER_TYPE_BUY = "LIMIT_BUY";
 
+    // Stop-loss. Subtract this value from last market price, to make sure order is executed immediately.
+    public static final double STOP_LOSS_SELL_THRESHOLD = 0.0000005;
+
     // Dialogs
     public static final String DIALOG_FAILED_TO_LOAD_API_KEYS = "Failed to load one or more API keys! Please go to 'API Setup' section in the 'Settings' menu.";
     public static final String DIALOG_INVALID_API_KEYS = "API keys are invalid. Please go to 'API Setup' section in the 'Settings' menu.";

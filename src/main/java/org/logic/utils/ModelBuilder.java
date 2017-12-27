@@ -5,6 +5,7 @@ import org.logic.models.JSONParser;
 import org.logic.models.responses.MarketBalancesResponse;
 import org.logic.models.responses.MarketOrderResponse;
 import org.logic.models.responses.MarketSummaryResponse;
+import org.logic.models.responses.OrderResponse;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
 
@@ -46,6 +47,18 @@ public class ModelBuilder {
         }
 //        logger.debug(marketSummary);
         return marketSummary;
+    }
+
+    public static OrderResponse buildCancelOrderById(String uuid) {
+        OrderResponse orderResponse = null;
+        try {
+            String response = MarketRequests.cancelOrder(uuid);
+            orderResponse = JSONParser.parseOrderResponse(response);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+//        logger.debug(marketSummary);
+        return orderResponse;
     }
 
 

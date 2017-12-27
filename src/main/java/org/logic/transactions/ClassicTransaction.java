@@ -50,8 +50,7 @@ public class ClassicTransaction implements TransactionImpl {
             }
         } catch (Exception e) {
             logger.debug(e.getMessage());
-            e.printStackTrace();
-            return "Error: " + e.getMessage() + ". Transaction not completed.";
+            return "Error: " + e.getMessage() + "\n" + e.getStackTrace().toString() + ". Transaction not completed.";
         }
         return message;
     }

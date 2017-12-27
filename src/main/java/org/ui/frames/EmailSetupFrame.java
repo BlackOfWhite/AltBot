@@ -77,7 +77,7 @@ public class EmailSetupFrame extends SingleInstanceFrame {
             if (password != null && !password.isEmpty()) {
                 MailSender mailSender = new MailSender();
                 try {
-                    mailSender.sendEmailNotification(address, password,"Mail sender - Test", "This is a verification email.");
+                    mailSender.sendEmailNotification(address, password,"Mail sender - Test", "This is just a verification email. Please do not reply.");
                     logger.debug("New email and password setup correctly.");
                     PreferenceManager.setEmailAddress(address);
                     PreferenceManager.setEmailPassword(password, true);

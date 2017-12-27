@@ -3,12 +3,8 @@ package org.logic.schedulers;
 import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.misc.BalancesSet;
-import org.logic.models.responses.MarketBalancesResponse;
-import org.logic.models.responses.MarketOrderResponse;
-import org.logic.models.responses.MarketSummaryResponse;
-import org.logic.models.responses.Response;
+import org.logic.models.responses.*;
 import org.logic.requests.MarketRequests;
-import org.logic.requests.PublicRequests;
 import org.logic.smtp.MailSender;
 import org.logic.transactions.model.CancelOption;
 import org.logic.transactions.model.CancelOptionCollection;
@@ -71,6 +67,7 @@ public class MarketMonitor {
             public void run() {
                 logger.debug("\nNew run..");
                 try {
+                    // Open market orders & settings validation
                     COUNTER = (COUNTER + 1) % 10000;
                     if (!loadAPIKeys()) {
                         return;
@@ -80,17 +77,22 @@ public class MarketMonitor {
                         return;
                     }
 
+                    // Main frame status bar
                     sharedMarketOrders = openMarketOrders;
-                    final int size = openMarketOrders.getResult().size();
-                    final int buyOrders = openMarketOrders.getBuyOrdersCount();
-                    updateMainFrameStatus(size, buyOrders);
+                    final int totalOrdersCount = openMarketOrders.getResult().size();
+                    final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
+                    updateMainFrameStatus(totalOrdersCount, buyOrdersCount);
 
                     MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
-                    updatePieChart(marketBalances);
 
-                    sendNotification(size);
-                    cancelOrders(openMarketOrders);
+                    // Market name - last price map
+                    Map<String, Double> priceMap = createLastPriceMap(marketBalances, openMarketOrders);
+
+                    updatePieChart(marketBalances, priceMap);
+                    sendNotification(totalOrdersCount);
+                    stopLossOrdersByOrderId(openMarketOrders, priceMap);
                 } catch (Exception e) {
+                    e.printStackTrace();
                     logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
                 }
             }
@@ -124,7 +126,10 @@ public class MarketMonitor {
                 try {
                     ms.sendEmailNotification(messageText, SUBJECT);
                 } catch (MessagingException e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
+                    if (COUNTER % DIALOG_DELAY == 0) {
+                        new InfoDialog("Failed to authenticate email " + PreferenceManager.getEmailAddress());
+                    }
                 }
                 logger.debug(messageText);
                 ORDERS_COUNT = openOrderCount;
@@ -132,43 +137,61 @@ public class MarketMonitor {
         }
     }
 
-    private static int cancelOrders(MarketOrderResponse openMarketOrders) {
+    /**
+     * This method will find all orders (candidates) for which stop-loss should be executed.
+     * If given order's id is in the collection of stop orders, it will be cancelled and new sell order would be placed.
+     * Current price must lower than stop-loss price minus THRESHOLD - useful in case when price drops dramatically.
+     *
+     * @param openMarketOrders
+     * @return
+     */
+    private static void stopLossOrdersByOrderId(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
         List<CancelOption> cancelOptionList = CancelOptionCollection.getCancelList();
+        logger.info("Number of stop-loss orders: " + cancelOptionList.size());
         for (CancelOption cancelOption : cancelOptionList) {
             for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
-                if (cancelOption.getMarketName().equalsIgnoreCase(result.getExchange())) {
-                    String response = null;
-                    try {
-                        response = PublicRequests.getMarketSummary(cancelOption.getMarketName());
-                    } catch (Exception e) {
-                        logger.debug("Response is null");
-                    }
-                    if (response != null) {
-                        MarketSummaryResponse marketSummary = JSONParser.parseMarketSummary(response);
-                        logger.debug(marketSummary);
-                        if (cancelOption.getCancelBelow() <= marketSummary.getResult().get(0).getLast()) {
-                            try {
-                                final String uuid = cancelOption.getUuid();
-                                String resp = MarketRequests.cancelOrder(uuid);
-                                if (resp != null && resp.isEmpty()) {
-                                    logger.debug("Successfully canceled order: " + uuid);
-                                }
-                            } catch (Exception e) {
-                                logger.debug("Error while creating request's URL");
+                if (cancelOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
+                    // find last market value for this currency
+                    double last = priceMap.get(cancelOption.getMarketName());
+                    double cancelBelow = cancelOption.getCancelBelow();
+                    if (cancelBelow <= last && last >= cancelOption.getCancelBelow() *
+                            ((100 - cancelOption.getThreshold()) / 100.0d)) {
+                        final String uuid = cancelOption.getUuid();
+                        final double amount = result.getQuantityRemaining();
+                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
+                        if (orderResponse.isSuccess()) {
+                            logger.debug("Successfully canceled order: " + uuid);
+                            // Place new sell order
+                            double rate = last - STOP_LOSS_SELL_THRESHOLD;
+                            if (rate < BALANCE_MINIMUM) {
+                                logger.error("Failed to place new sell order with too low rate: " + rate + ".");
+                                return;
                             }
+                            String response = null;
+                            try {
+                                response = MarketRequests.placeOrderSell(result.getExchange(), amount, rate);
+                            } catch (Exception e) {
+                                logger.error("Failed to place new sell order after cancelling order with id: \" + uuid");
+                            }
+                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
+                            if (sellOrderResponse.isSuccess()) {
+                                logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
+                            }
+                        } else {
+                            logger.error("Failed to cancel order: " + uuid + ". Reason: " + orderResponse.getMessage());
                         }
                     }
                 }
             }
         }
-        return cancelOptionList.size();
     }
 
     private static void updateMainFrameStatus(int totalOrders, int buyOrders) {
         mainFrame.updateStatusBar(totalOrders, buyOrders);
     }
 
-    private static void updatePieChart(final MarketBalancesResponse marketBalances) {
+    private static void updatePieChart(final MarketBalancesResponse marketBalances,
+                                       final Map<String, Double> priceMap) {
         if (!mainFrame.isPieChartVisible()) {
             return;
         }
@@ -177,22 +200,16 @@ public class MarketMonitor {
             if (result.getBalance() < BALANCE_MINIMUM) {
                 continue;
             }
-            try {
-                String marketName = MarketNameUtils.getMarketNameForCurrency(result.getCurrency());
-                if (marketName.equals("BTC")) {
-                    map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
-                } else {
-                    MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(marketName);
-                    if (marketSummary != null) {
-                        double btc = marketSummary.getResult().get(0).getLast() * result.getBalance();
-                        if (marketName.equalsIgnoreCase("USDT-BTC")) {
-                            btc = result.getBalance() * (1 / marketSummary.getResult().get(0).getLast());
-                        }
-                        map.put(result.getCurrency(), new BalancesSet(result.getBalance(), btc));
-                    }
+            String marketName = MarketNameUtils.getMarketNameForCurrency(result.getCurrency());
+            if (marketName.equals("BTC")) {
+                map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
+            } else {
+                double last = priceMap.get(marketName);
+                double btc = last * result.getBalance();
+                if (marketName.equalsIgnoreCase("USDT-BTC")) {
+                    btc = result.getBalance() * (1 / last);
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
+                map.put(result.getCurrency(), new BalancesSet(result.getBalance(), btc));
             }
         }
         mainFrame.updatePieChartFrame(map);
@@ -216,13 +233,39 @@ public class MarketMonitor {
     }
 
     private static boolean validateResponse(Response response) {
-      if (COUNTER % DIALOG_DELAY != 0) {
-          return true;
-      }
-      if (!response.isSuccess() && response.getMessage().equals(MSG_APIKEY_INVALID)) {
-          infoDialog = new InfoDialog(DIALOG_INVALID_API_KEYS);
-          return false;
-      }
-      return true;
+        if (COUNTER % DIALOG_DELAY != 0) {
+            return true;
+        }
+        if (!response.isSuccess() && response.getMessage().equals(MSG_APIKEY_INVALID)) {
+            infoDialog = new InfoDialog(DIALOG_INVALID_API_KEYS);
+            return false;
+        }
+        return true;
+    }
+
+    private static Map<String, Double> createLastPriceMap(MarketBalancesResponse
+                                                                  marketBalancesResponse, MarketOrderResponse marketOrderResponse) {
+        Map<String, Double> map = new HashMap<>();
+        for (MarketBalancesResponse.Result result : marketBalancesResponse.getResult()) {
+            String currency = result.getCurrency();
+            if (!currency.startsWith("BTC")) {
+                if (currency.startsWith("USDT")) {
+                    map.put(result.getCurrency() + "-BTC", -1.0);
+                } else {
+                    map.put("BTC-" + result.getCurrency(), -1.0);
+                }
+            }
+
+        }
+        for (MarketOrderResponse.Result result : marketOrderResponse.getResult()) {
+            map.put(result.getExchange(), -1.0);
+        }
+        for (Map.Entry<String, Double> entry : map.entrySet()) {
+            if (map.get(entry.getKey()) < 0.0d) {
+                MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
+                map.put(entry.getKey(), marketSummary.getResult().get(0).getLast());
+            }
+        }
+        return map;
     }
 }

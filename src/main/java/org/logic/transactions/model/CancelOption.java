@@ -2,16 +2,26 @@ package org.logic.transactions.model;
 
 import java.io.Serializable;
 
-public class CancelOption implements Serializable{
+public class CancelOption implements Serializable {
 
     private String marketName;
     private double cancelBelow;
     private String uuid;
+    private int threshold; // 1-99%. default is 5%.
 
     public CancelOption(String marketName, double cancelBelow, String uuid) {
+        this(marketName, cancelBelow, uuid, 5);
+    }
+
+    public CancelOption(String marketName, double cancelBelow, String uuid, int threshold) {
         this.marketName = marketName;
         this.cancelBelow = cancelBelow;
         this.uuid = uuid;
+        this.threshold = threshold;
+    }
+
+    public int getThreshold() {
+        return threshold;
     }
 
     public String getMarketName() {

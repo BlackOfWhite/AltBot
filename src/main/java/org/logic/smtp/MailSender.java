@@ -2,7 +2,6 @@ package org.logic.smtp;
 
 import org.apache.log4j.Logger;
 import org.preferences.managers.PreferenceManager;
-import org.ui.views.dialog.box.InfoDialog;
 
 import javax.mail.*;
 import javax.mail.internet.InternetAddress;
@@ -14,9 +13,9 @@ public class MailSender {
     private Logger logger = Logger.getLogger(MailSender.class);
 
     public void sendEmailNotification(String subject, final String messageText) throws MessagingException {
-        final String addressee = PreferenceManager.getEmailAddress();
+        final String address = PreferenceManager.getEmailAddress();
         final String password = PreferenceManager.getEmailPassword(true);
-        sendEmailNotification(addressee, password, subject, messageText);
+        sendEmailNotification(address, password, subject, messageText);
     }
 
     public void sendEmailNotification(String address, String password, String subject, final String messageText) throws MessagingException {
@@ -34,22 +33,18 @@ public class MailSender {
                         return new PasswordAuthentication(address, password);
                     }
                 });
+
+        Message message = new MimeMessage(session);
+        message.setFrom(new InternetAddress("AltBot"));
+        message.setRecipients(Message.RecipientType.TO,
+                InternetAddress.parse(address));
+        message.setSubject(subject);
         try {
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress("AltBot"));
-            message.setRecipients(Message.RecipientType.TO,
-                    InternetAddress.parse(address));
-            message.setSubject(subject);
-            try {
-                message.setText(messageText);
-            } catch (MessagingException e) {
-                e.printStackTrace();
-            }
-            Transport.send(message);
-            logger.debug("Mail sent to: " + address);
+            message.setText(messageText);
         } catch (MessagingException e) {
-            new InfoDialog("Failed to authenticate email " + address);
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
+        Transport.send(message);
+        logger.debug("Mail sent to: " + address);
     }
 }
