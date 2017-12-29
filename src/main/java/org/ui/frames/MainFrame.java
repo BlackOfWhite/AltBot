@@ -23,9 +23,9 @@ public class MainFrame extends JFrame {
 
     private final static String[] ARR_MODES = {"Classic", "Buy&Sell", "Sequence"};
     private static Logger logger = Logger.getLogger(MainFrame.class);
-    private JLabel labelOpenOrdersStatus, labelEmailAddress;
+    private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
-    private JTextArea jtaStatusBar;
+    private JTextArea jtaStatusBar, jApiStatusBar;
     private JScrollPane jScrollPane;
     private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
@@ -40,7 +40,7 @@ public class MainFrame extends JFrame {
         Container cp = getContentPane();
         JPanel pMain = new JPanel();
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
-        pMain.setLayout(new GridLayout(3, 1));
+        pMain.setLayout(new GridLayout(4, 1));
 
         // Status bar
         JPanel statusBar = new JPanel();
@@ -59,6 +59,24 @@ public class MainFrame extends JFrame {
         statusBar.add(status1);
         statusBar.add(status2);
         pMain.add(statusBar);
+
+        // Api status bar
+        JPanel apiStatusBar = new JPanel();
+        apiStatusBar.setBorder(new TitledBorder(new EtchedBorder()));
+        apiStatusBar.setLayout(new GridLayout(1, 2));
+        labelApi = new JLabel();
+        labelApi.setText("API: " + PreferenceManager.getApiKeyObfucate());
+        JPanel apiStatusBar1 = new JPanel();
+        apiStatusBar1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        apiStatusBar1.add(labelApi);
+        labelApiSecret = new JLabel();
+        labelApiSecret.setText("Secret: " + PreferenceManager.getApiKeySecretObfucate());
+        JPanel apiStatusBar2 = new JPanel();
+        apiStatusBar2.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        apiStatusBar2.add(labelApiSecret);
+        apiStatusBar.add(apiStatusBar1);
+        apiStatusBar.add(apiStatusBar2);
+        pMain.add(apiStatusBar);
 
         jComboBoxMode = new JComboBox<>(ARR_MODES);
         btnCreateTransaction = new JButton("Create transaction");
@@ -179,6 +197,11 @@ public class MainFrame extends JFrame {
         }
         this.labelEmailAddress.validate();
         logger.debug("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
+    }
+
+    public void updateAPIStatusBar() {
+        labelApi.setText("API: " + PreferenceManager.getApiKeyObfucate());
+        labelApiSecret.setText("Secret: " + PreferenceManager.getApiKeySecretObfucate());
     }
 
     private void openClassicTransactionView() {

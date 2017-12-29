@@ -98,4 +98,33 @@ public class PreferenceManager {
             prefs.put(API_SECRET_KEY, apiSecretKey);
         }
     }
+
+    public static String getApiKeyObfucate() {
+        String apiKey = getApiKey(true);
+        if (apiKey.length() <= 8) {
+            return apiKey;
+        }
+        return obfMask(apiKey);
+    }
+
+    public static String getApiKeySecretObfucate() {
+        String apiKey = getApiSecretKey(true);
+        if (apiKey.length() <= 8) {
+            return apiKey;
+        }
+        return obfMask(apiKey);
+    }
+
+    private static String obfMask(String s) {
+        StringBuilder masked = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (i < 4 || ((i + 4) >= s.length())) {
+                masked.append(c);
+            } else {
+                masked.append("*");
+            }
+        }
+        return masked.toString();
+    }
 }

@@ -44,9 +44,7 @@ public class ClassicTransaction implements TransactionImpl {
             message = "Successfully created new order with id: " + uuid + " for market " + marketName + ".";
             if (cancelAt > 0.0d) {
                 CancelOption cancelOption = new CancelOption(marketName, cancelAt, uuid);
-                final CancelOptionManager cancelOptionManager = CancelOptionManager.getInstance();
-                cancelOptionManager.addCancelOption(cancelOption);
-                cancelOptionManager.reload();
+                CancelOptionManager.getInstance().addCancelOption(cancelOption);
                 message += "New stop-loss option added for order: " + uuid + " (if drops below " + cancelAt + ").";
             }
         } catch (IOException ioe) {

@@ -91,7 +91,6 @@ public class MarketMonitor {
                     sendNotification(totalOrdersCount);
                     stopLossOrdersByOrderId(openMarketOrders, priceMap);
                 } catch (Exception e) {
-                    e.printStackTrace();
                     logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
                 }
             }
@@ -187,6 +186,9 @@ public class MarketMonitor {
 
     private static void updateMainFrameStatus(int totalOrders, int buyOrders) {
         mainFrame.updateStatusBar(totalOrders, buyOrders);
+        if (COUNTER % DIALOG_DELAY == 0) {
+            mainFrame.updateAPIStatusBar();
+        }
     }
 
     /**
@@ -229,8 +231,9 @@ public class MarketMonitor {
         }
         Params.API_KEY = PreferenceManager.getApiKey(true);
         Params.API_SECRET_KEY = PreferenceManager.getApiSecretKey(true);
-        if (Params.API_KEY.isEmpty() || Params.API_SECRET_KEY.isEmpty()) {
+        if (Params.API_KEY.trim().isEmpty() || Params.API_SECRET_KEY.trim().isEmpty()) {
             infoDialog = new InfoDialog(DIALOG_FAILED_TO_LOAD_API_KEYS);
+            mainFrame.updateAPIStatusBar();
             return false;
         }
         return true;
@@ -240,7 +243,7 @@ public class MarketMonitor {
         if (COUNTER % DIALOG_DELAY != 0) {
             return true;
         }
-        if (!response.isSuccess() && response.getMessage().equals(MSG_APIKEY_INVALID)) {
+        if (response == null || !response.isSuccess() && response.getMessage().equals(MSG_APIKEY_INVALID)) {
             infoDialog = new InfoDialog(DIALOG_INVALID_API_KEYS);
             return false;
         }
