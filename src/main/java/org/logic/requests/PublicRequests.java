@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLConnection;
 
+import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
+
 public class PublicRequests {
 
     private static Logger logger = Logger.getLogger(PublicRequests.class);
@@ -27,6 +29,7 @@ public class PublicRequests {
     public static String getMarketSummary(String marketName) throws Exception{
         URL url = new URL("https://bittrex.com/api/v1.1/public/getmarketsummary?market=" + marketName);
         URLConnection urlConnection = url.openConnection();
+        urlConnection.setReadTimeout(1000 * REQUEST_TIMEOUT_SECONDS);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
                         urlConnection.getInputStream()));

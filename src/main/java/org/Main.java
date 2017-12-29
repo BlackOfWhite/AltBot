@@ -2,10 +2,7 @@ package org;
 
 import org.apache.log4j.Logger;
 import org.logic.schedulers.MarketMonitor;
-import org.preferences.Params;
-import org.preferences.managers.PreferenceManager;
 import org.ui.frames.MainFrame;
-import org.ui.views.dialog.box.InfoDialog;
 
 import javax.swing.*;
 
@@ -25,13 +22,13 @@ public class Main {
         try {
             UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } catch (InstantiationException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } catch (UnsupportedLookAndFeelException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
     }
 

@@ -1,5 +1,7 @@
 package org.logic.utils;
 
+import org.apache.log4j.Logger;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.UnsupportedEncodingException;
@@ -11,6 +13,7 @@ import static org.preferences.Params.API_SECRET_KEY;
 public class Converter {
 
     private String uri;
+    private Logger logger = Logger.getLogger(Converter.class);
 
     public Converter(String uri) {
         this.uri = uri;
@@ -31,7 +34,6 @@ public class Converter {
         Mac sha512_HMAC = null;
         String result = null;
         String key = API_SECRET_KEY;
-
         try {
             byte[] byteKey = key.getBytes("UTF-8");
             final String HMAC_SHA256 = "HmacSHA512";
@@ -44,14 +46,11 @@ public class Converter {
             result = bytesToHex(mac_data);
 //            System.out.println(result);
         } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } catch (NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } catch (InvalidKeyException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            logger.error(e.getMessage());
         } finally {
 //            System.out.println("Done");
         }

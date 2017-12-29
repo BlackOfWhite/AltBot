@@ -42,7 +42,7 @@ public class MailSender {
         try {
             message.setText(messageText);
         } catch (MessagingException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         Transport.send(message);
         logger.debug("Mail sent to: " + address);

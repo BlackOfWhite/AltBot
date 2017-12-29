@@ -10,7 +10,7 @@ public class Constants {
     public static final String MSG_APIKEY_INVALID = "APIKEY_INVALID";
 
     public static final String MSG_REQUEST_TIMEOUT = "Request timeout.";
-    public static final int REQUEST_TIMEOUT_SECONDS = 5;
+    public static final int REQUEST_TIMEOUT_SECONDS = 3;
 
     public static final double BALANCE_MINIMUM = 0.00000001;
     public static final double CHART_SIGNIFICANT_MINIMUM = 0.000001;

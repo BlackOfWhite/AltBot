@@ -57,7 +57,7 @@ public class PersistenceManager {
         try {
             writer = new PrintWriter(CANCEL_OPTIONS_FILE_NAME);
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         writer.print("");
         writer.close();

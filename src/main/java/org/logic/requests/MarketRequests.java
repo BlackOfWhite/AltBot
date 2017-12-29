@@ -6,6 +6,7 @@ import org.logic.utils.Converter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 
@@ -82,28 +83,32 @@ public class MarketRequests {
         URLConnection urlConnection = null;
         try {
             urlConnection = url.openConnection();
+            urlConnection.setReadTimeout(1000 * REQUEST_TIMEOUT_SECONDS);
             urlConnection.setRequestProperty("apisign", sign);
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
                             urlConnection.getInputStream()));
-            // SET REQUEST TIMEOUT
+            // SET REQUEST TIMEOUT exception
             String inputLine;
-            long endTimeMillis = System.currentTimeMillis() + (REQUEST_TIMEOUT_SECONDS * 1000);
+//            long endTimeMillis = System.currentTimeMillis() + (REQUEST_TIMEOUT_SECONDS * 1000);
             while ((inputLine = in.readLine()) != null) {
 //                logger.debug(inputLine);
                 response = inputLine;
-                if (System.currentTimeMillis() > endTimeMillis) {
-                    return MSG_REQUEST_TIMEOUT;
-                }
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+//                if (System.currentTimeMillis() > endTimeMillis) {
+//                    return MSG_REQUEST_TIMEOUT;
+//                }
+//                try {
+//                    Thread.sleep(100);
+//                } catch (InterruptedException e) {
+//                    logger.error(e.getMessage() + "\nThread interrupted.");
+//                }
             }
             in.close();
+        } catch (SocketTimeoutException e) {
+            logger.error(e.getMessage());
+            return MSG_REQUEST_TIMEOUT;
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error(e.getMessage());
         }
         return response;
     }

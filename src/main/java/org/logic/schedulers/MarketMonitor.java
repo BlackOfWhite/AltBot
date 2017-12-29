@@ -85,8 +85,7 @@ public class MarketMonitor {
                     MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
 
                     // Market name - last price map
-                    Map<String, Double> priceMap = createLastPriceMap(marketBalances, openMarketOrders);
-
+                    final Map<String, Double> priceMap = createLastPriceMap(marketBalances, openMarketOrders);
                     updatePieChart(marketBalances, priceMap);
                     sendNotification(totalOrdersCount);
                     stopLossOrdersByOrderId(openMarketOrders, priceMap);

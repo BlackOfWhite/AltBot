@@ -72,12 +72,11 @@ public class TransactionScheduler {
 
                     placeOrder(marketSummary, marketOrder, marketBalance, marketBalanceBTC, marketOrderHistory);
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage());
                 }
             }
         }, 0, TIME, TimeUnit.SECONDS);  // execute every x seconds
         active = true;
-        logger.debug("Scheduler started");
     }
 
     public static void stop() {
@@ -128,8 +127,7 @@ public class TransactionScheduler {
 //                                    MarketRequests.placeOrderBuy(CURRENT_ALT_COIN, quantity, last);
                                     logger.debug("Placed an order to buy " + quantity + " alt. OK.");
                                 } catch (Exception e) {
-                                    e.printStackTrace();
-                                    logger.debug("Failed to place an order to buy " + quantity + " alt. FAIL.");
+                                    logger.error("Failed to place an order to buy " + quantity + " alt. FAIL.");
                                 }
                             }
                         }
@@ -151,8 +149,7 @@ public class TransactionScheduler {
 //                            MarketRequests.placeOrderSell(CURRENT_ALT_COIN, quantity, sellFor);
                             logger.debug("Placed an order to sell " + quantity + " alt. OK.");
                         } catch (Exception e) {
-                            e.printStackTrace();
-                            logger.debug("Failed to place an order to sell " + quantity + " alt. FAIL.");
+                            logger.error("Failed to place an order to sell " + quantity + " alt. FAIL.");
                         }
                     }
                 }

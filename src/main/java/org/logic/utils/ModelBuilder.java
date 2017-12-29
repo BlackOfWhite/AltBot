@@ -19,7 +19,7 @@ public class ModelBuilder {
             String response = MarketRequests.getBalances();
             marketBalances = JSONParser.parseMarketBalances(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage() + "\nFailed to create MarketBalancesResponse object");
         }
         logger.debug(marketBalances);
         return marketBalances;
@@ -31,7 +31,7 @@ public class ModelBuilder {
             String response = MarketRequests.getOpenOrders();
             openMarketOrders = JSONParser.parseMarketOrder(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage() + "\nFailed to create MarketOrderResponse object");
         }
         logger.debug(openMarketOrders);
         return openMarketOrders;
@@ -43,7 +43,7 @@ public class ModelBuilder {
             String response = PublicRequests.getMarketSummary(marketName);
             marketSummary = JSONParser.parseMarketSummary(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage() + "\nFailed to create MarketSummaryResponse object");
         }
 //        logger.debug(marketSummary);
         return marketSummary;
@@ -55,11 +55,9 @@ public class ModelBuilder {
             String response = MarketRequests.cancelOrder(uuid);
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
         }
 //        logger.debug(marketSummary);
         return orderResponse;
     }
-
-
 }
