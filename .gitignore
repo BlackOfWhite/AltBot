@@ -32,3 +32,6 @@ src/test/
 target/generated-sources/
 target/generated-test-sources/
 cancelOptions.ser
+src/main/java/org/logic/models/requests/
+target/classes/org/
+target/test-classes/
