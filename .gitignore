@@ -1,0 +1,38 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+*.log*
+
+# BlueJ files
+*.ctxt
+
+# Mobile Tools for Java (J2ME)
+.mtj.tmp/
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+# IntelliJ
+*.idea
+*.iml
+
+pom.xml
+logs/
+src/test/
+target/generated-sources/
+target/generated-test-sources/
+cancelOptions.ser
+
+src/main/java/org/logic/models/requests/
+target/classes/org/
+target/test-classes/
