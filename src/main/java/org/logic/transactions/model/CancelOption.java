@@ -3,7 +3,7 @@ package org.logic.transactions.model;
 import java.io.Serializable;
 
 public class CancelOption implements Serializable {
-
+    private static final long serialVersionUID = 1L;
     private String marketName;
     private double cancelBelow;
     private String uuid;

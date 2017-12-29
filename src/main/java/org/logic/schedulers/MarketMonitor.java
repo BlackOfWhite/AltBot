@@ -7,7 +7,7 @@ import org.logic.models.responses.*;
 import org.logic.requests.MarketRequests;
 import org.logic.smtp.MailSender;
 import org.logic.transactions.model.CancelOption;
-import org.logic.transactions.model.CancelOptionCollection;
+import org.logic.transactions.model.CancelOptionManager;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
 import org.preferences.Params;
@@ -31,15 +31,14 @@ public class MarketMonitor {
 
     private static final String SUBJECT = "Open orders status changed!";
     public volatile static boolean active = false;
+    public volatile static int COUNTER = -1;
     private static Logger logger = Logger.getLogger(MarketMonitor.class);
     private static MarketMonitor instance;
     private static ScheduledExecutorService ses;
     private static volatile MarketOrderResponse sharedMarketOrders;
     private static int ORDERS_COUNT = -1;
     private static MainFrame mainFrame;
-
     private static InfoDialog infoDialog;
-    public volatile static int COUNTER = -1;
     private static int DIALOG_DELAY = 5; // show dialog every 5 runs
 
     private MarketMonitor() {
@@ -107,9 +106,9 @@ public class MarketMonitor {
         logger.debug("Scheduler stopped");
     }
 
-    private static boolean isRunning() {
+    public static boolean isRunning() {
         if (ses.isShutdown() || ses.isTerminated()) {
-            return true;
+            return false;
         }
         return active;
     }
@@ -146,7 +145,7 @@ public class MarketMonitor {
      * @return
      */
     private static void stopLossOrdersByOrderId(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
-        List<CancelOption> cancelOptionList = CancelOptionCollection.getCancelList();
+        List<CancelOption> cancelOptionList = CancelOptionManager.getCancelOptionList();
         logger.info("Number of stop-loss orders: " + cancelOptionList.size());
         for (CancelOption cancelOption : cancelOptionList) {
             for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
@@ -190,6 +189,11 @@ public class MarketMonitor {
         mainFrame.updateStatusBar(totalOrders, buyOrders);
     }
 
+    /**
+     * Price map is used only to get last price.
+     * @param marketBalances
+     * @param priceMap
+     */
     private static void updatePieChart(final MarketBalancesResponse marketBalances,
                                        final Map<String, Double> priceMap) {
         if (!mainFrame.isPieChartVisible()) {
@@ -243,11 +247,23 @@ public class MarketMonitor {
         return true;
     }
 
-    private static Map<String, Double> createLastPriceMap(MarketBalancesResponse
-                                                                  marketBalancesResponse, MarketOrderResponse marketOrderResponse) {
+    /**
+     * Creates a map containing currency and its attributes. Merges all currencies from market balances and open orders.
+     * It is used to wallet chart and for stop orders, therefore only these currencies with balance greater than zero would be picked (this reduces number of requests to Bittrex).
+     *
+     * @param marketBalancesResponse
+     * @param marketOrderResponse
+     * @return
+     */
+    public static Map<String, Double> createLastPriceMap(MarketBalancesResponse
+                                                                 marketBalancesResponse, MarketOrderResponse marketOrderResponse) {
         Map<String, Double> map = new HashMap<>();
+        // Take only non-zero currencies from market balance.
         for (MarketBalancesResponse.Result result : marketBalancesResponse.getResult()) {
             String currency = result.getCurrency();
+            if (result.getBalance() < BALANCE_MINIMUM) {
+                continue;
+            }
             if (!currency.startsWith("BTC")) {
                 if (currency.startsWith("USDT")) {
                     map.put(result.getCurrency() + "-BTC", -1.0);
@@ -255,17 +271,23 @@ public class MarketMonitor {
                     map.put("BTC-" + result.getCurrency(), -1.0);
                 }
             }
-
         }
+        // Take every currency from orders
         for (MarketOrderResponse.Result result : marketOrderResponse.getResult()) {
             map.put(result.getExchange(), -1.0);
         }
+        // Marge and get last price.
         for (Map.Entry<String, Double> entry : map.entrySet()) {
             if (map.get(entry.getKey()) < 0.0d) {
                 MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
-                map.put(entry.getKey(), marketSummary.getResult().get(0).getLast());
+                try {
+                    entry.setValue(marketSummary.getResult().get(0).getLast());
+                } catch (NullPointerException ex) {
+                    logger.debug("Invalid market:" + entry.getKey());
+                }
             }
         }
+        logger.debug(map.toString());
         return map;
     }
 }

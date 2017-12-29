@@ -5,8 +5,10 @@ import org.logic.models.JSONParser;
 import org.logic.models.responses.OrderResponse;
 import org.logic.requests.MarketRequests;
 import org.logic.transactions.model.CancelOption;
-import org.logic.transactions.model.CancelOptionCollection;
+import org.logic.transactions.model.CancelOptionManager;
 import org.logic.validators.TransactionValidator;
+
+import java.io.IOException;
 
 public class ClassicTransaction implements TransactionImpl {
 
@@ -25,7 +27,7 @@ public class ClassicTransaction implements TransactionImpl {
 
     public String createClassicTransaction() {
         OrderResponse orderResponse;
-        String message;
+        String message = "";
         if (isOnlyOnePerMarketAllowed()) {
             if (new TransactionValidator(marketName).isOnlyOneOrderForGivenMarketName()) {
                 return "There is already at least one order for this market. Please close all open orders to create a new order for market " + marketName;
@@ -42,14 +44,16 @@ public class ClassicTransaction implements TransactionImpl {
             message = "Successfully created new order with id: " + uuid + " for market " + marketName + ".";
             if (cancelAt > 0.0d) {
                 CancelOption cancelOption = new CancelOption(marketName, cancelAt, uuid);
-                if (CancelOptionCollection.getInstance().addCancelOption(cancelOption)) {
-                    message += "Stop-loss is set to: " + cancelOption + ".";
-                } else {
-                    message += "Failed to register stop-loss monitor.";
-                }
+                final CancelOptionManager cancelOptionManager = CancelOptionManager.getInstance();
+                cancelOptionManager.addCancelOption(cancelOption);
+                cancelOptionManager.reload();
+                message += "New stop-loss option added for order: " + uuid + " (if drops below " + cancelAt + ").";
             }
+        } catch (IOException ioe) {
+            message += "Failed to register stop-loss monitor.";
+            logger.error(ioe.getMessage() + "\n" + ioe.getStackTrace().toString());
         } catch (Exception e) {
-            logger.debug(e.getMessage());
+            logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
             return "Error: " + e.getMessage() + "\n" + e.getStackTrace().toString() + ". Transaction not completed.";
         }
         return message;

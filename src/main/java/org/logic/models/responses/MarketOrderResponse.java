@@ -16,6 +16,14 @@ public class MarketOrderResponse extends Response {
         return result;
     }
 
+    // Just for testing purposes
+    public void addResult(String exchange) {
+        if (result == null) {
+            result = new ArrayList<>();
+        }
+        result.add(new Result(1,"", 1, "", exchange));
+    }
+
     @Override
     public String toString() {
         return "MarketOrder{" +
@@ -46,7 +54,6 @@ public class MarketOrderResponse extends Response {
     }
 
     public class Result {
-
         @Expose
         double PricePerUnit;
         @Expose
@@ -57,6 +64,14 @@ public class MarketOrderResponse extends Response {
         String OrderUuid;
         @Expose
         String Exchange;
+
+        public Result(double pricePerUnit, String orderType, double quantityRemaining, String orderUuid, String exchange) {
+            PricePerUnit = pricePerUnit;
+            OrderType = orderType;
+            QuantityRemaining = quantityRemaining;
+            OrderUuid = orderUuid;
+            Exchange = exchange;
+        }
 
         public String getOrderType() {
             return OrderType;

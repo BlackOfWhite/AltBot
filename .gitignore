@@ -1,6 +1,9 @@
 *.log
 *.idea
 *.iml
-*.class
-logs/*
-*.log.*git
+pom.xml
+logs/
+src/test/
+target/generated-sources/
+target/generated-test-sources/
+cancelOptions.ser

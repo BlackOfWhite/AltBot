@@ -1,13 +1,12 @@
 package org.logic.models.responses;
 
 import com.google.gson.annotations.Expose;
-import org.logic.models.responses.Response;
 
 import java.util.ArrayList;
 
 import static org.preferences.Constants.BALANCE_MINIMUM;
 
-public class MarketBalancesResponse extends Response{
+public class MarketBalancesResponse extends Response {
 
     @Expose
     private ArrayList<Result> result;
@@ -25,6 +24,14 @@ public class MarketBalancesResponse extends Response{
                 '}';
     }
 
+    // Just for test purpose
+    public void addResult(double balance, double available, String currency) {
+        if (result == null) {
+            result = new ArrayList<>();
+        }
+        result.add(new Result(balance, available, currency));
+    }
+
     public class Result {
 
         @Expose
@@ -33,6 +40,12 @@ public class MarketBalancesResponse extends Response{
         double Available;
         @Expose
         String Currency;
+
+        public Result(double balance, double available, String currency) {
+            Balance = balance;
+            Available = available;
+            Currency = currency;
+        }
 
         public double getBalance() {
             return Balance;

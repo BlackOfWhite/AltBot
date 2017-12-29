@@ -1,5 +1,6 @@
 package org.preferences.managers;
 
+import org.apache.log4j.Logger;
 import org.logic.transactions.model.CancelOption;
 
 import java.io.*;
@@ -7,48 +8,58 @@ import java.util.ArrayList;
 
 public class PersistenceManager {
 
-    public static void saveCancelOptionCollection(ArrayList<CancelOption> cancelOptions) {
+    private static final String CANCEL_OPTIONS_FILE_NAME = "cancelOptions.ser";
+    private static Logger logger = Logger.getLogger(PersistenceManager.class);
+
+    public static void saveCancelOptionCollection(ArrayList<CancelOption> cancelOptions) throws IOException {
         FileOutputStream fout = null;
         ObjectOutputStream oos = null;
         try {
-            fout = new FileOutputStream("cancelOptions.ser");
+            fout = new FileOutputStream(CANCEL_OPTIONS_FILE_NAME);
             oos = new ObjectOutputStream(fout);
             oos.writeObject(cancelOptions);
-        } catch (IOException e) {
-            e.printStackTrace();
         } finally {
-            try {
-                fout.close();
-                oos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            fout.close();
+            oos.close();
         }
     }
 
-    public static ArrayList<CancelOption> loadCancelOptionCollection() {
+    public static ArrayList<CancelOption> loadCancelOptionCollection() throws IOException, ClassNotFoundException, NullPointerException {
         FileInputStream fis = null;
         ObjectInputStream ois = null;
         ArrayList<CancelOption> arrayList = new ArrayList<>();
         try {
-            fis = new FileInputStream("cancelOptions.ser");
+            fis = new FileInputStream(CANCEL_OPTIONS_FILE_NAME);
             ois = new ObjectInputStream(fis);
-            try {
-                arrayList = (ArrayList<CancelOption>) ois.readObject();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+            arrayList = (ArrayList<CancelOption>) ois.readObject();
+        } catch (NullPointerException npe) {
+            logger.info("Loaded cancel option list but it was empty!\n" + npe.getStackTrace().toString());
+        } catch (EOFException eofe) {
+            logger.info("Loaded cancel option list but it was empty!\n" + eofe.getStackTrace().toString());
         } finally {
             try {
                 fis.close();
                 ois.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (NullPointerException npe) {
+                logger.info("Loaded cancel option list but it was empty!\n" + npe.getStackTrace().toString());
+            } catch (EOFException eofe) {
+                logger.info("Loaded cancel option list but it was empty!\n" + eofe.getStackTrace().toString());
             }
         }
         return arrayList;
     }
 
+    /**
+     * Just for test purposes
+     */
+    public static void clearCancelOptionCollection() {
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(CANCEL_OPTIONS_FILE_NAME);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        writer.print("");
+        writer.close();
+    }
 }
