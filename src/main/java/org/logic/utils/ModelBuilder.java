@@ -2,10 +2,7 @@ package org.logic.utils;
 
 import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
-import org.logic.models.responses.MarketBalancesResponse;
-import org.logic.models.responses.MarketOrderResponse;
-import org.logic.models.responses.MarketSummaryResponse;
-import org.logic.models.responses.OrderResponse;
+import org.logic.models.responses.*;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
 
@@ -21,8 +18,20 @@ public class ModelBuilder {
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketBalancesResponse object");
         }
-        logger.debug(marketBalances);
+//        logger.debug(marketBalances);
         return marketBalances;
+    }
+
+    public static MarketBalanceResponse buildMarketBalance(final String coinName) {
+        MarketBalanceResponse marketBalance = null;
+        try {
+            String response = MarketRequests.getBalance(coinName);
+            marketBalance = JSONParser.parseMarketBalance(response);
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "\nFailed to create MarketBalanceResponse object");
+        }
+//        logger.debug(marketBalance);
+        return marketBalance;
     }
 
     public static MarketOrderResponse buildAllOpenOrders() {

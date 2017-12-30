@@ -56,10 +56,15 @@ public class MarketRequests {
         return sendRequest(url);
     }
 
-
-    public static String getBalance(String altCoin) throws Exception {
+    /**
+     * Currency in this form: BTC, XRP, MEO - not BTC-XRP
+     * @param coinName
+     * @return
+     * @throws Exception
+     */
+    public static String getBalance(String coinName) throws Exception {
         long nonce = System.currentTimeMillis();
-        URL url = new URL("https://bittrex.com/api/v1.1/account/getbalance?apikey=" + API_KEY + "&nonce=" + nonce + "&currency=" + altCoin);
+        URL url = new URL("https://bittrex.com/api/v1.1/account/getbalance?apikey=" + API_KEY + "&nonce=" + nonce + "&currency=" + coinName);
         return sendRequest(url);
     }
 

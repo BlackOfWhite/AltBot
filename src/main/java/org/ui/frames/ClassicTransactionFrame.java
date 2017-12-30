@@ -1,7 +1,10 @@
 package org.ui.frames;
 
 import org.apache.log4j.Logger;
+import org.logic.models.responses.MarketBalanceResponse;
+import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.transactions.ClassicTransaction;
+import org.logic.utils.ModelBuilder;
 import org.logic.validators.PatternValidator;
 import org.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
@@ -11,6 +14,8 @@ import org.ui.views.textfield.HintTextField;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -69,6 +74,20 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
             }
         });
 
+        jtfMarketName.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                loadHint();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                loadHint();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                loadHint();
+            }
+        });
+
         // Bottom panel
         JPanel pBottom = new JPanel();
         pBottom.setBorder(new TitledBorder(new EtchedBorder()));
@@ -84,6 +103,30 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
         setVisible(true);
 
         logger.debug("ClassicTransactionFrame initialized");
+    }
+
+    private void loadHint() {
+        final String marketName = jtfMarketName.getText();
+        if (marketName.length() > 6) {
+            if (marketName.substring(0, 4).equalsIgnoreCase("BTC-") || marketName.substring(0, 5).equalsIgnoreCase("USDT-")) {
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        MarketSummaryResponse marketSummaryResponse = ModelBuilder.buildMarketSummary(marketName);
+                        if (marketSummaryResponse != null && marketSummaryResponse.isSuccess()) {
+                            labelRate.setText("Rate: (Last: " + marketSummaryResponse.getResult().get(0).getLast() + ")");
+                        }
+                        String coin = marketName.substring(4,marketName.length());
+                        MarketBalanceResponse marketBalanceResponse = ModelBuilder.buildMarketBalance(coin);
+                        if (marketBalanceResponse != null && marketBalanceResponse.isSuccess()) {
+                            labelAmount.setText("Amount: (Available: " + marketBalanceResponse.getResult().getAvailable() + ")");
+                        } else {
+
+                        }
+                    }
+                }).start();
+            }
+        }
     }
 
     private boolean placeOrder() {
