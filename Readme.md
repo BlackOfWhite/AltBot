@@ -5,7 +5,8 @@
 1. Shows percentage for every coin
 2. Shows BTC equivalent
 3. Shows total value of wallet
-![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/WalletPieChart1.png)
+![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart1.png)
+![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart2.png)
 
 * Stop-loss option
 
