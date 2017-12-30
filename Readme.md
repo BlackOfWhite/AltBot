@@ -1,6 +1,15 @@
 # AltCoin desktop application for Bittrex Exchange
 
-![Screen Shot 2017-07-17 at 7.32.51 PM.png](https://steemitimages.com/DQmRQZMoNbWa5xfWZcUdBPTam1jcs65vuWGdo7agg1Xqx5w/Screen%20Shot%202017-07-17%20at%207.32.51%20PM.png)
+#AltCoin features
+* Real time wallet to display all owned coins:
+1. Shows percentage for every coin
+2. Shows BTC equivalent
+3. Shows total value of wallet
+![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/WalletPieChart1.png)
+
+* Stop-loss option
+
+* Informs about every change in Bittrex orders by email notification
 
 #Steps to Setup the AltCoin:
 
@@ -47,17 +56,6 @@ There are seven types of BOT as follows:
 3. **BUY_AND_SELL BOT** which purchase the coin at minimum price and place the sell order at increment profits, BOT_TYPE=3
       e.g For Siacoin(SC), Run like this : `ruby bittrex_bot.rb "SC" "3"`
 
-4. **SELL_AT_ANY_COST BOT** which cancel all the open orders and sell the coin at breakeven or in loss to make an exit from the pump in case of unexpected scenario, BOT_TYPE=4
-     e.g For Siacoin(SC), Run like this : `ruby bittrex_bot.rb "SC" "4"`
-
-5. **BUY_ALL BOT** which purchases all the low volume ( < 50) coins on Bittrex, taking care of coin not being prepumped, BOT_TYPE=5
-      e.g For Siacoin(SC), Run like this : `ruby bittrex_bot.rb "OPTIONAL" "5"`
-
-6. **SELL_ALL BOT** which place sell orders against all low volume coins purchased by BOT-5 at given profit( by default **20%**) , BOT_TYPE=6
-      e.g For Siacoin(SC), Run like this : `ruby bittrex_bot.rb "OPTIONAL" "6"`
-
-7. **CANCEL_ALL BOT** which cancel all open orders across all BTC cryptocurrency pairs on Bittrex, BOT_TYPE=7
-     e.g For Siacoin(SC), Run like this : `ruby bittrex_bot.rb "OPTIONAL" "7"`
 
 **Tuning of Parameters in Bot Script:**
 
