@@ -101,6 +101,7 @@ public class MainFrame extends JFrame {
         jtaStatusBar.setEditable(false);
         jScrollPane = new JScrollPane(jtaStatusBar);
         jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+
         cp.add(jScrollPane, BorderLayout.CENTER);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -26,9 +26,10 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
 
     private final static String[] ARR_MODES = {"Buy", "Sell"};
     private JComboBox jComboBoxMode;
-    private JLabel labelMarketName, labelAmount, labelRate, labelCancelAt;
+    private JLabel labelMarketName, labelAmount, labelRate, labelCancelAt, labelSlider;
     private HintTextField jtfMarketName, jtfAmount, jtfRate, jtfCancelAt;
     private JButton jbCreate;
+    private JSlider jSliderThreshold;
     private Logger logger = Logger.getLogger(ClassicTransactionFrame.class);
 
     public ClassicTransactionFrame() {
@@ -43,6 +44,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
         pMain.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         pMain.setLayout(new GridLayout(0, 2));
+        pMain.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
         jComboBoxMode = new JComboBox(ARR_MODES);
 
@@ -61,10 +63,22 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
         pMain.add(labelRate);
         pMain.add(jtfRate);
 
-        labelCancelAt = new JLabel("Stop loss:");
-        jtfCancelAt = new HintTextField("Leave empty to do not enable stop loss");
+        labelCancelAt = new JLabel("<html>Stop loss. This option will cancel this order and place new sell order immediately if coin's price drops below chosen value.</html>");
+        jtfCancelAt = new HintTextField("Leave empty to do not enable stop-loss.");
         pMain.add(labelCancelAt);
         pMain.add(jtfCancelAt);
+
+        jSliderThreshold = new JSlider(JSlider.HORIZONTAL, 5, 95, 95);
+        jSliderThreshold.setMinorTickSpacing(5);
+        jSliderThreshold.setMajorTickSpacing(5);
+        jSliderThreshold.setPaintTicks(true);
+        jSliderThreshold.setPaintLabels(true);
+        jSliderThreshold.setLabelTable(jSliderThreshold.createStandardLabels(10));
+        labelSlider = new JLabel("<html>This allows stop-loss to be executed only, " +
+                "if the coin's last price was below stop-loss value and above given % of stop-loss value." +
+                " Useful in case coin's value drops dramatically.</html>");
+        pMain.add(labelSlider);
+        pMain.add(jSliderThreshold);
 
         jbCreate = new JButton("Create transaction");
         jbCreate.addActionListener(new ActionListener() {
@@ -120,8 +134,6 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
                         MarketBalanceResponse marketBalanceResponse = ModelBuilder.buildMarketBalance(coin);
                         if (marketBalanceResponse != null && marketBalanceResponse.isSuccess()) {
                             labelAmount.setText("Amount: (Available: " + marketBalanceResponse.getResult().getAvailable() + ")");
-                        } else {
-
                         }
                     }
                 }).start();
@@ -130,7 +142,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
     }
 
     private boolean placeOrder() {
-        boolean success = false;
+          boolean success = false;
         String message = "";
         if (jtfRate.isValidDouble() && jtfAmount.isValidDouble() && jtfCancelAt.isValidDoubleOrEmpty()) {
             final double rate = jtfRate.getAsDouble();
@@ -142,8 +154,9 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
                 marketName = marketName.toUpperCase().trim();
                 if (new PatternValidator().isMarketNameValid(marketName)) {
                     logger.debug("Market name: " + marketName + " is valid.");
+                    int threshold = jSliderThreshold.getValue();
                     ClassicTransaction classicTransaction = new ClassicTransaction(marketName, amount, rate, cancelAt,
-                            jComboBoxMode.getSelectedIndex() == 0);
+                            jComboBoxMode.getSelectedIndex() == 0, threshold);
                     message = classicTransaction.createClassicTransaction();
                 } else {
                     message = "Invalid market name: " + marketName;

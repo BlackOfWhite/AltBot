@@ -6,7 +6,7 @@ public class Constants {
 
     public final static int FRAME_WIDTH = 700;
     public final static int FRAME_HEIGHT = 800;
-    public final static int CLASSIC_TRANSACTION_FRAME_HEIGHT = 250;
+    public final static int CLASSIC_TRANSACTION_FRAME_HEIGHT = 450;
 
     public final static int CHART_FRAME_WIDTH = 700;
     public final static int CHART_FRAME_HEIGHT = 700;

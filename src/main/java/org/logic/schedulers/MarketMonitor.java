@@ -13,11 +13,11 @@ import org.logic.utils.ModelBuilder;
 import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 import org.ui.frames.MainFrame;
-import org.ui.frames.util.SingleInstanceFrame;
 import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.dialog.box.SingleInstanceDialog;
 
 import javax.mail.MessagingException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,14 +148,17 @@ public class MarketMonitor {
     private static void stopLossOrdersByOrderId(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
         List<CancelOption> cancelOptionList = CancelOptionManager.getCancelOptionList();
         logger.info("Number of stop-loss orders: " + cancelOptionList.size());
+        if (cancelOptionList.size() > 0) {
+            logger.info("Stop-loss orders: " + cancelOptionList.toString());
+        }
         for (CancelOption cancelOption : cancelOptionList) {
             for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
                 if (cancelOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
                     // find last market value for this currency
                     double last = priceMap.get(cancelOption.getMarketName());
                     double cancelBelow = cancelOption.getCancelBelow();
-                    if (cancelBelow <= last && last >= cancelOption.getCancelBelow() *
-                            ((100 - cancelOption.getThreshold()) / 100.0d)) {
+                    if (cancelBelow >= last && (last >= cancelBelow *
+                            (cancelOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
                         final String uuid = cancelOption.getUuid();
                         final double amount = result.getQuantityRemaining();
                         OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
@@ -175,6 +178,11 @@ public class MarketMonitor {
                             }
                             OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
                             if (sellOrderResponse.isSuccess()) {
+                                try {
+                                    CancelOptionManager.getInstance().removeCancelOptionByUuid(uuid);
+                                } catch (IOException e) {
+                                    logger.error("Failed to remove cancel option with id: " + uuid);
+                                }
                                 logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
                             }
                         } else {

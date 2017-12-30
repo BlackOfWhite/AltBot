@@ -93,20 +93,10 @@ public class MarketRequests {
             BufferedReader in = new BufferedReader(
                     new InputStreamReader(
                             urlConnection.getInputStream()));
-            // SET REQUEST TIMEOUT exception
             String inputLine;
-//            long endTimeMillis = System.currentTimeMillis() + (REQUEST_TIMEOUT_SECONDS * 1000);
             while ((inputLine = in.readLine()) != null) {
 //                logger.debug(inputLine);
                 response = inputLine;
-//                if (System.currentTimeMillis() > endTimeMillis) {
-//                    return MSG_REQUEST_TIMEOUT;
-//                }
-//                try {
-//                    Thread.sleep(100);
-//                } catch (InterruptedException e) {
-//                    logger.error(e.getMessage() + "\nThread interrupted.");
-//                }
             }
             in.close();
         } catch (SocketTimeoutException e) {
