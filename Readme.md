@@ -1,6 +1,6 @@
 # AltCoin desktop application for Bittrex Exchange
 
-#AltCoin features
+# AltCoin features
 * Real time wallet to display all owned coins:
 1. Shows percentage for every coin
 2. Shows BTC equivalent
@@ -11,7 +11,7 @@
 
 * Informs about every change in Bittrex orders by email notification
 
-#Steps to Setup the AltCoin:
+# Steps to Setup the AltCoin:
 
 * Go to Bittrex Settings Tab, You need to generate API key to Place BUY or SELL order via Bot. Under API Keys in sidebar :
 1. Click on Add New Key
