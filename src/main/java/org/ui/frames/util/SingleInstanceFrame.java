@@ -18,6 +18,9 @@ public abstract class SingleInstanceFrame extends JFrame {
     }
 
     public boolean isClosed() {
+        if (!isClosed) {
+            return !isDisplayable();
+        }
         return isClosed;
     }
 

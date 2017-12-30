@@ -13,7 +13,7 @@ public class PublicRequests {
 
     private static Logger logger = Logger.getLogger(PublicRequests.class);
 
-    public static void getAllMarketSummaries() throws Exception{
+    public static void getAllMarketSummaries() throws Exception {
         URL url = new URL("https://bittrex.com/api/v1.1/public/getmarketsummaries/");
         URLConnection urlConnection = url.openConnection();
         BufferedReader in = new BufferedReader(
@@ -26,7 +26,7 @@ public class PublicRequests {
         in.close();
     }
 
-    public static String getMarketSummary(String marketName) throws Exception{
+    public static String getMarketSummary(String marketName) throws Exception {
         URL url = new URL("https://bittrex.com/api/v1.1/public/getmarketsummary?market=" + marketName);
         URLConnection urlConnection = url.openConnection();
         urlConnection.setReadTimeout(1000 * REQUEST_TIMEOUT_SECONDS);
@@ -35,9 +35,8 @@ public class PublicRequests {
                         urlConnection.getInputStream()));
         String inputLine;
         String response = "";
-
         while ((inputLine = in.readLine()) != null) {
-            logger.debug(inputLine);
+//            logger.debug(inputLine);
             response = inputLine;
         }
         in.close();

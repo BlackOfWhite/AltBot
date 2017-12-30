@@ -13,7 +13,9 @@ import org.logic.utils.ModelBuilder;
 import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 import org.ui.frames.MainFrame;
+import org.ui.frames.util.SingleInstanceFrame;
 import org.ui.views.dialog.box.InfoDialog;
+import org.ui.views.dialog.box.SingleInstanceDialog;
 
 import javax.mail.MessagingException;
 import java.util.HashMap;
@@ -38,7 +40,7 @@ public class MarketMonitor {
     private static volatile MarketOrderResponse sharedMarketOrders;
     private static int ORDERS_COUNT = -1;
     private static MainFrame mainFrame;
-    private static InfoDialog infoDialog;
+    private static SingleInstanceDialog dialog;
     private static int DIALOG_DELAY = 5; // show dialog every 5 runs
 
     private MarketMonitor() {
@@ -90,7 +92,8 @@ public class MarketMonitor {
                     sendNotification(totalOrdersCount);
                     stopLossOrdersByOrderId(openMarketOrders, priceMap);
                 } catch (Exception e) {
-                    logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
+                    logger.error(e.toString());
+                    e.printStackTrace();
                 }
             }
         }, 0, SLEEP_TIME, TimeUnit.SECONDS);  // execute every x seconds
@@ -192,6 +195,7 @@ public class MarketMonitor {
 
     /**
      * Price map is used only to get last price.
+     *
      * @param marketBalances
      * @param priceMap
      */
@@ -231,7 +235,7 @@ public class MarketMonitor {
         Params.API_KEY = PreferenceManager.getApiKey(true);
         Params.API_SECRET_KEY = PreferenceManager.getApiSecretKey(true);
         if (Params.API_KEY.trim().isEmpty() || Params.API_SECRET_KEY.trim().isEmpty()) {
-            infoDialog = new InfoDialog(DIALOG_FAILED_TO_LOAD_API_KEYS);
+            showDialog(DIALOG_FAILED_TO_LOAD_API_KEYS);
             mainFrame.updateAPIStatusBar();
             return false;
         }
@@ -242,8 +246,8 @@ public class MarketMonitor {
         if (COUNTER % DIALOG_DELAY != 0) {
             return true;
         }
-        if (response == null || !response.isSuccess() && response.getMessage().equals(MSG_APIKEY_INVALID)) {
-            infoDialog = new InfoDialog(DIALOG_INVALID_API_KEYS);
+        if (response == null || !response.isSuccess() || response.getMessage().equals(MSG_APIKEY_INVALID)) {
+            showDialog(DIALOG_INVALID_API_KEYS);
             return false;
         }
         return true;
@@ -291,5 +295,11 @@ public class MarketMonitor {
         }
         logger.debug(map.toString());
         return map;
+    }
+
+    private static void showDialog(String msg) {
+        if (dialog == null || dialog.isClosed()) {
+            dialog = new SingleInstanceDialog(msg);
+        }
     }
 }
