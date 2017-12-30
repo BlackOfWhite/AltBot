@@ -254,7 +254,11 @@ public class MarketMonitor {
         if (COUNTER % DIALOG_DELAY != 0) {
             return true;
         }
-        if (response == null || !response.isSuccess() || response.getMessage().equals(MSG_APIKEY_INVALID)) {
+        if  (response == null) {
+            showDialog(NO_INTERNET_CONNECTION);
+            return false;
+        }
+        if (!response.isSuccess() || response.getMessage().equals(MSG_APIKEY_INVALID)) {
             showDialog(DIALOG_INVALID_API_KEYS);
             return false;
         }

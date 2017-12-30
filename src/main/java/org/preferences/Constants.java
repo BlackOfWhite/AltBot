@@ -25,6 +25,7 @@ public class Constants {
     // Dialogs
     public static final String DIALOG_FAILED_TO_LOAD_API_KEYS = "Failed to load one or more API keys! Please go to 'API Setup' section in the 'Settings' menu.";
     public static final String DIALOG_INVALID_API_KEYS = "API keys are invalid. Please go to 'API Setup' section in the 'Settings' menu.";
+    public static final String NO_INTERNET_CONNECTION = "Your internet connection is weak or Bittrex server is temporarily not accessible.";
 
 
 }
