@@ -17,7 +17,12 @@
 1. Notifies if state of the open orders changes.
 
 * User friendly interface:
+1. Main View.
+
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/Main.png)
+
+2. Transaction Creator.
+
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/ClassicTransactionCreator.png)
 
 # Steps to Setup the AltCoin:
