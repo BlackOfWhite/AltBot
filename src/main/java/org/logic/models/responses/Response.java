@@ -1,7 +1,6 @@
 package org.logic.models.responses;
 
 import com.google.gson.annotations.Expose;
-import com.sun.istack.internal.Nullable;
 
 import static org.preferences.Constants.*;
 
@@ -12,7 +11,6 @@ public abstract class Response {
     @Expose
     protected String message;
 
-    @Nullable
     public String getMessage() {
         switch (message) {
             case MSG_MIN_TRADE_REQUIREMENT_NOT_MET:
@@ -34,7 +32,6 @@ public abstract class Response {
         return "Unknown response";
     }
 
-    @Nullable
     protected String getPlainMessage() {
         return message;
     }

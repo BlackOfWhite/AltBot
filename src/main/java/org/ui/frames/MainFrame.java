@@ -8,13 +8,16 @@ import org.ui.Constants;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Map;
+
+import static org.preferences.Constants.BTC_DONATION_ADDRESS;
+import static org.preferences.Constants.ETH_DONATION_ADDRESS;
+import static org.preferences.Constants.LTC_DONATION_ADDRESS;
 
 /**
  * Created by niewinskip on 2016-12-28.
@@ -25,7 +28,7 @@ public class MainFrame extends JFrame {
     private static Logger logger = Logger.getLogger(MainFrame.class);
     private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
-    private JTextArea jtaStatusBar, jApiStatusBar;
+    private JTextArea jtaScrollPane;
     private JScrollPane jScrollPane;
     private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
@@ -97,12 +100,31 @@ public class MainFrame extends JFrame {
         pMain.add(btnCreateTransaction);
         cp.add(pMain, BorderLayout.NORTH);
 
-        jtaStatusBar = new JTextArea(getWidth(), 300);
-        jtaStatusBar.setEditable(false);
-        jScrollPane = new JScrollPane(jtaStatusBar);
+        jtaScrollPane = new JTextArea(getWidth(), 300);
+        jtaScrollPane.setEditable(false);
+        jScrollPane = new JScrollPane(jtaScrollPane);
         jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 
         cp.add(jScrollPane, BorderLayout.CENTER);
+
+        JPanel donationPanel = new JPanel();
+        donationPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        donationPanel.setBorder(new TitledBorder(new EtchedBorder()));
+        donationPanel.setLayout(new GridLayout(3, 1));
+        Border border = LineBorder.createGrayLineBorder();
+        JTextField btcLabel = new JTextField("Donate BTC: " + BTC_DONATION_ADDRESS);
+        btcLabel.setEditable(false);
+        btcLabel.setBorder(border);
+        donationPanel.add(btcLabel);
+        JTextField ethLabel = new JTextField("Donate ETH: " + ETH_DONATION_ADDRESS);
+        ethLabel.setEditable(false);
+        ethLabel.setBorder(border);
+        donationPanel.add(ethLabel);
+        JTextField ltcLabel = new JTextField("Donate LTC: " + LTC_DONATION_ADDRESS);
+        ltcLabel.setEditable(false);
+        ltcLabel.setBorder(border);
+        donationPanel.add(ltcLabel);
+        cp.add(donationPanel, BorderLayout.SOUTH);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(Constants.FRAME_WIDTH, Constants.FRAME_HEIGHT);

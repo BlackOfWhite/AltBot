@@ -2,7 +2,6 @@ package org.ui.frames;
 
 import org.apache.log4j.Logger;
 import org.logic.schedulers.MarketMonitor;
-import org.logic.validators.PatternValidator;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
