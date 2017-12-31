@@ -6,7 +6,6 @@
 2. Shows BTC equivalent
 3. Shows total value of wallet
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart1.png)
-![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart2.png)
 
 * Place Buy/Sell order with **stop-loss** option
 1. Cancels the order and places a new sell order immediately if coin's price drops below chosen stop-loss value.
