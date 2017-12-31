@@ -45,6 +45,11 @@
 * Double click **AltCoin.jar** file.
 
 3. Java 8 setup:
+* This application requires JDK/JRE in minimum version 1.8.0_144.
+* Official release can be downloaded from here: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+* You need to setup you JDK/JRE propely, this information can be found here: https://docs.oracle.com/goldengate/1212/gg-winux/GDRAD/java.htm#BGBFJHAB
+* Double click **AltCoin.jar** or execute **java -jar AltCoin.jar** from you CLI to start the application.
+* Have fun!
 
 4. **AltCoin** setup and configuration
 
@@ -55,6 +60,17 @@
   ```
 
 5. Usage:
+
+6. Tips:
+* You can check all **AltCoin** events under /logs direcotry. Just pick the one wit the latest timestamp.
+
+7. Test version:
+* There is currently only one version of **AltCoin**, therefore it may still contain some bugs. Feel free to mail me at: **niewinskipiotr1993@gmail.com** in case you found any. 
+* However, even if this is just a test version / first release, it is **not possible** that your coins would be lost! Feel free to play around!
+* Any ideas of the features that should be included in the next release are welcome!
+
+
+// OLD
 * Change *percent_decrease* as per the need : 
 
 `sell_at_any_cost(0.3) if BOT_TYPE == 4` means you want to cancel all open orders and place one sell order at **30%** decrease of the last traded price of the market.
@@ -72,7 +88,7 @@ def sell_all_bot(profit_rate = 0.2)
 `sell_all_bot(0.2) if BOT_TYPE == 6` means you want to place sell orders with **20%** profit on the net purchased value
 
 > **CANCEL_ALL BOT** has no parameters as its task is only to cancel all open orders.
-
+// AND OLD
 
 # Future Scope
 
