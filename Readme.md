@@ -1,4 +1,4 @@
-# AltCoin desktop application for Bittrex Exchange
+# AltCoin desktop application for Bittrex Exchange (Wallet/Bot/Stop-loss)
 
 # AltCoin features
 1. Real time wallet to display all owned coins:
