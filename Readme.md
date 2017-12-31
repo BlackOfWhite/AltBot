@@ -8,9 +8,17 @@
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart1.png)
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart2.png)
 
-* Stop-loss option
+* Place Buy/Sell order with **stop-loss** option
+1. Cancels the order and places a new sell order immediately if coin's price drops below chosen stop-loss value.
+2. Stop-loss is market-proof. This allows stop-loss to be executed only, " +
+                "if the coin's last price was below stop-loss value and above given % of stop-loss value." +
+                " Useful in case coin's value drops dramatically
 
-* Informs about every change in Bittrex orders by email notification
+* Email notifications
+1. Notifies if state of the open orders changes
+
+* User friendly interface
+1.
 
 # Steps to Setup the AltCoin:
 
