@@ -48,7 +48,7 @@
 * This application requires JDK/JRE in minimum version 1.8.0_144.
 * Official release can be downloaded from here: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 * You need to setup you JDK/JRE propely, this information can be found here: https://docs.oracle.com/goldengate/1212/gg-winux/GDRAD/java.htm#BGBFJHAB
-* Double click **AltCoin.jar** or execute **java -jar AltCoin.jar** from you CLI to start the application.
+* Double click **AltCoin.jar** or execute **java -jar AltCoin.jar** from your CLI to start the application.
 * Have fun!
 
 4. **AltCoin** setup and configuration
