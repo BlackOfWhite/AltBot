@@ -173,7 +173,7 @@ def sell_all_bot(profit_rate = 0.2)
 **DON'T FORGET TO MAKE DONATIONS IF YOU FIND IT HELPFUL OR MAKE PROFITS OUT OF IT:**
 
 ```
-Bitcoin(BTC) Address : 1B4Q5yPHaGDRSfGqzyZj3EevQhP2yAm2Te
-Ethereum(ETH) Address : 0xb2fff53651b1335f195361601a44118f7ee1f46a
-Litcoin(LTC) Address : LiVuQjBwMhoaf7QLuVGBgx9g8TPYSgcrmx
+Bitcoin(BTC) Address : 168zdkYPAqMjwjior2GRyfbo1djBJL9LTH
+Ethereum(ETH) Address : 0xE69Cb31ddD790F072E79aC789f0152dF85b16AF4
+Litcoin(LTC) Address : LPBDpTsHd9n6e8ZG4xhUoyUx91CdNmXZWW
 ```
