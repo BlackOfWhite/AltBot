@@ -29,8 +29,7 @@ hs_err_pid*
 pom.xml
 logs/
 src/test/
-target/generated-sources/
-target/generated-test-sources/
+target/
 cancelOptions.ser
 
 src/main/java/org/logic/models/requests/
