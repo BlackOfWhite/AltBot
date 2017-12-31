@@ -1,23 +1,29 @@
 # AltCoin desktop application for Bittrex Exchange
 
 # AltCoin features
-* Real time wallet to display all owned coins:
-1. Shows percentage for every coin
-2. Shows BTC equivalent
-3. Shows total value of wallet
+1. Real time wallet to display all owned coins:
+* Shows percentage for every coin.
+* Shows BTC equivalent.
+* Shows total value of wallet.
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart1.png)
 
-* Place Buy/Sell order with **stop-loss** option
-1. Cancels the order and places a new sell order immediately if coin's price drops below chosen stop-loss value.
-2. Stop-loss is market-proof. This allows stop-loss to be executed only, " +
-                "if the coin's last price was below stop-loss value and above given % of stop-loss value." +
-                " Useful in case coin's value drops dramatically
+2. Place Buy/Sell order with **stop-loss** option:
+* Place normal Bittrex buy/sell orders using this application.
+* You can add stop-loss option to every buy/sell order created within AltCoin application.
+* Stop-loss cancels the order and places a new sell order immediately if coin's price drops below chosen stop-loss value.
+* Stop-loss is market-proof. This allows stop-loss to be executed only, if the coin's last price was below stop-loss value and above given % of stop-loss value. Useful in case coin's value drops dramatically.
 
-* Email notifications
-1. Notifies if state of the open orders changes
+3. Email notifications:
+* Notifies if state of the open orders changes.
 
-* User friendly interface
-1.
+4. User friendly interface:
+* Main View.
+
+![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/Main.png)
+
+* Transaction Creator.
+
+![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/ClassicTransactionCreator.png)
 
 # Steps to Setup the AltCoin:
 
