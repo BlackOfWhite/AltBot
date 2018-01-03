@@ -70,26 +70,6 @@
 * Any ideas of the features that should be included in the next release are welcome!
 
 
-// OLD
-* Change *percent_decrease* as per the need : 
-
-`sell_at_any_cost(0.3) if BOT_TYPE == 4` means you want to cancel all open orders and place one sell order at **30%** decrease of the last traded price of the market.
-
-> **BUY_ALL BOT** has same parameters as that of **BUY BOT**.
-
-> **SELL_ALL BOT** has one parameter: 
-```
-# method to sell all BTC pair orders on bittrex
-# params- profit_rate(float)[default = 0.2] at which sell orders need to be set
-def sell_all_bot(profit_rate = 0.2)
-```
-* Change *profit_rate* as per the need : 
-
-`sell_all_bot(0.2) if BOT_TYPE == 6` means you want to place sell orders with **20%** profit on the net purchased value
-
-> **CANCEL_ALL BOT** has no parameters as its task is only to cancel all open orders.
-// AND OLD
-
 # Future Scope
 
 * Gain/loss hisotry monitor & linear chart.
