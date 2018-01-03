@@ -83,6 +83,7 @@ public class EmailSetupFrame extends SingleInstanceFrame {
                     PreferenceManager.setEmailPassword(password, true);
                     new InfoDialog("Authentication successful. Please check your mailbox for the test email.");
                 } catch (MessagingException e) {
+                    e.printStackTrace();
                     logger.debug(e.getMessage() + " " + e.getStackTrace().toString());
                     new InfoDialog("Authentication error!");
                 }

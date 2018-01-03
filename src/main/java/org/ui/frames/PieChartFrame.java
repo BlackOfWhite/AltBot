@@ -18,6 +18,7 @@ import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.Map;
 
+import static org.preferences.Constants.BALANCE_MINIMUM;
 import static org.preferences.Constants.CHART_SIGNIFICANT_MINIMUM;
 import static org.ui.Constants.CHART_FRAME_HEIGHT;
 import static org.ui.Constants.CHART_FRAME_WIDTH;
@@ -97,7 +98,12 @@ public class PieChartFrame extends SingleInstanceFrame {
             pieChartData.clear();
         }
         // Sum
-        double btcSum = map.entrySet().stream().mapToDouble(entry -> entry.getValue().getBtc()).sum();
+        double btcSum = 0.0d;
+        for (Map.Entry<String, BalancesSet> entry : map.entrySet()) {
+            if (entry.getValue().getBtc() >= BALANCE_MINIMUM) {
+                btcSum += entry.getValue().getBtc();
+            }
+        }
         pieChart.setTitle("Estimated Value: " + String.format("%.5f", btcSum) + " BTC");
 
         // Remove unused
@@ -106,7 +112,7 @@ public class PieChartFrame extends SingleInstanceFrame {
             PieChart.Data data = i.next();
             boolean exists = false;
             for (Map.Entry<String, BalancesSet> entry : map.entrySet()) {
-                if (data.getName().startsWith(entry.getKey())) {
+                if (data.getName().startsWith(entry.getKey()) && data.getPieValue() >= BALANCE_MINIMUM) {
                     exists = true;
                 }
             }
