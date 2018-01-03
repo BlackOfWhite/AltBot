@@ -17,25 +17,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-
-            <!-- Make this jar executable -->
-            <!--<plugin>-->
-                <!--<groupId>org.apache.maven.plugins</groupId>-->
-                <!--<artifactId>maven-jar-plugin</artifactId>-->
-                <!--<configuration>-->
-                    <!--&lt;!&ndash; DO NOT include log4j.properties file in your Jar &ndash;&gt;-->
-                    <!--<excludes>-->
-                        <!--&lt;!&ndash;<exclude>**/log4j.properties</exclude>&ndash;&gt;-->
-                    <!--</excludes>-->
-                    <!--<archive>-->
-                        <!--<manifest>-->
-                            <!--&lt;!&ndash; Jar file entry point &ndash;&gt;-->
-                            <!--<mainClass>org.Main</mainClass>-->
-                        <!--</manifest>-->
-                    <!--</archive>-->
-                    <!---->
-                <!--</configuration>-->
-            <!--</plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

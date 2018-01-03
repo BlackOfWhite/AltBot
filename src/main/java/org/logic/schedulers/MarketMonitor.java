@@ -301,7 +301,7 @@ public class MarketMonitor {
                 try {
                     entry.setValue(marketSummary.getResult().get(0).getLast());
                 } catch (NullPointerException ex) {
-                    logger.debug("Invalid market:" + entry.getKey());
+                    logger.error("Invalid market:" + entry.getKey());
                 }
             }
         }
