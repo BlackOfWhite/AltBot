@@ -30,6 +30,7 @@ public class PieChartFrame extends SingleInstanceFrame {
     private static final String TITLE = "Wallet Pie Chart";
     private static PieChart pieChart = null;
     private ObservableList<PieChart.Data> pieChartData;
+    private static boolean isConnected = true;
 
     public PieChartFrame() {
         JFXPanel jfxPanel = new JFXPanel();
@@ -200,5 +201,13 @@ public class PieChartFrame extends SingleInstanceFrame {
                 String.format("%.5f", entry.getValue().getBtc()) + " BTC\n" +
                 "(" + String.format("%.2f", entry.getValue().getBtc() / btcSum * 100)
                 + "%)";
+    }
+
+    public void setIsConnected(boolean set) {
+        if (isConnected && !set) {
+            pieChart.setTitle(pieChart.getTitle() + " (Connecting..)");
+            pieChartData.sorted();
+        }
+        isConnected = set;
     }
 }

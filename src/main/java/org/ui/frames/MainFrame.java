@@ -254,6 +254,10 @@ public class MainFrame extends JFrame {
         }
     }
 
+    public PieChartFrame getPieChartFrame() {
+        return pieChartFrame;
+    }
+
     public boolean isPieChartVisible() {
         return pieChartFrame != null && !pieChartFrame.isClosed();
     }

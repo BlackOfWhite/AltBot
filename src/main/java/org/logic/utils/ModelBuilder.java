@@ -29,6 +29,7 @@ public class ModelBuilder {
             marketBalance = JSONParser.parseMarketBalance(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketBalanceResponse object");
+            e.printStackTrace();
         }
 //        logger.debug(marketBalance);
         return marketBalance;

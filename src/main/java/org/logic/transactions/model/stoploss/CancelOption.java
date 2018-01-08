@@ -1,8 +1,10 @@
-package org.logic.transactions.model;
+package org.logic.transactions.model.stoploss;
+
+import org.logic.transactions.model.OptionImpl;
 
 import java.io.Serializable;
 
-public class CancelOption implements Serializable {
+public class CancelOption implements Serializable, OptionImpl {
     private static final long serialVersionUID = 1L;
     private String marketName;
     private double cancelBelow;

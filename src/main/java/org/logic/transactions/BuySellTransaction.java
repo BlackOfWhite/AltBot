@@ -10,24 +10,21 @@ import org.logic.validators.TransactionValidator;
 
 import java.io.IOException;
 
-public class ClassicTransaction implements TransactionImpl {
+public class BuySellTransaction implements TransactionImpl {
 
     private String marketName;
-    private double rate, amount, cancelAt;
-    private Logger logger = Logger.getLogger(ClassicTransaction.class);
+    private double rate, amount;
+    private Logger logger = Logger.getLogger(BuySellTransaction.class);
     private boolean isBuying; // true for buy option, otherwise is sell
-    private int threshold;
 
-    public ClassicTransaction(String marketName, double amount, double rate, double cancelAt, boolean isBuying, int threshold) {
+    public BuySellTransaction(String marketName, double amount, double rate, boolean isBuying) {
         this.marketName = marketName;
         this.rate = rate;
         this.amount = amount;
-        this.cancelAt = cancelAt;
         this.isBuying = isBuying;
-        this.threshold = threshold;
     }
 
-    public String createClassicTransaction() {
+    public String createBuySellTransaction() {
         OrderResponse orderResponse;
         String message = "";
         if (isOnlyOnePerMarketAllowed()) {
@@ -44,11 +41,6 @@ public class ClassicTransaction implements TransactionImpl {
             }
             String uuid = orderResponse.getResult().getUuid();
             message = "Successfully created new order with id: " + uuid + " for market " + marketName + ".";
-            if (cancelAt > 0.0d) {
-                CancelOption cancelOption = new CancelOption(marketName, cancelAt, uuid, threshold);
-                CancelOptionManager.getInstance().addOption(cancelOption);
-                message += " New stop-loss option added for order: " + uuid + " (if drops below " + cancelAt + ").";
-            }
         } catch (IOException ioe) {
             message += " Failed to register stop-loss monitor.";
             logger.error(ioe.getMessage() + "\n" + ioe.getStackTrace().toString());
@@ -71,12 +63,8 @@ public class ClassicTransaction implements TransactionImpl {
         return amount;
     }
 
-    public double getCancelAt() {
-        return cancelAt;
-    }
-
     @Override
     public boolean isOnlyOnePerMarketAllowed() {
-        return false;
+        return true;
     }
 }

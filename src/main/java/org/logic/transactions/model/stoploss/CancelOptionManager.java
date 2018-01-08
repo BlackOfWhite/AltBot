@@ -1,6 +1,8 @@
-package org.logic.transactions.model;
+package org.logic.transactions.model.stoploss;
 
 import org.apache.log4j.Logger;
+import org.logic.transactions.model.OptionImpl;
+import org.logic.transactions.model.OptionManagerImpl;
 import org.preferences.managers.PersistenceManager;
 
 import java.io.IOException;
@@ -9,7 +11,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class CancelOptionManager {
+public class CancelOptionManager implements OptionManagerImpl {
 
     private static final CancelOptionManager instance = new CancelOptionManager();
     private static List<CancelOption> cancelOptionList = Collections.synchronizedList(new ArrayList());
@@ -23,9 +25,10 @@ public class CancelOptionManager {
         return instance;
     }
 
-    public static boolean reload() {
+    @Override
+    public boolean reload() {
         try {
-            loadCancelOptions();
+            loadOptions();
             return true;
         } catch (IOException e) {
             logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
@@ -35,11 +38,13 @@ public class CancelOptionManager {
         return false;
     }
 
-    public static List<CancelOption> getCancelOptionList() {
+    public List<CancelOption> getOptionList() {
         return cancelOptionList;
     }
 
-    public static void addCancelOption(final CancelOption cancelOption) throws IOException {
+    @Override
+    public void addOption(final OptionImpl option) throws IOException {
+        CancelOption cancelOption = (CancelOption) option;
         cancelOptionList.add(cancelOption);
         ArrayList<CancelOption> cancelOptions = new ArrayList<>();
         for (CancelOption cancelOption1 : cancelOptionList) {
@@ -49,7 +54,8 @@ public class CancelOptionManager {
     }
 
 
-    public static int removeCancelOptionByUuid(final String uuid) throws IOException {
+    @Override
+    public int removeOptionByUuid(final String uuid) throws IOException {
         int count = 0;
         for (Iterator<CancelOption> iterator = cancelOptionList.iterator(); iterator.hasNext();) {
             CancelOption cancelOption = iterator.next();
@@ -69,12 +75,14 @@ public class CancelOptionManager {
         return count;
     }
 
-    private static void loadCancelOptions() throws IOException, ClassNotFoundException {
+    @Override
+    public void loadOptions() throws IOException, ClassNotFoundException {
         ArrayList<CancelOption> cancelOptions = PersistenceManager.loadCancelOptionCollection();
         cancelOptionList = Collections.synchronizedList(cancelOptions);
     }
 
-    public static void clearCancelOptionCollection() {
+    @Override
+    public void clearOptionCollection() {
         PersistenceManager.clearCancelOptionCollection();
         cancelOptionList.clear();
     }

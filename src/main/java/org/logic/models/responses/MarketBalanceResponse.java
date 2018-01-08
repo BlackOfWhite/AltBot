@@ -28,6 +28,8 @@ public class MarketBalanceResponse extends Response {
         double Balance;
         @Expose
         double Available;
+        @Expose
+        String Currency;
 
         public double getBalance() {
             return Balance;
@@ -44,13 +46,24 @@ public class MarketBalanceResponse extends Response {
         public double getAvailable() {
             return Available;
         }
+        public String getCurrency() {
+            return Currency;
+        }
 
         public boolean isEmpty() {
             return Balance < BALANCE_MINIMUM && Available < BALANCE_MINIMUM;
         }
     }
 
-//
-//    "Balance" : 4.21549076,
-//            "Available" : 4.21549076,
+//"success" : true,
+//        "message" : "",
+//        "result" : {
+//        "Currency" : "BTC",
+//                "Balance" : 4.21549076,
+//                "Available" : 4.21549076,
+//                "Pending" : 0.00000000,
+//                "CryptoAddress" : "1MacMr6715hjds342dXuLqXcju6fgwHA31",
+//                "Requested" : false,
+//                "Uuid" : null
+//    }
 }

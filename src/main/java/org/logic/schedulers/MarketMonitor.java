@@ -6,8 +6,8 @@ import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
 import org.logic.requests.MarketRequests;
 import org.logic.smtp.MailSender;
-import org.logic.transactions.model.CancelOption;
-import org.logic.transactions.model.CancelOptionManager;
+import org.logic.transactions.model.stoploss.CancelOption;
+import org.logic.transactions.model.stoploss.CancelOptionManager;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
 import org.preferences.Params;
@@ -88,9 +88,15 @@ public class MarketMonitor {
 
                     // Market name - last price map
                     final Map<String, Double> priceMap = createLastPriceMap(marketBalances, openMarketOrders);
-                    updatePieChart(marketBalances, priceMap);
+                    if (priceMap != null) {
+                        mainFrame.getPieChartFrame().setIsConnected(true);
+                        updatePieChart(marketBalances, priceMap);
+                        stopLossOrdersByOrderId(openMarketOrders, priceMap);
+                    } else {
+                        logger.debug("Some HTTP responses lost, not updating PieChart and stop-loss!");
+                        mainFrame.getPieChartFrame().setIsConnected(false);
+                    }
                     sendNotification(totalOrdersCount);
-                    stopLossOrdersByOrderId(openMarketOrders, priceMap);
                 } catch (Exception e) {
                     logger.error(e.toString());
                     e.printStackTrace();
@@ -146,7 +152,7 @@ public class MarketMonitor {
      * @return
      */
     private static void stopLossOrdersByOrderId(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
-        List<CancelOption> cancelOptionList = CancelOptionManager.getCancelOptionList();
+        List<CancelOption> cancelOptionList = CancelOptionManager.getInstance().getOptionList();
         logger.info("Number of stop-loss orders: " + cancelOptionList.size());
         if (cancelOptionList.size() > 0) {
             logger.info("Stop-loss orders: " + cancelOptionList.toString());
@@ -179,7 +185,7 @@ public class MarketMonitor {
                             OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
                             if (sellOrderResponse.isSuccess()) {
                                 try {
-                                    CancelOptionManager.getInstance().removeCancelOptionByUuid(uuid);
+                                    CancelOptionManager.getInstance().removeOptionByUuid(uuid);
                                 } catch (IOException e) {
                                     logger.error("Failed to remove cancel option with id: " + uuid);
                                 }
@@ -254,7 +260,7 @@ public class MarketMonitor {
         if (COUNTER % DIALOG_DELAY != 0) {
             return true;
         }
-        if  (response == null) {
+        if (response == null) {
             showDialog(NO_INTERNET_CONNECTION);
             return false;
         }
@@ -301,7 +307,11 @@ public class MarketMonitor {
                 try {
                     entry.setValue(marketSummary.getResult().get(0).getLast());
                 } catch (NullPointerException ex) {
-                    logger.error("Invalid market:" + entry.getKey());
+                    logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
+                    return null;
+                } catch (Exception ex) {
+                    logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
+                    return null;
                 }
             }
         }
