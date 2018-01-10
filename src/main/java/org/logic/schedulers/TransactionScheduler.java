@@ -16,13 +16,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.preferences.Constants.BALANCE_MINIMUM;
-import static org.preferences.Constants.DIALOG_FAILED_TO_LOAD_API_KEYS;
-
 
 public class TransactionScheduler {
 
-    private static final int TIME = 10;
+    private static final int TIME = 4;
     private static final String CURRENT_ALT_COIN = "XZC";
     private static final int PERCENT_GAIN = 5;
     public volatile static boolean active = false;
@@ -30,8 +27,9 @@ public class TransactionScheduler {
     private static TransactionScheduler instance;
     private static ScheduledExecutorService ses;
 
-    private static final double sellAbove = 0.0068355;
-    private static final double buyBelow = 0.00651;
+    private static final double sellAbove = 0.00678;
+    private static final double buyBelow = 0.00658;
+    private static final double stopBelow = 0.00625;
     private static final double btc = 0.004;
 
 
@@ -60,17 +58,28 @@ public class TransactionScheduler {
             public void run() {
                 logger.debug("\nNew run..");
                 try {
+                    // Check if there are open orders for this coin:
+                    MarketOrderResponse marketOrderResponse = ModelBuilder.buildAllOpenOrders();
+                    for (MarketOrderResponse.Result result : marketOrderResponse.getResult()) {
+                        if (result.getExchange().endsWith(CURRENT_ALT_COIN)) {
+                            logger.debug("there still pending orders for this coin");
+                            return;
+                        }
+                    }
+
                     // get alt info
                     MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary("BTC-" + CURRENT_ALT_COIN);
                     logger.debug(marketSummary);
-                    MarketBalanceResponse marketBalanceResponse = ModelBuilder.buildMarketBalance("BTC");
-                    logger.debug(marketBalanceResponse);
+                    MarketBalanceResponse marketBalanceBtc = ModelBuilder.buildMarketBalance("BTC");
+                    logger.debug(marketBalanceBtc);
+                    MarketBalanceResponse marketBalanceAlt = ModelBuilder.buildMarketBalance(CURRENT_ALT_COIN);
+                    logger.debug(marketBalanceAlt);
                     // get order history
                     String response = MarketRequests.getOrderHistory(CURRENT_ALT_COIN);
                     MarketOrderResponse marketOrderHistory = JSONParser.parseMarketOrder(response);
                     logger.debug(marketOrderHistory);
 
-                    placeOrder(marketSummary, marketOrderHistory, marketBalanceResponse);
+                    placeOrder(marketSummary, marketOrderHistory, marketBalanceBtc, marketBalanceAlt);
                 } catch (Exception e) {
                     logger.error(e.getMessage());
                     e.printStackTrace();
@@ -158,65 +167,60 @@ public class TransactionScheduler {
 //        logger.debug("PlaceOrder done..");
 //    }
 
-    private static void placeOrder(MarketSummaryResponse marketSummary,
-                                   MarketOrderResponse marketOrderHistory, MarketBalanceResponse marketBalanceResponse) {
+    private static void placeOrder(MarketSummaryResponse marketSummary, MarketOrderResponse marketOrderHistory,
+                                   MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
         double last = marketSummary.getResult().get(0).getLast();
-        // Was last sell or buy?
-        boolean lastWasBuy = true;
-        for (MarketOrderResponse.Result response : marketOrderHistory.getResult()) {
-            if (response.getExchange().endsWith(CURRENT_ALT_COIN)) {
-                if (response.getQuantityRemaining() > BALANCE_MINIMUM) {
-                    logger.debug("There are still open order for this coin!");
-                    return;
-                } else {
-                    if (response.getOrderType().equalsIgnoreCase("LIMIT_SELL")) {
-                        lastWasBuy = false;
-                        break;
-                    } else if (response.getOrderType().equalsIgnoreCase("LIMIT_BUY")) {
-                        lastWasBuy = true;
-                        break;
-                    } else {
-                        return;
-                    }
-                }
-            }
-        }
-        if (marketBalanceResponse.getResult().isEmpty()) {
-            logger.debug("We do not have any btc!");
+        // Now we sell or buy?
+        boolean buy;
+        try {
+            buy = marketOrderHistory.getResult().get(0).getOrderType().equalsIgnoreCase("LIMIT_SELL");
+        } catch (Exception e) {
+            logger.debug("failed to check if last was buy or sell");
             return;
         }
-        if (!lastWasBuy) {
-            // Last action was Sell so now we buy.
-            double btcBalance = marketBalanceResponse.getResult().getAvailable();
+
+        if (last < stopBelow) {
+            logger.debug("Stopping because its below stop losss");
+            return;
+        }
+        if (marketBalanceAlt.getResult().isEmpty() && buy) {
+            logger.debug("trying to buy");
+            double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < btc) {
-                logger.debug("Youdo nbot have enoguh btc");
+                logger.debug("Tryna to buy but you dont have enoguh btc");
                 return;
             }
             // We have no coins of this type. So we place a buy order.
-            if (marketSummary.getResult().isEmpty()) {
-                logger.debug("You do not own any coin of this type (alt). OK.");
-                if (last < buyBelow) {
-                    logger.debug("Last transaction price was below low/high avg. OK.");
-                    double quantity = round(btc / last);
-                    logger.debug("Trying to buy " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
-                    try {
-//                                    MarketRequests.placeOrderBuy(CURRENT_ALT_COIN, quantity, last);
-                        logger.debug("Placed an order to buy " + quantity + " alt. OK.");
-                    } catch (Exception e) {
-                        logger.error("Failed to place an order to buy " + quantity + " alt. FAIL.");
-                    }
+            logger.debug("You do not own any coin of this type (alt). OK.");
+            if (last < buyBelow) {
+                logger.debug("Last transaction price was below low/high avg. OK.");
+                double quantity = round(btc / last);
+                logger.debug("Trying to buy " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
+                try {
+//                                    MarketRequests.placeOrderBuy(CURRENT_ALT_COIN, quantity, last + 0.00002);
+                    logger.debug("Woo: Placed an order to buy " + quantity + " " + CURRENT_ALT_COIN +
+                            " for " + last + " each.");
+                } catch (Exception e) {
+                    logger.error("Failed to place an order to buy " + quantity + " alt. FAIL.");
                 }
             }
+
         } else {
-            // Last action was Buy so now we sell all alt.
-            double quantity = marketBalanceResponse.getResult().getBalance();
-            double sellFor = sellAbove;
-            logger.debug("Trying to sell " + quantity + " units of " + CURRENT_ALT_COIN + " for " + sellFor + ".");
-            try {
-//                            MarketRequests.placeOrderSell(CURRENT_ALT_COIN, quantity, sellFor);
-                logger.debug("Placed an order to sell " + quantity + " alt. OK.");
-            } catch (Exception e) {
-                logger.error("Failed to place an order to sell " + quantity + " alt. FAIL.");
+            logger.debug("trying to sell");
+            if (!buy) {
+                logger.debug("last was buy now we sell.");
+                // Last action was Buy so now we sell all alt.
+                if (last > sellAbove) {
+                    double quantity = marketBalanceAlt.getResult().getBalance();
+                    logger.debug("Trying to sell " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
+                    try {
+                        MarketRequests.placeOrderSell(CURRENT_ALT_COIN, quantity, last - 0.00002);
+                        logger.debug("WOO: Placed an order to sell " + quantity + " of " + CURRENT_ALT_COIN +
+                                " for " + last + " each.");
+                    } catch (Exception e) {
+                        logger.error("Failed to place an order to sell " + quantity + " alt. FAIL.");
+                    }
+                }
             }
         }
     }
