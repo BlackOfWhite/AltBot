@@ -91,6 +91,10 @@ public class MarketMonitor {
                     if (priceMap != null) {
                         mainFrame.getPieChartFrame().setIsConnected(true);
                         updatePieChart(marketBalances, priceMap);
+//                        if (mainFrame.getPieChartFrame().getBtcSum() > 0.024) {
+//                            sellAll(priceMap, openMarketOrders);
+//                            return;
+//                        }
                         stopLossOrdersByOrderId(openMarketOrders, priceMap);
                     } else {
                         logger.debug("Some HTTP responses lost, not updating PieChart and stop-loss!");
@@ -152,52 +156,52 @@ public class MarketMonitor {
      * @return
      */
     private static void stopLossOrdersByOrderId(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
-        List<CancelOption> cancelOptionList = CancelOptionManager.getInstance().getOptionList();
-        logger.info("Number of stop-loss orders: " + cancelOptionList.size());
-        if (cancelOptionList.size() > 0) {
-            logger.info("Stop-loss orders: " + cancelOptionList.toString());
-        }
-        for (CancelOption cancelOption : cancelOptionList) {
-            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
-                if (cancelOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
-                    // find last market value for this currency
-                    double last = priceMap.get(cancelOption.getMarketName());
-                    double cancelBelow = cancelOption.getCancelBelow();
-                    if (cancelBelow >= last && (last >= cancelBelow *
-                            (cancelOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
-                        final String uuid = cancelOption.getUuid();
-                        final double amount = result.getQuantityRemaining();
-                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
-                        if (orderResponse.isSuccess()) {
-                            logger.debug("Successfully canceled order: " + uuid);
-                            // Place new sell order
-                            double rate = last - STOP_LOSS_SELL_THRESHOLD;
-                            if (rate < BALANCE_MINIMUM) {
-                                logger.error("Failed to place new sell order with too low rate: " + rate + ".");
-                                return;
-                            }
-                            String response = null;
-                            try {
-                                response = MarketRequests.placeOrderSell(result.getExchange(), amount, rate);
-                            } catch (Exception e) {
-                                logger.error("Failed to place new sell order after cancelling order with id: \" + uuid");
-                            }
-                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
-                            if (sellOrderResponse.isSuccess()) {
-                                try {
-                                    CancelOptionManager.getInstance().removeOptionByUuid(uuid);
-                                } catch (IOException e) {
-                                    logger.error("Failed to remove cancel option with id: " + uuid);
-                                }
-                                logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
-                            }
-                        } else {
-                            logger.error("Failed to cancel order: " + uuid + ". Reason: " + orderResponse.getMessage());
-                        }
-                    }
-                }
-            }
-        }
+//        List<CancelOption> cancelOptionList = CancelOptionManager.getInstance().getOptionList();
+//        logger.info("Number of stop-loss orders: " + cancelOptionList.size());
+//        if (cancelOptionList.size() > 0) {
+//            logger.info("Stop-loss orders: " + cancelOptionList.toString());
+//        }
+//        for (CancelOption cancelOption : cancelOptionList) {
+//            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+//                if (cancelOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
+//                    // find last market value for this currency
+//                    double last = priceMap.get(cancelOption.getMarketName());
+//                    double cancelBelow = cancelOption.getCancelBelow();
+//                    if (cancelBelow >= last && (last >= cancelBelow *
+//                            (cancelOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
+//                        final String uuid = cancelOption.getUuid();
+//                        final double amount = result.getQuantityRemaining();
+//                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
+//                        if (orderResponse.isSuccess()) {
+//                            logger.debug("Successfully canceled order: " + uuid);
+//                            // Place new sell order
+//                            double rate = last - STOP_LOSS_SELL_THRESHOLD;
+//                            if (rate < BALANCE_MINIMUM) {
+//                                logger.error("Failed to place new sell order with too low rate: " + rate + ".");
+//                                return;
+//                            }
+//                            String response = null;
+//                            try {
+//                                response = MarketRequests.placeOrderSell(result.getExchange(), amount, rate);
+//                            } catch (Exception e) {
+//                                logger.error("Failed to place new sell order after cancelling order with id: \" + uuid");
+//                            }
+//                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
+//                            if (sellOrderResponse.isSuccess()) {
+//                                try {
+//                                    CancelOptionManager.getInstance().removeOptionByUuid(uuid);
+//                                } catch (IOException e) {
+//                                    logger.error("Failed to remove cancel option with id: " + uuid);
+//                                }
+//                                logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
+//                            }
+//                        } else {
+//                            logger.error("Failed to cancel order: " + uuid + ". Reason: " + orderResponse.getMessage());
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 
     private static void updateMainFrameStatus(int totalOrders, int buyOrders) {
@@ -322,6 +326,34 @@ public class MarketMonitor {
     private static void showDialog(String msg) {
         if (dialog == null || dialog.isClosed()) {
             dialog = new SingleInstanceDialog(msg);
+        }
+    }
+
+    private static void sellAll(Map<String, Double> lastPriceMap, MarketOrderResponse openMarketOrders) {
+        int count = 1;
+        boolean cancelFail = false;
+        for(MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+            count = 0;
+            if (cancelFail) {
+                return;
+            }
+            if (result.getOrderType().equals("LIMIT_SELL")) {
+                String orderId = result.getOrderUuid();
+                while (count <= 4) {
+                    if (count == 4) {
+                        logger.debug("Cancel operation failed! Aborting 'sellAll'!");
+                        cancelFail = true;
+                        break;
+                    }
+                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
+                    if (orderResponse.isSuccess()) {
+                        count = 5;
+                        logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + result.getExchange());
+                    } else {
+                        count++;
+                    }
+                }
+            }
         }
     }
 }

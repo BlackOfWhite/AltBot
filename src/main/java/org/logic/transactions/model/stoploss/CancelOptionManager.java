@@ -53,13 +53,18 @@ public class CancelOptionManager implements OptionManagerImpl {
         PersistenceManager.saveCancelOptionCollection(cancelOptions);
     }
 
-
+    /**
+     * Use full market name, e.g. BTC-ETH.
+     * @param marketName
+     * @return
+     * @throws IOException
+     */
     @Override
-    public int removeOptionByUuid(final String uuid) throws IOException {
+    public int removeOptionByMarketName(final String marketName) throws IOException {
         int count = 0;
         for (Iterator<CancelOption> iterator = cancelOptionList.iterator(); iterator.hasNext();) {
             CancelOption cancelOption = iterator.next();
-            if (cancelOption.getUuid().equals(uuid)) {
+            if (cancelOption.getMarketName().equalsIgnoreCase(marketName)) {
                 // Remove the current element from the iterator and the list.
                 iterator.remove();
                 count++;

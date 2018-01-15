@@ -7,43 +7,33 @@ import java.io.Serializable;
 public class CancelOption implements Serializable, OptionImpl {
     private static final long serialVersionUID = 1L;
     private String marketName;
-    private double cancelBelow;
-    private String uuid;
-    private int threshold; // 1-99%. default is 5%.
+    private double cancelAt;
+    private StopLossCondition condition;
 
-    public CancelOption(String marketName, double cancelBelow, String uuid) {
-        this(marketName, cancelBelow, uuid, 5);
-    }
-
-    public CancelOption(String marketName, double cancelBelow, String uuid, int threshold) {
+    public CancelOption(String marketName, double cancelAt, StopLossCondition condition) {
         this.marketName = marketName;
-        this.cancelBelow = cancelBelow;
-        this.uuid = uuid;
-        this.threshold = threshold;
+        this.cancelAt = cancelAt;
+        this.condition = condition;
     }
 
-    public int getThreshold() {
-        return threshold;
+    public StopLossCondition getCondition() {
+        return condition;
     }
 
     public String getMarketName() {
         return marketName;
     }
 
-    public double getCancelBelow() {
-        return cancelBelow;
-    }
-
-    public String getUuid() {
-        return uuid;
+    public double getCancelAt() {
+        return cancelAt;
     }
 
     @Override
     public String toString() {
         return "CancelOption{" +
                 "marketName='" + marketName + '\'' +
-                ", cancelBelow=" + cancelBelow +
-                ", uuid='" + uuid + '\'' +
+                ", cancelAt=" + cancelAt +
+                ", condition=" + condition +
                 '}';
     }
 }

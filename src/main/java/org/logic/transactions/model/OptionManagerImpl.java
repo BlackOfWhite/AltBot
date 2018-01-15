@@ -10,7 +10,7 @@ public interface OptionManagerImpl<T extends OptionImpl> {
 
     void loadOptions() throws IOException, ClassNotFoundException;
     boolean reload();
-    int removeOptionByUuid(final String uuid) throws IOException;
+    int removeOptionByMarketName(final String marketName) throws IOException;
     void clearOptionCollection();
     void addOption(T option) throws IOException;
 }

@@ -54,7 +54,7 @@ public class BuySellOptionManager implements OptionManagerImpl {
     }
 
     @Override
-    public int removeOptionByUuid(final String uuid) throws IOException {
+    public int removeOptionByMarketName(final String uuid) throws IOException {
 //        int count = 0;
 //        for (Iterator<BuySellOption> iterator = optionList.iterator(); iterator.hasNext();) {
 //            int i = 0;

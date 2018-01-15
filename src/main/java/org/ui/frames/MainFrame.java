@@ -15,16 +15,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Map;
 
-import static org.preferences.Constants.BTC_DONATION_ADDRESS;
-import static org.preferences.Constants.ETH_DONATION_ADDRESS;
-import static org.preferences.Constants.LTC_DONATION_ADDRESS;
+import static org.preferences.Constants.*;
 
 /**
  * Created by niewinskip on 2016-12-28.
  */
 public class MainFrame extends JFrame {
 
-    private final static String[] ARR_MODES = {"Classic", "Buy&Sell", "Sequence"};
+    private final static String[] ARR_MODES = {"Classic", "Stop-loss", "Buy&Sell"};
     private static Logger logger = Logger.getLogger(MainFrame.class);
     private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
@@ -32,6 +30,7 @@ public class MainFrame extends JFrame {
     private JScrollPane jScrollPane;
     private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
+    private StopLossFrame stopLossFrame;
     private PieChartFrame pieChartFrame;
     private EmailSetupFrame emailSetupFrame;
     private APISetupFrame apiSetupFrame;
@@ -89,7 +88,10 @@ public class MainFrame extends JFrame {
                 int id = jComboBoxMode.getSelectedIndex();
                 switch (id) {
                     case 0:
-                        openClassicTransactionView();
+                        openClassicTransactionFrame();
+                        break;
+                    case 1:
+                        openStopLossFrame();
                         break;
                     default:
                         break;
@@ -227,9 +229,15 @@ public class MainFrame extends JFrame {
         labelApiSecret.setText("Secret: " + PreferenceManager.getApiKeySecretObfucate());
     }
 
-    private void openClassicTransactionView() {
+    private void openClassicTransactionFrame() {
         if (classicTransactionFrame == null || classicTransactionFrame.isClosed()) {
             classicTransactionFrame = new ClassicTransactionFrame();
+        }
+    }
+
+    private void openStopLossFrame() {
+        if (stopLossFrame == null || stopLossFrame.isClosed()) {
+            stopLossFrame = new StopLossFrame();
         }
     }
 

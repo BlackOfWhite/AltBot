@@ -31,6 +31,7 @@ public class PieChartFrame extends SingleInstanceFrame {
     private static PieChart pieChart = null;
     private ObservableList<PieChart.Data> pieChartData;
     private static boolean isConnected = true;
+    private static double btcSum = 0.0d;
 
     public PieChartFrame() {
         JFXPanel jfxPanel = new JFXPanel();
@@ -98,8 +99,7 @@ public class PieChartFrame extends SingleInstanceFrame {
                 || pieChartData.get(0).getName().equalsIgnoreCase(LOADING_MESSAGE))) {
             pieChartData.clear();
         }
-        // Sum
-        double btcSum = 0.0d;
+        btcSum = 0.0d;
         for (Map.Entry<String, BalancesSet> entry : map.entrySet()) {
             if (entry.getValue().getBtc() >= BALANCE_MINIMUM) {
                 btcSum += entry.getValue().getBtc();
@@ -209,5 +209,9 @@ public class PieChartFrame extends SingleInstanceFrame {
             pieChartData.sorted();
         }
         isConnected = set;
+    }
+
+    public double getBtcSum() {
+        return btcSum;
     }
 }

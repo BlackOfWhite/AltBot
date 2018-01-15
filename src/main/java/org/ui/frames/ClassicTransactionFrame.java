@@ -4,6 +4,8 @@ import org.apache.log4j.Logger;
 import org.logic.models.responses.MarketBalanceResponse;
 import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.transactions.ClassicTransaction;
+import org.logic.transactions.model.stoploss.CancelOption;
+import org.logic.transactions.model.stoploss.CancelOptionManager;
 import org.logic.utils.ModelBuilder;
 import org.logic.validators.PatternValidator;
 import org.ui.Constants;
@@ -26,10 +28,9 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
 
     private final static String[] ARR_MODES = {"Buy", "Sell"};
     private JComboBox jComboBoxMode;
-    private JLabel labelMarketName, labelAmount, labelRate, labelCancelAt, labelSlider;
-    private HintTextField jtfMarketName, jtfAmount, jtfRate, jtfCancelAt;
+    private JLabel labelMarketName, labelAmount, labelRate;
+    private HintTextField jtfMarketName, jtfAmount, jtfRate;
     private JButton jbCreate;
-    private JSlider jSliderThreshold;
     private Logger logger = Logger.getLogger(ClassicTransactionFrame.class);
 
     public ClassicTransactionFrame() {
@@ -62,23 +63,6 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
         jtfRate = new HintTextField("0.0");
         pMain.add(labelRate);
         pMain.add(jtfRate);
-
-        labelCancelAt = new JLabel("<html>Stop loss. This option will cancel this order and place new sell order immediately if coin's price drops below chosen value.</html>");
-        jtfCancelAt = new HintTextField("Leave empty to do not enable stop-loss.");
-        pMain.add(labelCancelAt);
-        pMain.add(jtfCancelAt);
-
-        jSliderThreshold = new JSlider(JSlider.HORIZONTAL, 5, 95, 95);
-        jSliderThreshold.setMinorTickSpacing(5);
-        jSliderThreshold.setMajorTickSpacing(5);
-        jSliderThreshold.setPaintTicks(true);
-        jSliderThreshold.setPaintLabels(true);
-        jSliderThreshold.setLabelTable(jSliderThreshold.createStandardLabels(10));
-        labelSlider = new JLabel("<html>This allows stop-loss to be executed only, " +
-                "if the coin's last price was below stop-loss value and above given % of stop-loss value." +
-                " Useful in case coin's value drops dramatically.</html>");
-        pMain.add(labelSlider);
-        pMain.add(jSliderThreshold);
 
         jbCreate = new JButton("Create transaction");
         jbCreate.addActionListener(new ActionListener() {
@@ -130,7 +114,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
                         if (marketSummaryResponse != null && marketSummaryResponse.isSuccess()) {
                             labelRate.setText("Rate: (Last: " + marketSummaryResponse.getResult().get(0).getLast() + ")");
                         }
-                        String coin = marketName.substring(4,marketName.length());
+                        String coin = marketName.substring(4, marketName.length());
                         MarketBalanceResponse marketBalanceResponse = ModelBuilder.buildMarketBalance(coin);
                         if (marketBalanceResponse != null && marketBalanceResponse.isSuccess()) {
                             labelAmount.setText("Amount: (Available: " + marketBalanceResponse.getResult().getAvailable() + ")");
@@ -142,21 +126,18 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
     }
 
     private boolean placeOrder() {
-          boolean success = false;
+        boolean success = false;
         String message = "";
-        if (jtfRate.isValidDouble() && jtfAmount.isValidDouble() && jtfCancelAt.isValidDoubleOrEmpty()) {
+        if (jtfRate.isValidDouble() && jtfAmount.isValidDouble() ) {
             final double rate = jtfRate.getAsDouble();
             final double amount = jtfAmount.getAsDouble();
-            // can be omitted
-            final double cancelAt = jtfCancelAt.getAsDouble();
             if (!jtfMarketName.isEmpty()) {
                 String marketName = jtfMarketName.getText();
                 marketName = marketName.toUpperCase().trim();
                 if (new PatternValidator().isMarketNameValid(marketName)) {
                     logger.debug("Market name: " + marketName + " is valid.");
-                    int threshold = jSliderThreshold.getValue();
-                    ClassicTransaction classicTransaction = new ClassicTransaction(marketName, amount, rate, cancelAt,
-                            jComboBoxMode.getSelectedIndex() == 0, threshold);
+                    ClassicTransaction classicTransaction = new ClassicTransaction(marketName, amount, rate,
+                            jComboBoxMode.getSelectedIndex() == 0);
                     message = classicTransaction.createClassicTransaction();
                 } else {
                     message = "Invalid market name: " + marketName;
