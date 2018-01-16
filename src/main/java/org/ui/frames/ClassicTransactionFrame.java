@@ -97,7 +97,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
         cp.add(pMain, BorderLayout.CENTER);
         cp.add(pBottom, BorderLayout.SOUTH);
 
-        setSize(Constants.FRAME_WIDTH, Constants.CLASSIC_TRANSACTION_FRAME_HEIGHT);
+        setSize(Constants.SETUP_FRAME_WIDTH, Constants.SETUP_FRAME_HEIGHT);
         setVisible(true);
 
         logger.debug("ClassicTransactionFrame initialized");

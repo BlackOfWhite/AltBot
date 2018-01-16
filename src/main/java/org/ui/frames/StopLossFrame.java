@@ -1,10 +1,13 @@
 package org.ui.frames;
 
 import org.apache.log4j.Logger;
+import org.logic.transactions.model.stoploss.CancelOption;
+import org.logic.transactions.model.stoploss.CancelOptionManager;
 import org.logic.transactions.model.stoploss.StopLossCondition;
 import org.logic.validators.PatternValidator;
 import org.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
+import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.textfield.HintTextField;
 
 import javax.swing.*;
@@ -13,15 +16,15 @@ import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
+import java.io.IOException;
 
 public class StopLossFrame extends SingleInstanceFrame {
 
     private JLabel labelMarketName, labelRate;
     private HintTextField jtfMarketName, jtfRate;
     private JButton jbSubmit;
-    private JComboBox<String> jComboBoxMode;
-    private String[] ARR_MODES = Arrays.toString(StopLossCondition.values()).replaceAll("^.|.$", "").split(", ");
+    private JComboBox<StopLossCondition> jComboBoxMode;
+    private StopLossCondition[] ARR_MODES = {StopLossCondition.BELOW, StopLossCondition.ABOVE, StopLossCondition.ALL};//Arrays.toString(StopLossCondition.values()).replaceAll("^.|.$", "").split(", ");
 
     private Logger logger = Logger.getLogger(StopLossFrame.class);
 
@@ -31,7 +34,7 @@ public class StopLossFrame extends SingleInstanceFrame {
     }
 
     private void init() {
-        setTitle("Classic Transaction Creator");
+        setTitle("Stop-loss Transaction Creator");
 
         Container cp = getContentPane();
         JPanel pMain = new JPanel();
@@ -50,19 +53,18 @@ public class StopLossFrame extends SingleInstanceFrame {
         pMain.add(labelRate);
         pMain.add(jtfRate);
 
-        jbSubmit = new JButton("Submit");
-        jbSubmit.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                submit();
-            }
-        });
-
         // Bottom panel
         JPanel pBottom = new JPanel();
         pBottom.setBorder(new TitledBorder(new EtchedBorder()));
         pBottom.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         pBottom.setLayout(new GridLayout(0, 1));
+        jbSubmit = new JButton("Submit");
+        jbSubmit.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                validateEntries();
+            }
+        });
         pBottom.add(jbSubmit);
 
         jComboBoxMode = new JComboBox<>(ARR_MODES);
@@ -71,26 +73,40 @@ public class StopLossFrame extends SingleInstanceFrame {
         cp.add(pMain, BorderLayout.CENTER);
         cp.add(pBottom, BorderLayout.SOUTH);
 
-        setSize(Constants.FRAME_WIDTH, Constants.CLASSIC_TRANSACTION_FRAME_HEIGHT);
+        setSize(Constants.SETUP_FRAME_WIDTH, Constants.SETUP_FRAME_HEIGHT);
         setVisible(true);
 
         logger.debug("StopLossFrame initialized");
     }
 
-    private void submit() {
+    private void validateEntries() {
         String marketName = jtfMarketName.getText();
-        String condition = jComboBoxMode.getSelectedItem().toString();
+        StopLossCondition condition = (StopLossCondition) jComboBoxMode.getSelectedItem();
         if (jtfRate.isValidDoubleOrEmpty() && new PatternValidator().isMarketNameValid(marketName)) {
             double rate = jtfRate.getAsDouble();
             if (rate > 0.0d) {
-//               CancelOption cancelOption = new CancelOption(marketName, rate, condition);
-//               CancelOptionManager.getInstance().addOption(cancelOption);
-//               message += " New stop-loss option added for order: " + uuid + " (if drops below " + cancelAt + ").";
+                try {
+                    execute(marketName, rate, condition);
+                } catch (IOException e) {
+                    logger.error("Failed to register new stop-loss transaction.");
+                    new InfoDialog("Failed to register new stop-loss transaction.");
+                }
             } else {
-                logger.debug("Value is too low.");
+                logger.debug("Stop-loss must be greater than zero.");
+                new InfoDialog("Stop-loss must be greater than zero.");
             }
         } else {
             logger.debug("Market name is invalid.");
+            new InfoDialog("Market name is invalid.");
         }
+    }
+
+    private void execute(String marketName, double rate, StopLossCondition condition) throws IOException {
+        CancelOption cancelOption = new CancelOption(marketName, rate, condition);
+        CancelOptionManager.getInstance().addOption(cancelOption);
+        logger.debug("New stop-loss option {" + condition.toString() + "} added for market " + marketName +
+                " Rate was set to " + rate + ".");
+        new InfoDialog("New stop-loss option " + condition.toString() + " added for market " + marketName.toUpperCase() +
+                ". Rate was set to " + rate + ".");
     }
 }

@@ -64,7 +64,7 @@ public class EmailSetupFrame extends SingleInstanceFrame {
         });
         cp.add(jbSubmit);
 
-        setSize(Constants.EMAIL_SETUP_FRAME_WIDTH, Constants.EMAIL_SETUP_FRAME_HEIGHT);
+        setSize(Constants.SETUP_FRAME_WIDTH, Constants.SETUP_FRAME_HEIGHT);
         setVisible(true);
         logger.debug("EmailSetupFrame initialized");
     }
