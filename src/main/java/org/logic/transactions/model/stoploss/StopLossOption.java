@@ -4,13 +4,13 @@ import org.logic.transactions.model.OptionImpl;
 
 import java.io.Serializable;
 
-public class CancelOption implements Serializable, OptionImpl {
+public class StopLossOption implements Serializable, OptionImpl {
     private static final long serialVersionUID = 1L;
     private String marketName;
     private double cancelAt;
     private StopLossCondition condition;
 
-    public CancelOption(String marketName, double cancelAt, StopLossCondition condition) {
+    public StopLossOption(String marketName, double cancelAt, StopLossCondition condition) {
         this.marketName = marketName;
         this.cancelAt = cancelAt;
         this.condition = condition;

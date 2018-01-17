@@ -4,8 +4,6 @@ import org.apache.log4j.Logger;
 import org.logic.models.responses.MarketBalanceResponse;
 import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.transactions.ClassicTransaction;
-import org.logic.transactions.model.stoploss.CancelOption;
-import org.logic.transactions.model.stoploss.CancelOptionManager;
 import org.logic.utils.ModelBuilder;
 import org.logic.validators.PatternValidator;
 import org.ui.Constants;

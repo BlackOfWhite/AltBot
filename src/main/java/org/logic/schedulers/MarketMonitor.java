@@ -6,8 +6,8 @@ import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
 import org.logic.requests.MarketRequests;
 import org.logic.smtp.MailSender;
-import org.logic.transactions.model.stoploss.CancelOption;
-import org.logic.transactions.model.stoploss.CancelOptionManager;
+import org.logic.transactions.model.stoploss.StopLossOption;
+import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
 import org.preferences.Params;
@@ -95,9 +95,9 @@ public class MarketMonitor {
 //                            sellAll(priceMap, openMarketOrders);
 //                            return;
 //                        }
-                        stopLossOrdersByOrderId(openMarketOrders, priceMap);
+                        stopLossOrders(openMarketOrders, priceMap);
                     } else {
-                        logger.debug("Some HTTP responses lost, not updating PieChart and stop-loss!");
+                        logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
                         mainFrame.getPieChartFrame().setIsConnected(false);
                     }
                     sendNotification(totalOrdersCount);
@@ -155,21 +155,21 @@ public class MarketMonitor {
      * @param openMarketOrders
      * @return
      */
-    private static void stopLossOrdersByOrderId(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
-//        List<CancelOption> cancelOptionList = CancelOptionManager.getInstance().getOptionList();
-//        logger.info("Number of stop-loss orders: " + cancelOptionList.size());
-//        if (cancelOptionList.size() > 0) {
-//            logger.info("Stop-loss orders: " + cancelOptionList.toString());
-//        }
-//        for (CancelOption cancelOption : cancelOptionList) {
+    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
+        List<StopLossOption> stopLossOptionList = StopLossOptionManager.getInstance().getOptionList();
+        logger.info("Number of stop-loss orders: " + stopLossOptionList.size());
+        if (stopLossOptionList.size() > 0) {
+            logger.info("Stop-loss orders: " + stopLossOptionList.toString());
+        }
+//        for (StopLossOption stopLossOption : stopLossOptionList) {
 //            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
-//                if (cancelOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
+//                if (stopLossOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
 //                    // find last market value for this currency
-//                    double last = priceMap.get(cancelOption.getMarketName());
-//                    double cancelBelow = cancelOption.getCancelBelow();
+//                    double last = priceMap.get(stopLossOption.getMarketName());
+//                    double cancelBelow = stopLossOption.getCancelBelow();
 //                    if (cancelBelow >= last && (last >= cancelBelow *
-//                            (cancelOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
-//                        final String uuid = cancelOption.getUuid();
+//                            (stopLossOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
+//                        final String uuid = stopLossOption.getUuid();
 //                        final double amount = result.getQuantityRemaining();
 //                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
 //                        if (orderResponse.isSuccess()) {
@@ -189,7 +189,7 @@ public class MarketMonitor {
 //                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
 //                            if (sellOrderResponse.isSuccess()) {
 //                                try {
-//                                    CancelOptionManager.getInstance().removeOptionByUuid(uuid);
+//                                    StopLossOptionManager.getInstance().removeOptionByUuid(uuid);
 //                                } catch (IOException e) {
 //                                    logger.error("Failed to remove cancel option with id: " + uuid);
 //                                }

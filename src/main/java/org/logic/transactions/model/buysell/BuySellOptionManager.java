@@ -1,6 +1,5 @@
 package org.logic.transactions.model.buysell;
 
-import org.apache.log4j.Logger;
 import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.OptionManagerImpl;
 import org.preferences.managers.PersistenceManager;
@@ -8,14 +7,12 @@ import org.preferences.managers.PersistenceManager;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
-public class BuySellOptionManager implements OptionManagerImpl {
+public class BuySellOptionManager extends OptionManagerImpl {
 
     private static final BuySellOptionManager instance = new BuySellOptionManager();
     private static List<BuySellOption> optionList = Collections.synchronizedList(new ArrayList());
-    private static Logger logger = Logger.getLogger(BuySellOptionManager.class);
 
     //private constructor to avoid client applications to use constructor
     private BuySellOptionManager() {
@@ -23,19 +20,6 @@ public class BuySellOptionManager implements OptionManagerImpl {
 
     public BuySellOptionManager getInstance() {
         return instance;
-    }
-
-    @Override
-    public boolean reload() {
-        try {
-            loadOptions();
-            return true;
-        } catch (IOException e) {
-            logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
-        } catch (ClassNotFoundException e) {
-            logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
-        }
-        return false;
     }
 
     public List<BuySellOption> getOptionList() {
@@ -50,7 +34,7 @@ public class BuySellOptionManager implements OptionManagerImpl {
         for (BuySellOption option1 : optionList) {
             options.add(option1);
         }
-        PersistenceManager.saveBuySellOptionCollection(options);
+        PersistenceManager.saveOptionCollection(options);
     }
 
     @Override
@@ -84,7 +68,7 @@ public class BuySellOptionManager implements OptionManagerImpl {
 
     @Override
     public void clearOptionCollection() {
-        PersistenceManager.clearCancelOptionCollection();
+        PersistenceManager.clearBuySellOptionCollection();
         optionList.clear();
     }
 }

@@ -1,16 +1,27 @@
 package org.logic.transactions.model;
 
-import org.logic.transactions.model.buysell.BuySellOption;
-import org.logic.transactions.model.stoploss.CancelOption;
+import org.apache.log4j.Logger;
+import org.logic.transactions.model.buysell.BuySellOptionManager;
 
 import java.io.IOException;
-import java.util.List;
 
-public interface OptionManagerImpl<T extends OptionImpl> {
+public abstract class OptionManagerImpl<T extends OptionImpl> {
 
-    void loadOptions() throws IOException, ClassNotFoundException;
-    boolean reload();
-    int removeOptionByMarketName(final String marketName) throws IOException;
-    void clearOptionCollection();
-    void addOption(T option) throws IOException;
+    private static Logger logger = Logger.getLogger(BuySellOptionManager.class);
+
+    protected abstract void loadOptions() throws IOException, ClassNotFoundException;
+    protected abstract int removeOptionByMarketName(final String marketName) throws IOException;
+    protected abstract void clearOptionCollection();
+    protected abstract void addOption(T option) throws IOException;
+    public boolean reload() {
+        try {
+            loadOptions();
+            return true;
+        } catch (IOException e) {
+            logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
+        } catch (ClassNotFoundException e) {
+            logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
+        }
+        return false;
+    }
 }

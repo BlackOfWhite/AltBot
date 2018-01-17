@@ -1,8 +1,8 @@
 package org.ui.frames;
 
 import org.apache.log4j.Logger;
-import org.logic.transactions.model.stoploss.CancelOption;
-import org.logic.transactions.model.stoploss.CancelOptionManager;
+import org.logic.transactions.model.stoploss.StopLossOption;
+import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.StopLossCondition;
 import org.logic.validators.PatternValidator;
 import org.ui.Constants;
@@ -102,8 +102,8 @@ public class StopLossFrame extends SingleInstanceFrame {
     }
 
     private void execute(String marketName, double rate, StopLossCondition condition) throws IOException {
-        CancelOption cancelOption = new CancelOption(marketName, rate, condition);
-        CancelOptionManager.getInstance().addOption(cancelOption);
+        StopLossOption stopLossOption = new StopLossOption(marketName, rate, condition);
+        StopLossOptionManager.getInstance().addOption(stopLossOption);
         logger.debug("New stop-loss option {" + condition.toString() + "} added for market " + marketName +
                 " Rate was set to " + rate + ".");
         new InfoDialog("New stop-loss option " + condition.toString() + " added for market " + marketName.toUpperCase() +

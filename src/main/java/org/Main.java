@@ -3,7 +3,7 @@ package org;
 import org.apache.log4j.Logger;
 import org.logic.schedulers.MarketMonitor;
 import org.logic.schedulers.TransactionScheduler;
-import org.logic.transactions.model.stoploss.CancelOptionManager;
+import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.ui.frames.MainFrame;
 
 import javax.swing.*;
@@ -17,7 +17,7 @@ public class Main {
         MainFrame mainFrame = new MainFrame();
         logger.debug("MainFrame created.");
 
-        CancelOptionManager.getInstance().reload();
+        StopLossOptionManager.getInstance().reload();
         startSchedulers(mainFrame);
     }
 

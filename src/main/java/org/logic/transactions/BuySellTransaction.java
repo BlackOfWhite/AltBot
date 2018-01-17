@@ -4,8 +4,6 @@ import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.responses.OrderResponse;
 import org.logic.requests.MarketRequests;
-import org.logic.transactions.model.stoploss.CancelOption;
-import org.logic.transactions.model.stoploss.CancelOptionManager;
 import org.logic.validators.TransactionValidator;
 
 import java.io.IOException;
