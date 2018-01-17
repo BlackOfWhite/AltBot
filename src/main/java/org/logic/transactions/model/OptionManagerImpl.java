@@ -1,6 +1,7 @@
 package org.logic.transactions.model;
 
 import org.apache.log4j.Logger;
+import org.logic.exceptions.EntryExistsException;
 import org.logic.transactions.model.buysell.BuySellOptionManager;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ public abstract class OptionManagerImpl<T extends OptionImpl> {
     protected abstract void loadOptions() throws IOException, ClassNotFoundException;
     protected abstract int removeOptionByMarketName(final String marketName) throws IOException;
     protected abstract void clearOptionCollection();
-    protected abstract void addOption(T option) throws IOException;
+    protected abstract void addOption(T option) throws IOException, EntryExistsException;
     public boolean reload() {
         try {
             loadOptions();

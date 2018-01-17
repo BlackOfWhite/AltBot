@@ -1,11 +1,10 @@
 package org.logic.schedulers;
 
 import org.apache.log4j.Logger;
-import org.logic.models.JSONParser;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
-import org.logic.requests.MarketRequests;
 import org.logic.smtp.MailSender;
+import org.logic.transactions.model.stoploss.StopLossCondition;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.utils.MarketNameUtils;
@@ -17,7 +16,6 @@ import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.dialog.box.SingleInstanceDialog;
 
 import javax.mail.MessagingException;
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -91,10 +89,6 @@ public class MarketMonitor {
                     if (priceMap != null) {
                         mainFrame.getPieChartFrame().setIsConnected(true);
                         updatePieChart(marketBalances, priceMap);
-//                        if (mainFrame.getPieChartFrame().getBtcSum() > 0.024) {
-//                            sellAll(priceMap, openMarketOrders);
-//                            return;
-//                        }
                         stopLossOrders(openMarketOrders, priceMap);
                     } else {
                         logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
@@ -161,47 +155,52 @@ public class MarketMonitor {
         if (stopLossOptionList.size() > 0) {
             logger.info("Stop-loss orders: " + stopLossOptionList.toString());
         }
-//        for (StopLossOption stopLossOption : stopLossOptionList) {
-//            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
-//                if (stopLossOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
-//                    // find last market value for this currency
-//                    double last = priceMap.get(stopLossOption.getMarketName());
-//                    double cancelBelow = stopLossOption.getCancelBelow();
-//                    if (cancelBelow >= last && (last >= cancelBelow *
-//                            (stopLossOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
-//                        final String uuid = stopLossOption.getUuid();
-//                        final double amount = result.getQuantityRemaining();
-//                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
-//                        if (orderResponse.isSuccess()) {
-//                            logger.debug("Successfully canceled order: " + uuid);
-//                            // Place new sell order
-//                            double rate = last - STOP_LOSS_SELL_THRESHOLD;
-//                            if (rate < BALANCE_MINIMUM) {
-//                                logger.error("Failed to place new sell order with too low rate: " + rate + ".");
-//                                return;
-//                            }
-//                            String response = null;
-//                            try {
-//                                response = MarketRequests.placeOrderSell(result.getExchange(), amount, rate);
-//                            } catch (Exception e) {
-//                                logger.error("Failed to place new sell order after cancelling order with id: \" + uuid");
-//                            }
-//                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
-//                            if (sellOrderResponse.isSuccess()) {
-//                                try {
-//                                    StopLossOptionManager.getInstance().removeOptionByUuid(uuid);
-//                                } catch (IOException e) {
-//                                    logger.error("Failed to remove cancel option with id: " + uuid);
-//                                }
-//                                logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
-//                            }
-//                        } else {
-//                            logger.error("Failed to cancel order: " + uuid + ". Reason: " + orderResponse.getMessage());
-//                        }
-//                    }
-//                }
-//            }
-//        }
+
+        // Check if there are any valid stop-loss orders for ALL.
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            if (stopLossOption.isSellAll()) {
+                // Check if sell ALL is valid
+                boolean valid = false;
+                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+                    if (mainFrame.getPieChartFrame().getBtcSum() > stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                } else {
+                    if (mainFrame.getPieChartFrame().getBtcSum() < stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            stopLossAll(priceMap, openMarketOrders, stopLossOption.getCondition());
+                        }
+                    }).start();
+                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
+                    return;
+                }
+            }
+        }
+
+        // Check if there are any valid stop-loss orders for single order.
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            if (!stopLossOption.isSellAll()) {
+                boolean valid = false;
+                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+                    if (priceMap.get(stopLossOption.getMarketName()) > stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                } else {
+                    if (priceMap.get(stopLossOption.getMarketName()) < stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    stopLossOne(priceMap, openMarketOrders, stopLossOption.getCondition());
+                }
+            }
+        }
     }
 
     private static void updateMainFrameStatus(int totalOrders, int buyOrders) {
@@ -329,10 +328,10 @@ public class MarketMonitor {
         }
     }
 
-    private static void sellAll(Map<String, Double> lastPriceMap, MarketOrderResponse openMarketOrders) {
-        int count = 1;
+    private static void stopLossAll(Map<String, Double> lastPriceMap, MarketOrderResponse openMarketOrders, StopLossCondition condition) {
+        int count;
         boolean cancelFail = false;
-        for(MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+        for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             count = 0;
             if (cancelFail) {
                 return;
@@ -355,5 +354,50 @@ public class MarketMonitor {
                 }
             }
         }
+    }
+
+    private static void stopLossOne(Map<String, Double> lastPriceMap, MarketOrderResponse openMarketOrders, StopLossCondition condition) {
+
+//        for (StopLossOption stopLossOption : stopLossOptionList) {
+//            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+//                if (stopLossOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
+//                    // find last market value for this currency
+//                    double last = priceMap.get(stopLossOption.getMarketName());
+//                    double cancelBelow = stopLossOption.getCancelBelow();
+//                    if (cancelBelow >= last && (last >= cancelBelow *
+//                            (stopLossOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
+//                        final String uuid = stopLossOption.getUuid();
+//                        final double amount = result.getQuantityRemaining();
+//                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
+//                        if (orderResponse.isSuccess()) {
+//                            logger.debug("Successfully canceled order: " + uuid);
+//                            // Place new sell order
+//                            double rate = last - STOP_LOSS_SELL_THRESHOLD;
+//                            if (rate < BALANCE_MINIMUM) {
+//                                logger.error("Failed to place new sell order with too low rate: " + rate + ".");
+//                                return;
+//                            }
+//                            String response = null;
+//                            try {
+//                                response = MarketRequests.placeOrderSell(result.getExchange(), amount, rate);
+//                            } catch (Exception e) {
+//                                logger.error("Failed to place new sell order after cancelling order with id: \" + uuid");
+//                            }
+//                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
+//                            if (sellOrderResponse.isSuccess()) {
+//                                try {
+//                                    StopLossOptionManager.getInstance().removeOptionByUuid(uuid);
+//                                } catch (IOException e) {
+//                                    logger.error("Failed to remove cancel option with id: " + uuid);
+//                                }
+//                                logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
+//                            }
+//                        } else {
+//                            logger.error("Failed to cancel order: " + uuid + ". Reason: " + orderResponse.getMessage());
+//                        }
+//                    }
+//                }
+//            }
+//        }
     }
 }

@@ -1,8 +1,10 @@
 package org.logic.transactions.model.stoploss;
 
+import org.logic.exceptions.EntryExistsException;
 import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.OptionManagerImpl;
 import org.preferences.managers.PersistenceManager;
+import org.ui.views.dialog.box.InfoDialog;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -28,8 +30,12 @@ public class StopLossOptionManager extends OptionManagerImpl {
     }
 
     @Override
-    public void addOption(final OptionImpl option) throws IOException {
+    public void addOption(final OptionImpl option) throws IOException, EntryExistsException {
         StopLossOption stopLossOption = (StopLossOption) option;
+        if (optionList.contains(option)) {
+            throw new EntryExistsException(stopLossOption.getCondition().toString() + " option for market " +
+                    stopLossOption.getMarketName() + " already exists.");
+        }
         optionList.add(stopLossOption);
         ArrayList<StopLossOption> stopLossOptions = new ArrayList<>();
         for (StopLossOption stopLossOption1 : optionList) {
