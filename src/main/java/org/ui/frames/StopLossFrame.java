@@ -15,6 +15,7 @@ import org.ui.views.textfield.HintTextField;
 import javax.swing.*;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.TitledBorder;
+import javax.xml.bind.JAXBException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -114,6 +115,7 @@ public class StopLossFrame extends SingleInstanceFrame {
             if (!selectAll && !new PatternValidator().isMarketNameValid(marketName)) {
                 logger.debug("Market name is invalid.");
                 new InfoDialog("Market name is invalid.");
+                return;
             }
             double rate = jtfRate.getAsDouble();
             if (rate > 0.0d) {
@@ -123,6 +125,10 @@ public class StopLossFrame extends SingleInstanceFrame {
                     logger.error("Failed to register new stop-loss transaction.");
                     new InfoDialog("Failed to register new stop-loss transaction.");
                 } catch (EntryExistsException e) {
+                    logger.error(e.getMessage());
+                    new InfoDialog(e.getMessage());
+                } catch (JAXBException e) {
+                    e.printStackTrace();
                     logger.error(e.getMessage());
                     new InfoDialog(e.getMessage());
                 }
@@ -136,7 +142,7 @@ public class StopLossFrame extends SingleInstanceFrame {
         }
     }
 
-    private void execute(StopLossOption stopLossOption) throws IOException, EntryExistsException {
+    private void execute(StopLossOption stopLossOption) throws IOException, EntryExistsException, JAXBException {
         StopLossOptionManager.getInstance().addOption(stopLossOption);
         final String msg = "New stop-loss option {" + stopLossOption.getCondition().toString() + "|" + stopLossOption.getMode().toString() + "} added for market " + stopLossOption.getMarketName() +
                 " Rate was set to " + stopLossOption.getCancelAt() + ".";

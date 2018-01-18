@@ -26,6 +26,9 @@ hs_err_pid*
 *.idea
 *.iml
 
+# XML
+*.xml
+
 pom.xml
 logs/
 src/test/

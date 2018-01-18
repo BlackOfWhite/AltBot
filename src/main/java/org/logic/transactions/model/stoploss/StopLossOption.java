@@ -4,8 +4,13 @@ import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;
 import org.logic.transactions.model.stoploss.modes.StopLossMode;
 
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.Serializable;
 
+@XmlRootElement(name = "StopLossOption")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class StopLossOption implements Serializable, OptionImpl {
     private static final long serialVersionUID = 1L;
     private String marketName;
@@ -13,6 +18,10 @@ public class StopLossOption implements Serializable, OptionImpl {
     private StopLossCondition condition;
     private StopLossMode mode;
     private boolean sellAll;
+
+    public StopLossOption() {
+
+    }
 
     public StopLossOption(String marketName, double cancelAt, StopLossCondition condition, StopLossMode mode, boolean sellAll) {
         this.marketName = marketName;

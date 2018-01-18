@@ -4,6 +4,7 @@ import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.OptionManagerImpl;
 import org.preferences.managers.PersistenceManager;
 
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,14 +28,14 @@ public class BuySellOptionManager extends OptionManagerImpl {
     }
 
     @Override
-    public void addOption(final OptionImpl option) throws IOException {
+    public void addOption(final OptionImpl option) throws IOException, JAXBException {
         BuySellOption buySellOption = (BuySellOption) option;
         optionList.add(buySellOption);
         ArrayList<BuySellOption> options = new ArrayList<>();
         for (BuySellOption option1 : optionList) {
             options.add(option1);
         }
-        PersistenceManager.saveOptionCollection(options);
+        PersistenceManager.saveBuySellOptionCollection(options);
     }
 
     @Override
@@ -61,7 +62,7 @@ public class BuySellOptionManager extends OptionManagerImpl {
     }
 
     @Override
-    public void loadOptions() throws IOException, ClassNotFoundException {
+    public void loadOptions() throws IOException, ClassNotFoundException, JAXBException {
         ArrayList<BuySellOption> options = PersistenceManager.loadBuySellOptionCollection();
         optionList = Collections.synchronizedList(options);
     }

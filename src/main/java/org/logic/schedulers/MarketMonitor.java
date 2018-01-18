@@ -288,57 +288,57 @@ public class MarketMonitor {
             logger.info("Stop-loss orders: " + stopLossOptionList.toString());
         }
 
-        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
-        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
-            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
-            return;
-        }
-
-        // Check if there are any valid stop-loss orders for ALL.
-        for (StopLossOption stopLossOption : stopLossOptionList) {
-            if (stopLossOption.isSellAll()) {
-                // Check if sell ALL is valid
-                boolean valid = false;
-                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (totalBtc > stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                } else {
-                    if (totalBtc < stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                }
-                if (valid) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            executeStopLoss(priceMap, openMarketOrders, stopLossOption, null);
-                        }
-                    }).start();
-                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
-                    return;
-                }
-            }
-        }
-
-        // Check if there are any valid stop-loss orders for single order.
-        for (StopLossOption stopLossOption : stopLossOptionList) {
-            if (!stopLossOption.isSellAll()) {
-                boolean valid = false;
-                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (priceMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                } else {
-                    if (priceMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                }
-                if (valid) {
-                    executeStopLoss(priceMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
-                }
-            }
-        }
+//        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
+//        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
+//            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
+//            return;
+//        }
+//
+//        // Check if there are any valid stop-loss orders for ALL.
+//        for (StopLossOption stopLossOption : stopLossOptionList) {
+//            if (stopLossOption.isSellAll()) {
+//                // Check if sell ALL is valid
+//                boolean valid = false;
+//                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+//                    if (totalBtc > stopLossOption.getCancelAt()) {
+//                        valid = true;
+//                    }
+//                } else {
+//                    if (totalBtc < stopLossOption.getCancelAt()) {
+//                        valid = true;
+//                    }
+//                }
+//                if (valid) {
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            executeStopLoss(priceMap, openMarketOrders, stopLossOption, null);
+//                        }
+//                    }).start();
+//                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
+//                    return;
+//                }
+//            }
+//        }
+//
+//        // Check if there are any valid stop-loss orders for single order.
+//        for (StopLossOption stopLossOption : stopLossOptionList) {
+//            if (!stopLossOption.isSellAll()) {
+//                boolean valid = false;
+//                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+//                    if (priceMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
+//                        valid = true;
+//                    }
+//                } else {
+//                    if (priceMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
+//                        valid = true;
+//                    }
+//                }
+//                if (valid) {
+//                    executeStopLoss(priceMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
+//                }
+//            }
+//        }
     }
 
     /**

@@ -6,6 +6,7 @@ import org.logic.transactions.model.OptionManagerImpl;
 import org.preferences.managers.PersistenceManager;
 import org.ui.views.dialog.box.InfoDialog;
 
+import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,7 +31,7 @@ public class StopLossOptionManager extends OptionManagerImpl {
     }
 
     @Override
-    public void addOption(final OptionImpl option) throws IOException, EntryExistsException {
+    public void addOption(final OptionImpl option) throws IOException, EntryExistsException, JAXBException {
         StopLossOption stopLossOption = (StopLossOption) option;
         if (optionList.contains(option)) {
             throw new EntryExistsException(stopLossOption.getCondition().toString() + " option for market " +
@@ -41,7 +42,7 @@ public class StopLossOptionManager extends OptionManagerImpl {
         for (StopLossOption stopLossOption1 : optionList) {
             stopLossOptions.add(stopLossOption1);
         }
-        PersistenceManager.saveOptionCollection(stopLossOptions);
+        PersistenceManager.saveStopLossOptionCollection(stopLossOptions);
     }
 
     /**
@@ -52,7 +53,7 @@ public class StopLossOptionManager extends OptionManagerImpl {
      * @throws IOException
      */
     @Override
-    public int removeOptionByMarketName(final String marketName) throws IOException {
+    public int removeOptionByMarketName(final String marketName) throws IOException, JAXBException {
         int count = 0;
         for (Iterator<StopLossOption> iterator = optionList.iterator(); iterator.hasNext(); ) {
             StopLossOption stopLossOption = iterator.next();
@@ -67,13 +68,13 @@ public class StopLossOptionManager extends OptionManagerImpl {
             for (StopLossOption stopLossOption1 : optionList) {
                 stopLossOptions.add(stopLossOption1);
             }
-            PersistenceManager.saveOptionCollection(stopLossOptions);
+            PersistenceManager.saveStopLossOptionCollection(stopLossOptions);
         }
         return count;
     }
 
     @Override
-    public void loadOptions() throws IOException, ClassNotFoundException {
+    public void loadOptions() throws IOException, ClassNotFoundException, JAXBException {
         ArrayList<StopLossOption> stopLossOptions = PersistenceManager.loadStopLossOptionCollection();
         optionList = Collections.synchronizedList(stopLossOptions);
     }
