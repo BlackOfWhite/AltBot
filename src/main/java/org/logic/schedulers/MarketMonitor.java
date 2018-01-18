@@ -142,74 +142,6 @@ public class MarketMonitor {
         }
     }
 
-    /**
-     * This method will find all orders (candidates) for which stop-loss should be executed.
-     * If given order's id is in the collection of stop orders, it will be cancelled and new sell order would be placed.
-     * Current price must lower than stop-loss price minus THRESHOLD - useful in case when price drops dramatically.
-     *
-     * @param openMarketOrders
-     * @return
-     */
-    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> priceMap) {
-        List<StopLossOption> stopLossOptionList = StopLossOptionManager.getInstance().getOptionList();
-        logger.info("Number of stop-loss orders: " + stopLossOptionList.size());
-        if (stopLossOptionList.size() > 0) {
-            logger.info("Stop-loss orders: " + stopLossOptionList.toString());
-        }
-
-        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
-        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
-            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
-            return;
-        }
-
-        // Check if there are any valid stop-loss orders for ALL.
-        for (StopLossOption stopLossOption : stopLossOptionList) {
-            if (stopLossOption.isSellAll()) {
-                // Check if sell ALL is valid
-                boolean valid = false;
-                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (totalBtc > stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                } else {
-                    if (totalBtc < stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                }
-                if (valid) {
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            stopLossAll(priceMap, openMarketOrders, stopLossOption);
-                        }
-                    }).start();
-                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
-                    return;
-                }
-            }
-        }
-
-        // Check if there are any valid stop-loss orders for single order.
-        for (StopLossOption stopLossOption : stopLossOptionList) {
-            if (!stopLossOption.isSellAll()) {
-                boolean valid = false;
-                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (priceMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                } else {
-                    if (priceMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
-                        valid = true;
-                    }
-                }
-                if (valid) {
-                    stopLossOne(priceMap, stopLossOption);
-                }
-            }
-        }
-    }
-
     private static void updateMainFrameStatus(int totalOrders, int buyOrders) {
         mainFrame.updateStatusBar(totalOrders, buyOrders);
         if (COUNTER % DIALOG_DELAY == 0) {
@@ -286,11 +218,11 @@ public class MarketMonitor {
      * It is used to wallet chart and for stop orders, therefore only these currencies with balance greater than zero would be picked (this reduces number of requests to Bittrex).
      *
      * @param marketBalancesResponse
-     * @param marketOrderResponse
+     * @param openMarketOrders
      * @return
      */
     public static Map<String, MarketDetails> createMarketDetailsMap(MarketBalancesResponse
-                                                                            marketBalancesResponse, MarketOrderResponse marketOrderResponse) {
+                                                                            marketBalancesResponse, MarketOrderResponse openMarketOrders) {
         Map<String, MarketDetails> map = new HashMap<>();
         // Take only non-zero currencies from market balance.
         for (MarketBalancesResponse.Result result : marketBalancesResponse.getResult()) {
@@ -307,8 +239,8 @@ public class MarketMonitor {
                 }
             }
         }
-        // Take every currency from orders
-        for (MarketOrderResponse.Result result : marketOrderResponse.getResult()) {
+        // Take every currency from open orders.
+        for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             if (!map.containsKey(result.getExchange())) {
                 map.put(result.getExchange(), new MarketDetails(VALUE_NOT_SET, VALUE_NOT_SET));
             }
@@ -341,22 +273,100 @@ public class MarketMonitor {
         }
     }
 
-    private static void stopLossAll(Map<String, MarketDetails> lastPriceMap, MarketOrderResponse openMarketOrders, StopLossOption stopLossOption) {
+    /**
+     * This method will find all orders (candidates) for which stop-loss should be executed.
+     * If given order's id is in the collection of stop orders, it will be cancelled and new sell order would be placed.
+     * Current price must lower than stop-loss price minus THRESHOLD - useful in case when price drops dramatically.
+     *
+     * @param openMarketOrders
+     * @return
+     */
+    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> priceMap) {
+        List<StopLossOption> stopLossOptionList = StopLossOptionManager.getInstance().getOptionList();
+        logger.info("Number of stop-loss orders: " + stopLossOptionList.size());
+        if (stopLossOptionList.size() > 0) {
+            logger.info("Stop-loss orders: " + stopLossOptionList.toString());
+        }
+
+        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
+        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
+            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
+            return;
+        }
+
+        // Check if there are any valid stop-loss orders for ALL.
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            if (stopLossOption.isSellAll()) {
+                // Check if sell ALL is valid
+                boolean valid = false;
+                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+                    if (totalBtc > stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                } else {
+                    if (totalBtc < stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            executeStopLoss(priceMap, openMarketOrders, stopLossOption, null);
+                        }
+                    }).start();
+                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
+                    return;
+                }
+            }
+        }
+
+        // Check if there are any valid stop-loss orders for single order.
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            if (!stopLossOption.isSellAll()) {
+                boolean valid = false;
+                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+                    if (priceMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                } else {
+                    if (priceMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    executeStopLoss(priceMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
+                }
+            }
+        }
+    }
+
+    /**
+     * Leave singleMarketName as NULL, to execute stop-loss for all markets. Pass any value to execute stop-loss just for one market.
+     *
+     * @param priceMap
+     * @param openMarketOrders
+     * @param stopLossOption
+     * @param singleMarketName
+     */
+    private static void executeStopLoss(Map<String, MarketDetails> priceMap, MarketOrderResponse openMarketOrders, StopLossOption stopLossOption, final String singleMarketName) {
         int count;
         boolean cancelFail = false;
+        // Cancel all open orders
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             count = 0;
             if (cancelFail) {
                 return;
             }
+            String marketName = result.getExchange();
+            // Check if is in the single market mode.
+            if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
+                continue;
+            }
             if ((result.getOrderType().equals("LIMIT_SELL") && stopLossOption.getMode().equals(StopLossMode.SELL)) ||
                     (result.getOrderType().equals("LIMIT_BUY") && stopLossOption.getMode().equals(StopLossMode.BUY)) ||
                     stopLossOption.getMode().equals(StopLossMode.BOTH)) {
                 String orderId = result.getOrderUuid();
-                String marketName = result.getExchange();
-                double last = lastPriceMap.get(marketName).getLast();
-                double totalAmount = lastPriceMap.get(marketName).getTotalAmount();
-
                 // Cancel one. Allow to retry.
                 while (count <= 4) {
                     if (count == 4) {
@@ -367,13 +377,23 @@ public class MarketMonitor {
                     OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
                     if (orderResponse.isSuccess()) {
                         count = 5;
-                        logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + result.getExchange());
+                        logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
                     } else {
                         count++;
                     }
                 }
-                // Sell one. Also allow retries.
+            }
+        }
+        // Sell all alt coins. Allow retires.
+        for (Map.Entry<String, MarketDetails> entry : priceMap.entrySet()) {
+            if (entry.getValue().getTotalAmount() > BALANCE_MINIMUM) {
+                String marketName = entry.getKey();
+                double last = priceMap.get(marketName).getLast();
+                double totalAmount = priceMap.get(marketName).getTotalAmount();
                 count = 0;
+                if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
+                    continue;
+                }
                 if (!cancelFail) {
                     while (count <= 4) {
                         if (count == 4) {
@@ -381,10 +401,10 @@ public class MarketMonitor {
                             cancelFail = true;
                             break;
                         }
-                        OrderResponse orderResponse = ModelBuilder.buildSellOrder(result.getExchange(), totalAmount, last);
+                        OrderResponse orderResponse = ModelBuilder.buildSellOrder(marketName, totalAmount, last);
                         if (orderResponse.isSuccess()) {
                             count = 5;
-                            logger.debug("Successfully sold order with id: " + orderId + " for coin " + result.getExchange());
+                            logger.debug("Successfully placed sell order for " + totalAmount + " units of " + marketName + ", " + last + " each.");
                         } else {
                             count++;
                         }
@@ -392,52 +412,5 @@ public class MarketMonitor {
                 }
             }
         }
-    }
-
-    private static void stopLossOne(Map<String, MarketDetails> lastPriceMap, StopLossOption option) {
-        double last = lastPriceMap.get(option.getMarketName()).getLast();
-
-
-//        for (StopLossOption stopLossOption : stopLossOptionList) {
-//            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
-//                if (stopLossOption.getUuid().equalsIgnoreCase(result.getOrderUuid())) {
-//                    // find last market value for this currency
-//                    double last = priceMap.get(stopLossOption.getMarketName());
-//                    double cancelBelow = stopLossOption.getCancelBelow();
-//                    if (cancelBelow >= last && (last >= cancelBelow *
-//                            (stopLossOption.getThreshold() / 100.0d)) && last >= BALANCE_MINIMUM) {
-//                        final String uuid = stopLossOption.getUuid();
-//                        final double amount = result.getQuantityRemaining();
-//                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(uuid);
-//                        if (orderResponse.isSuccess()) {
-//                            logger.debug("Successfully canceled order: " + uuid);
-//                            // Place new sell order
-//                            double rate = last - STOP_LOSS_SELL_THRESHOLD;
-//                            if (rate < BALANCE_MINIMUM) {
-//                                logger.error("Failed to place new sell order with too low rate: " + rate + ".");
-//                                return;
-//                            }
-//                            String response = null;
-//                            try {
-//                                response = MarketRequests.placeOrderSell(result.getExchange(), amount, rate);
-//                            } catch (Exception e) {
-//                                logger.error("Failed to place new sell order after cancelling order with id: \" + uuid");
-//                            }
-//                            OrderResponse sellOrderResponse = JSONParser.parseOrderResponse(response);
-//                            if (sellOrderResponse.isSuccess()) {
-//                                try {
-//                                    StopLossOptionManager.getInstance().removeOptionByUuid(uuid);
-//                                } catch (IOException e) {
-//                                    logger.error("Failed to remove cancel option with id: " + uuid);
-//                                }
-//                                logger.debug("Successfully placed new sell order after cancelling order with id: " + uuid);
-//                            }
-//                        } else {
-//                            logger.error("Failed to cancel order: " + uuid + ". Reason: " + orderResponse.getMessage());
-//                        }
-//                    }
-//                }
-//            }
-//        }
     }
 }
