@@ -93,6 +93,7 @@ public class StopLossFrame extends SingleInstanceFrame {
             }
         });
         pBottom.add(jComboBoxMode);
+        pBottom.add(jComboBoxMode2);
         pBottom.add(jbSubmit);
 
         cp.add(pMain, BorderLayout.CENTER);
