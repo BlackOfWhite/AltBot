@@ -15,6 +15,7 @@ public class Constants {
     public static final double BALANCE_MINIMUM = 0.00000001;
     public static final double CHART_SIGNIFICANT_MINIMUM = 0.000001;
     public static final int MAX_INPUT_VALUE = 1000000;
+    public static final double VALUE_NOT_SET = -1.012345; // MUST BE LESS THAN 0!
 
     public static final String ORDER_TYPE_SELL = "LIMIT_SELL";
     public static final String ORDER_TYPE_BUY = "LIMIT_BUY";

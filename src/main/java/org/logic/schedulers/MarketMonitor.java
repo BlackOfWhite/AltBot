@@ -3,10 +3,12 @@ package org.logic.schedulers;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
+import org.logic.schedulers.model.MarketDetails;
 import org.logic.smtp.MailSender;
-import org.logic.transactions.model.stoploss.StopLossCondition;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
+import org.logic.transactions.model.stoploss.modes.StopLossCondition;
+import org.logic.transactions.model.stoploss.modes.StopLossMode;
 import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
 import org.preferences.Params;
@@ -28,7 +30,6 @@ import static org.preferences.Constants.*;
 public class MarketMonitor {
 
     private static final int SLEEP_TIME = 5;
-
     private static final String SUBJECT = "Open orders status changed!";
     public volatile static boolean active = false;
     public volatile static int COUNTER = -1;
@@ -85,7 +86,7 @@ public class MarketMonitor {
                     MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
 
                     // Market name - last price map
-                    final Map<String, Double> priceMap = createLastPriceMap(marketBalances, openMarketOrders);
+                    final Map<String, MarketDetails> priceMap = createMarketDetailsMap(marketBalances, openMarketOrders);
                     if (priceMap != null) {
                         mainFrame.getPieChartFrame().setIsConnected(true);
                         updatePieChart(marketBalances, priceMap);
@@ -149,11 +150,17 @@ public class MarketMonitor {
      * @param openMarketOrders
      * @return
      */
-    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, Double> priceMap) {
+    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> priceMap) {
         List<StopLossOption> stopLossOptionList = StopLossOptionManager.getInstance().getOptionList();
         logger.info("Number of stop-loss orders: " + stopLossOptionList.size());
         if (stopLossOptionList.size() > 0) {
             logger.info("Stop-loss orders: " + stopLossOptionList.toString());
+        }
+
+        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
+        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
+            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
+            return;
         }
 
         // Check if there are any valid stop-loss orders for ALL.
@@ -162,11 +169,11 @@ public class MarketMonitor {
                 // Check if sell ALL is valid
                 boolean valid = false;
                 if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (mainFrame.getPieChartFrame().getBtcSum() > stopLossOption.getCancelAt()) {
+                    if (totalBtc > stopLossOption.getCancelAt()) {
                         valid = true;
                     }
                 } else {
-                    if (mainFrame.getPieChartFrame().getBtcSum() < stopLossOption.getCancelAt()) {
+                    if (totalBtc < stopLossOption.getCancelAt()) {
                         valid = true;
                     }
                 }
@@ -174,7 +181,7 @@ public class MarketMonitor {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            stopLossAll(priceMap, openMarketOrders, stopLossOption.getCondition());
+                            stopLossAll(priceMap, openMarketOrders, stopLossOption);
                         }
                     }).start();
                     logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
@@ -188,16 +195,16 @@ public class MarketMonitor {
             if (!stopLossOption.isSellAll()) {
                 boolean valid = false;
                 if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (priceMap.get(stopLossOption.getMarketName()) > stopLossOption.getCancelAt()) {
+                    if (priceMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
                         valid = true;
                     }
                 } else {
-                    if (priceMap.get(stopLossOption.getMarketName()) < stopLossOption.getCancelAt()) {
+                    if (priceMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
                         valid = true;
                     }
                 }
                 if (valid) {
-                    stopLossOne(priceMap, openMarketOrders, stopLossOption.getCondition());
+                    stopLossOne(priceMap, stopLossOption);
                 }
             }
         }
@@ -217,7 +224,7 @@ public class MarketMonitor {
      * @param priceMap
      */
     private static void updatePieChart(final MarketBalancesResponse marketBalances,
-                                       final Map<String, Double> priceMap) {
+                                       final Map<String, MarketDetails> priceMap) {
         if (!mainFrame.isPieChartVisible()) {
             return;
         }
@@ -230,7 +237,7 @@ public class MarketMonitor {
             if (marketName.equals("BTC")) {
                 map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
             } else {
-                double last = priceMap.get(marketName);
+                double last = priceMap.get(marketName).getLast();
                 double btc = last * result.getBalance();
                 if (marketName.equalsIgnoreCase("USDT-BTC")) {
                     btc = result.getBalance() * (1 / last);
@@ -282,9 +289,9 @@ public class MarketMonitor {
      * @param marketOrderResponse
      * @return
      */
-    public static Map<String, Double> createLastPriceMap(MarketBalancesResponse
-                                                                 marketBalancesResponse, MarketOrderResponse marketOrderResponse) {
-        Map<String, Double> map = new HashMap<>();
+    public static Map<String, MarketDetails> createMarketDetailsMap(MarketBalancesResponse
+                                                                            marketBalancesResponse, MarketOrderResponse marketOrderResponse) {
+        Map<String, MarketDetails> map = new HashMap<>();
         // Take only non-zero currencies from market balance.
         for (MarketBalancesResponse.Result result : marketBalancesResponse.getResult()) {
             String currency = result.getCurrency();
@@ -292,23 +299,29 @@ public class MarketMonitor {
                 continue;
             }
             if (!currency.startsWith("BTC")) {
+                MarketDetails marketDetails = new MarketDetails(VALUE_NOT_SET, result.getBalance());
                 if (currency.startsWith("USDT")) {
-                    map.put(result.getCurrency() + "-BTC", -1.0);
+                    map.put(result.getCurrency() + "-BTC", marketDetails);
                 } else {
-                    map.put("BTC-" + result.getCurrency(), -1.0);
+                    map.put("BTC-" + result.getCurrency(), marketDetails);
                 }
             }
         }
         // Take every currency from orders
         for (MarketOrderResponse.Result result : marketOrderResponse.getResult()) {
-            map.put(result.getExchange(), -1.0);
+            if (!map.containsKey(result.getExchange())) {
+                map.put(result.getExchange(), new MarketDetails(VALUE_NOT_SET, VALUE_NOT_SET));
+            }
         }
         // Marge and get last price.
-        for (Map.Entry<String, Double> entry : map.entrySet()) {
-            if (map.get(entry.getKey()) < 0.0d) {
+        for (Map.Entry<String, MarketDetails> entry : map.entrySet()) {
+            if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM) {
                 MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
                 try {
-                    entry.setValue(marketSummary.getResult().get(0).getLast());
+                    // update last price
+                    MarketDetails marketDetails = entry.getValue();
+                    marketDetails.setLast(marketSummary.getResult().get(0).getLast());
+                    entry.setValue(marketDetails);
                 } catch (NullPointerException ex) {
                     logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
                     return null;
@@ -318,7 +331,7 @@ public class MarketMonitor {
                 }
             }
         }
-        logger.debug(map.toString());
+        logger.debug("MarketDetails map: " + map.toString());
         return map;
     }
 
@@ -328,7 +341,7 @@ public class MarketMonitor {
         }
     }
 
-    private static void stopLossAll(Map<String, Double> lastPriceMap, MarketOrderResponse openMarketOrders, StopLossCondition condition) {
+    private static void stopLossAll(Map<String, MarketDetails> lastPriceMap, MarketOrderResponse openMarketOrders, StopLossOption stopLossOption) {
         int count;
         boolean cancelFail = false;
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
@@ -336,11 +349,18 @@ public class MarketMonitor {
             if (cancelFail) {
                 return;
             }
-            if (result.getOrderType().equals("LIMIT_SELL")) {
+            if ((result.getOrderType().equals("LIMIT_SELL") && stopLossOption.getMode().equals(StopLossMode.SELL)) ||
+                    (result.getOrderType().equals("LIMIT_BUY") && stopLossOption.getMode().equals(StopLossMode.BUY)) ||
+                    stopLossOption.getMode().equals(StopLossMode.BOTH)) {
                 String orderId = result.getOrderUuid();
+                String marketName = result.getExchange();
+                double last = lastPriceMap.get(marketName).getLast();
+                double totalAmount = lastPriceMap.get(marketName).getTotalAmount();
+
+                // Cancel one. Allow to retry.
                 while (count <= 4) {
                     if (count == 4) {
-                        logger.debug("Cancel operation failed! Aborting 'sellAll'!");
+                        logger.debug("One of the cancel operations failed! Aborting stop-loss all!");
                         cancelFail = true;
                         break;
                     }
@@ -352,11 +372,31 @@ public class MarketMonitor {
                         count++;
                     }
                 }
+                // Sell one. Also allow retries.
+                count = 0;
+                if (!cancelFail) {
+                    while (count <= 4) {
+                        if (count == 4) {
+                            logger.debug("One of the sell operations failed! Aborting stop-loss all!");
+                            cancelFail = true;
+                            break;
+                        }
+                        OrderResponse orderResponse = ModelBuilder.buildSellOrder(result.getExchange(), totalAmount, last);
+                        if (orderResponse.isSuccess()) {
+                            count = 5;
+                            logger.debug("Successfully sold order with id: " + orderId + " for coin " + result.getExchange());
+                        } else {
+                            count++;
+                        }
+                    }
+                }
             }
         }
     }
 
-    private static void stopLossOne(Map<String, Double> lastPriceMap, MarketOrderResponse openMarketOrders, StopLossCondition condition) {
+    private static void stopLossOne(Map<String, MarketDetails> lastPriceMap, StopLossOption option) {
+        double last = lastPriceMap.get(option.getMarketName()).getLast();
+
 
 //        for (StopLossOption stopLossOption : stopLossOptionList) {
 //            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {

@@ -70,4 +70,28 @@ public class ModelBuilder {
 //        logger.debug(marketSummary);
         return orderResponse;
     }
+
+    public static OrderResponse buildSellOrder(String marketName, double quantity, double rate) {
+        OrderResponse orderResponse = null;
+        try {
+            String response = MarketRequests.placeOrderSell(marketName, quantity, rate);
+            orderResponse = JSONParser.parseOrderResponse(response);
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+        }
+//        logger.debug(marketSummary);
+        return orderResponse;
+    }
+
+    public static OrderResponse buildBuyOrder(String marketName, double quantity, double rate) {
+        OrderResponse orderResponse = null;
+        try {
+            String response = MarketRequests.placeOrderBuy(marketName, quantity, rate);
+            orderResponse = JSONParser.parseOrderResponse(response);
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+        }
+//        logger.debug(marketSummary);
+        return orderResponse;
+    }
 }

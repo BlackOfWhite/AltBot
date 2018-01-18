@@ -4,7 +4,8 @@ import org.apache.log4j.Logger;
 import org.logic.exceptions.EntryExistsException;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
-import org.logic.transactions.model.stoploss.StopLossCondition;
+import org.logic.transactions.model.stoploss.modes.StopLossCondition;
+import org.logic.transactions.model.stoploss.modes.StopLossMode;
 import org.logic.validators.PatternValidator;
 import org.ui.Constants;
 import org.ui.frames.util.SingleInstanceFrame;
@@ -25,8 +26,10 @@ public class StopLossFrame extends SingleInstanceFrame {
     private HintTextField jtfMarketName, jtfRate;
     private JButton jbSubmit;
     private JComboBox<StopLossCondition> jComboBoxMode;
+    private JComboBox<StopLossMode> jComboBoxMode2;
     private StopLossCondition[] ARR_MODES = {StopLossCondition.BELOW, StopLossCondition.ABOVE};//Arrays.toString(StopLossCondition.values()).replaceAll("^.|.$", "").split(", ");
     private JCheckBox jCheckBox;
+    private StopLossMode[] ARR_MODES2 = {StopLossMode.SELL, StopLossMode.BUY, StopLossMode.BOTH};
 
     private Logger logger = Logger.getLogger(StopLossFrame.class);
 
@@ -80,6 +83,8 @@ public class StopLossFrame extends SingleInstanceFrame {
         pBottom.setBorder(new TitledBorder(new EtchedBorder()));
         pBottom.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
         pBottom.setLayout(new GridLayout(0, 1));
+        jComboBoxMode = new JComboBox<>(ARR_MODES);
+        jComboBoxMode2 = new JComboBox<>(ARR_MODES2);
         jbSubmit = new JButton("Submit");
         jbSubmit.addActionListener(new ActionListener() {
             @Override
@@ -87,10 +92,8 @@ public class StopLossFrame extends SingleInstanceFrame {
                 validateEntries();
             }
         });
-        pBottom.add(jbSubmit);
-
-        jComboBoxMode = new JComboBox<>(ARR_MODES);
         pBottom.add(jComboBoxMode);
+        pBottom.add(jbSubmit);
 
         cp.add(pMain, BorderLayout.CENTER);
         cp.add(pBottom, BorderLayout.SOUTH);
@@ -104,6 +107,7 @@ public class StopLossFrame extends SingleInstanceFrame {
     private void validateEntries() {
         String marketName = jtfMarketName.getText();
         StopLossCondition condition = (StopLossCondition) jComboBoxMode.getSelectedItem();
+        StopLossMode mode = (StopLossMode) jComboBoxMode2.getSelectedItem();
         boolean selectAll = jCheckBox.isSelected();
         if (jtfRate.isValidDoubleOrEmpty()) {
             if (!selectAll && !new PatternValidator().isMarketNameValid(marketName)) {
@@ -113,7 +117,7 @@ public class StopLossFrame extends SingleInstanceFrame {
             double rate = jtfRate.getAsDouble();
             if (rate > 0.0d) {
                 try {
-                    execute(marketName, rate, condition, selectAll);
+                    execute(new StopLossOption(marketName, rate, condition, mode, selectAll));
                 } catch (IOException e) {
                     logger.error("Failed to register new stop-loss transaction.");
                     new InfoDialog("Failed to register new stop-loss transaction.");
@@ -131,12 +135,11 @@ public class StopLossFrame extends SingleInstanceFrame {
         }
     }
 
-    private void execute(String marketName, double rate, StopLossCondition condition, boolean sellAll) throws IOException, EntryExistsException {
-        StopLossOption stopLossOption = new StopLossOption(marketName, rate, condition, sellAll);
+    private void execute(StopLossOption stopLossOption) throws IOException, EntryExistsException {
         StopLossOptionManager.getInstance().addOption(stopLossOption);
-        logger.debug("New stop-loss option {" + condition.toString() + "} added for market " + marketName +
-                " Rate was set to " + rate + ".");
-        new InfoDialog("New stop-loss option " + condition.toString() + " added for market " + marketName.toUpperCase() +
-                ". Rate was set to " + rate + ".");
+        final String msg = "New stop-loss option {" + stopLossOption.getCondition().toString() + "|" + stopLossOption.getMode().toString() + "} added for market " + stopLossOption.getMarketName() +
+                " Rate was set to " + stopLossOption.getCancelAt() + ".";
+        logger.debug(msg);
+        new InfoDialog(msg);
     }
 }

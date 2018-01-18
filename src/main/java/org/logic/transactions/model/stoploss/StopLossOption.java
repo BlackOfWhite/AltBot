@@ -1,6 +1,8 @@
 package org.logic.transactions.model.stoploss;
 
 import org.logic.transactions.model.OptionImpl;
+import org.logic.transactions.model.stoploss.modes.StopLossCondition;
+import org.logic.transactions.model.stoploss.modes.StopLossMode;
 
 import java.io.Serializable;
 
@@ -9,12 +11,14 @@ public class StopLossOption implements Serializable, OptionImpl {
     private String marketName;
     private double cancelAt;
     private StopLossCondition condition;
+    private StopLossMode mode;
     private boolean sellAll;
 
-    public StopLossOption(String marketName, double cancelAt, StopLossCondition condition, boolean sellAll) {
+    public StopLossOption(String marketName, double cancelAt, StopLossCondition condition, StopLossMode mode, boolean sellAll) {
         this.marketName = marketName;
         this.cancelAt = cancelAt;
         this.condition = condition;
+        this.mode = mode;
         this.sellAll = sellAll;
     }
 
@@ -24,6 +28,10 @@ public class StopLossOption implements Serializable, OptionImpl {
 
     public String getMarketName() {
         return marketName;
+    }
+
+    public StopLossMode getMode() {
+        return mode;
     }
 
     public double getCancelAt() {
@@ -36,10 +44,12 @@ public class StopLossOption implements Serializable, OptionImpl {
 
     @Override
     public String toString() {
-        return "CancelOption{" +
+        return "StopLossOption{" +
                 "marketName='" + marketName + '\'' +
                 ", cancelAt=" + cancelAt +
                 ", condition=" + condition +
+                ", mode=" + mode +
+                ", sellAll=" + sellAll +
                 '}';
     }
 
