@@ -3,6 +3,7 @@ package org.logic.transactions.model.stoploss;
 import org.logic.exceptions.EntryExistsException;
 import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.OptionManagerImpl;
+import org.logic.transactions.model.stoploss.modes.StopLossMode;
 import org.preferences.managers.PersistenceManager;
 import org.ui.views.dialog.box.InfoDialog;
 
@@ -53,11 +54,11 @@ public class StopLossOptionManager extends OptionManagerImpl {
      * @throws IOException
      */
     @Override
-    public int removeOptionByMarketName(final String marketName) throws IOException, JAXBException {
+    public int removeOptionByMarketNameAndMode(final String marketName, final StopLossMode mode) throws IOException, JAXBException {
         int count = 0;
         for (Iterator<StopLossOption> iterator = optionList.iterator(); iterator.hasNext(); ) {
             StopLossOption stopLossOption = iterator.next();
-            if (stopLossOption.getMarketName().equalsIgnoreCase(marketName)) {
+            if (stopLossOption.getMarketName().equalsIgnoreCase(marketName) && stopLossOption.getMode().equals(mode)) {
                 // Remove the current element from the iterator and the list.
                 iterator.remove();
                 count++;

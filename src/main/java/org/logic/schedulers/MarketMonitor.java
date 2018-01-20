@@ -18,6 +18,8 @@ import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.dialog.box.SingleInstanceDialog;
 
 import javax.mail.MessagingException;
+import javax.xml.bind.JAXBException;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -293,57 +295,59 @@ public class MarketMonitor {
             logger.info("Stop-loss orders: " + stopLossOptionList.toString());
         }
 
-//        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
-//        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
-//            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
-//            return;
-//        }
-//
-//        // Check if there are any valid stop-loss orders for ALL.
-//        for (StopLossOption stopLossOption : stopLossOptionList) {
-//            if (stopLossOption.isSellAll()) {
-//                // Check if sell ALL is valid
-//                boolean valid = false;
-//                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-//                    if (totalBtc > stopLossOption.getCancelAt()) {
-//                        valid = true;
-//                    }
-//                } else {
-//                    if (totalBtc < stopLossOption.getCancelAt()) {
-//                        valid = true;
-//                    }
-//                }
-//                if (valid) {
-//                    new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, null);
-//                        }
-//                    }).start();
-//                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
-//                    return;
-//                }
-//            }
-//        }
-//
-//        // Check if there are any valid stop-loss orders for single order.
-//        for (StopLossOption stopLossOption : stopLossOptionList) {
-//            if (!stopLossOption.isSellAll()) {
-//                boolean valid = false;
-//                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-//                    if (marketDetailsMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
-//                        valid = true;
-//                    }
-//                } else {
-//                    if (marketDetailsMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
-//                        valid = true;
-//                    }
-//                }
-//                if (valid) {
-//                    executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
-//                }
-//            }
-//        }
+        double totalBtc = mainFrame.getPieChartFrame().getBtcSum();
+        if (totalBtc < CHART_SIGNIFICANT_MINIMUM) {
+            logger.debug("Total BTC value is too low. Aborting all stop-loss procedures.");
+            return;
+        }
+
+        // Check if there are any valid stop-loss orders for ALL.
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            if (stopLossOption.isSellAll()) {
+                // Check if sell ALL is valid
+                boolean valid = false;
+                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+                    if (totalBtc > stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                } else {
+                    if (totalBtc < stopLossOption.getCancelAt()) {
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, null);
+                        }
+                    }).start();
+                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
+                    return;
+                }
+            }
+        }
+
+        // Check if there are any valid stop-loss orders for single order.
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            String marketName = stopLossOption.getMarketName();
+            double cancelAt = stopLossOption.getCancelAt();
+            if (!stopLossOption.isSellAll() && marketDetailsMap.containsKey(marketName)) {
+                boolean valid = false;
+                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
+                    if (marketDetailsMap.get(marketName).getLast() > cancelAt) {
+                        valid = true;
+                    }
+                } else {
+                    if (marketDetailsMap.get(marketName).getLast() < cancelAt) {
+                        valid = true;
+                    }
+                }
+                if (valid) {
+                    executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
+                }
+            }
+        }
     }
 
     /**
@@ -379,13 +383,17 @@ public class MarketMonitor {
                         cancelFail = true;
                         break;
                     }
-                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
-                    if (orderResponse.isSuccess()) {
-                        count = 5;
+//                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
+//                    if (orderResponse.isSuccess()) {
+//                        count = 5;
+//                    StopLossOptionManager.getInstance().
+//                            removeOptionByMarketNameAndMode(singleMarketName, stopLossOption.getMode());
                         logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
-                    } else {
-                        count++;
-                    }
+//                    } else {
+//                        count++;
+//                    }
+                    count++;
+                    logger.debug("HABANA 4");
                 }
             }
         }
@@ -406,13 +414,17 @@ public class MarketMonitor {
                             cancelFail = true;
                             break;
                         }
-                        OrderResponse orderResponse = ModelBuilder.buildSellOrder(marketName, totalAmount, last);
-                        if (orderResponse.isSuccess()) {
-                            count = 5;
+//                        OrderResponse orderResponse = ModelBuilder.buildSellOrder(marketName, totalAmount, last);
+//                        if (orderResponse.isSuccess()) {
+//                            count = 5;
+//                        StopLossOptionManager.getInstance().
+//                                removeOptionByMarketNameAndMode(singleMarketName, stopLossOption.getMode());
                             logger.debug("Successfully placed sell order for " + totalAmount + " units of " + marketName + ", " + last + " each.");
-                        } else {
-                            count++;
-                        }
+//                        } else {
+//                            count++;
+//                        }
+                        count++;
+                        logger.debug("HABANA 5");
                     }
                 }
             }
