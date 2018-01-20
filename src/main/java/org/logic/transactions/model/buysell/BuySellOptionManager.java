@@ -2,6 +2,7 @@ package org.logic.transactions.model.buysell;
 
 import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.OptionManagerImpl;
+import org.logic.transactions.model.stoploss.modes.StopLossMode;
 import org.preferences.managers.PersistenceManager;
 
 import javax.xml.bind.JAXBException;
@@ -38,27 +39,10 @@ public class BuySellOptionManager extends OptionManagerImpl {
         PersistenceManager.saveBuySellOptionCollection(options);
     }
 
+
     @Override
-    public int removeOptionByMarketName(final String uuid) throws IOException {
-//        int count = 0;
-//        for (Iterator<BuySellOption> iterator = optionList.iterator(); iterator.hasNext();) {
-//            int i = 0;
-//            BuySellOption option = iterator.next();
-//            if (i == ) {
-//                // Remove the current element from the iterator and the list.
-//                iterator.remove();
-//                count++;
-//            }
-//        }
-//        if (count > 0) {
-//            ArrayList<BuySellOption> cancelOptions = new ArrayList<>();
-//            for (BuySellOption cancelOption1 : optionList) {
-//                cancelOptions.add(cancelOption1);
-//            }
-//            PersistenceManager.saveBuySellOptionCollection(cancelOptions);
-//        }
-//        return count;
-        return -1;
+    public int removeOptionByMarketNameAndMode(String marketName, StopLossMode mode) throws IOException, JAXBException {
+        return 0;
     }
 
     @Override

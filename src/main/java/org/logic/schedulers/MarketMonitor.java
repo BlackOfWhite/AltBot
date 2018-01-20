@@ -2,7 +2,10 @@ package org.logic.schedulers;
 
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
-import org.logic.models.responses.*;
+import org.logic.models.responses.MarketBalancesResponse;
+import org.logic.models.responses.MarketOrderResponse;
+import org.logic.models.responses.MarketSummaryResponse;
+import org.logic.models.responses.Response;
 import org.logic.schedulers.model.MarketDetails;
 import org.logic.smtp.MailSender;
 import org.logic.transactions.model.stoploss.StopLossOption;
@@ -20,9 +23,7 @@ import org.ui.views.dialog.box.SingleInstanceDialog;
 import javax.mail.MessagingException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -289,7 +290,8 @@ public class MarketMonitor {
      * @return
      */
     private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> marketDetailsMap) {
-        List<StopLossOption> stopLossOptionList = StopLossOptionManager.getInstance().getOptionList();
+        // Make a copy here!
+        List<StopLossOption> stopLossOptionList = new ArrayList<>(StopLossOptionManager.getInstance().getOptionList());
         logger.info("Number of stop-loss orders: " + stopLossOptionList.size());
         if (stopLossOptionList.size() > 0) {
             logger.info("Stop-loss orders: " + stopLossOptionList.toString());
@@ -304,7 +306,6 @@ public class MarketMonitor {
         // Check if there are any valid stop-loss orders for ALL.
         for (StopLossOption stopLossOption : stopLossOptionList) {
             if (stopLossOption.isSellAll()) {
-                // Check if sell ALL is valid
                 boolean valid = false;
                 if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
                     if (totalBtc > stopLossOption.getCancelAt()) {
@@ -319,7 +320,7 @@ public class MarketMonitor {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, null);
+                            executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, null);
                         }
                     }).start();
                     logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
@@ -344,7 +345,7 @@ public class MarketMonitor {
                     }
                 }
                 if (valid) {
-                    executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
+                    executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, stopLossOption.getMarketName());
                 }
             }
         }
@@ -358,15 +359,14 @@ public class MarketMonitor {
      * @param stopLossOption
      * @param singleMarketName
      */
-    private static void executeStopLoss(Map<String, MarketDetails> marketDetailsMap, MarketOrderResponse openMarketOrders, StopLossOption stopLossOption, final String singleMarketName) {
+    private static void executeStopLoss(Map<String, MarketDetails> marketDetailsMap,
+                                        MarketOrderResponse openMarketOrders,
+                                        StopLossOption stopLossOption, final String singleMarketName) {
         int count;
-        boolean cancelFail = false;
+        Set<String> marketNamesToSell = new HashSet<>();
         // Cancel all open orders
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             count = 0;
-            if (cancelFail) {
-                return;
-            }
             String marketName = result.getExchange();
             // Check if is in the single market mode.
             if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
@@ -380,52 +380,58 @@ public class MarketMonitor {
                 while (count <= 4) {
                     if (count == 4) {
                         logger.debug("One of the cancel operations failed! Aborting stop-loss all!");
-                        cancelFail = true;
-                        break;
+                        return;
                     }
 //                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
 //                    if (orderResponse.isSuccess()) {
 //                        count = 5;
-//                    StopLossOptionManager.getInstance().
-//                            removeOptionByMarketNameAndMode(singleMarketName, stopLossOption.getMode());
-                        logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
+                    logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
+                    marketNamesToSell.add(marketName);
 //                    } else {
 //                        count++;
 //                    }
-                    count++;
+                    count = 5;
                     logger.debug("HABANA 4");
                 }
             }
         }
+
         // Sell all alt coins. Allow retires.
-        for (Map.Entry<String, MarketDetails> entry : marketDetailsMap.entrySet()) {
-            if (entry.getValue().getTotalAmount() > BALANCE_MINIMUM) {
-                String marketName = entry.getKey();
+        for (String marketName : marketNamesToSell) {
+            count = 0;
+            double totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
+            if (totalAmount > BALANCE_MINIMUM) {
                 double last = marketDetailsMap.get(marketName).getLast();
-                double totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
-                count = 0;
                 if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
                     continue;
                 }
-                if (!cancelFail) {
-                    while (count <= 4) {
-                        if (count == 4) {
-                            logger.debug("One of the sell operations failed! Aborting stop-loss all!");
-                            cancelFail = true;
-                            break;
-                        }
+                while (count <= 4) {
+                    if (count == 4) {
+                        logger.debug("One of the sell operations failed! Aborting stop-loss all!");
+                        break;
+                    }
+                    // TODO
+                    // MAY CAUSE PROBLEMS IF ONLY LIMIT_SELL TYPES ARE GOING TO BE SOLD, BUT THERE ARE LIMIT_BUYs REMAINING.
+                    // IN SUCH CASE THE totalAmount will be too high!
 //                        OrderResponse orderResponse = ModelBuilder.buildSellOrder(marketName, totalAmount, last);
 //                        if (orderResponse.isSuccess()) {
 //                            count = 5;
-//                        StopLossOptionManager.getInstance().
-//                                removeOptionByMarketNameAndMode(singleMarketName, stopLossOption.getMode());
-                            logger.debug("Successfully placed sell order for " + totalAmount + " units of " + marketName + ", " + last + " each.");
+                    try {
+                        StopLossOptionManager.getInstance().
+                                removeOptionByMarketNameAndMode(marketName, stopLossOption.getMode());
+                    } catch (IOException e) {
+                        logger.error(e.getMessage() + "\nFailed to remove stop-loss option");
+                        return;
+                    } catch (JAXBException e) {
+                        logger.error(e.getMessage() + "\nFailed to remove stop-loss option");
+                        return;
+                    }
+                    logger.debug("Successfully placed sell order for " + totalAmount + " units of " + marketName + ", " + last + " each.");
 //                        } else {
 //                            count++;
 //                        }
-                        count++;
-                        logger.debug("HABANA 5");
-                    }
+                    count = 5;
+                    logger.debug("HABANA 5");
                 }
             }
         }
