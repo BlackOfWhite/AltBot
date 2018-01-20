@@ -204,11 +204,16 @@ public class PieChartFrame extends SingleInstanceFrame {
     }
 
     public void setIsConnected(boolean set) {
-        if (isConnected && !set) {
-            pieChart.setTitle(pieChart.getTitle() + " (Connecting..)");
-            pieChartData.sorted();
-        }
-        isConnected = set;
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                if (isConnected && !set) {
+                    pieChart.setTitle(pieChart.getTitle() + " (Reconnecting..)");
+                    pieChartData.sorted();
+                }
+                isConnected = set;
+            }
+        });
     }
 
     public double getBtcSum() {

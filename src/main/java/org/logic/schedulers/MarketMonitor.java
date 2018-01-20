@@ -86,11 +86,11 @@ public class MarketMonitor {
                     MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
 
                     // Market name - last price map
-                    final Map<String, MarketDetails> priceMap = createMarketDetailsMap(marketBalances, openMarketOrders);
-                    if (priceMap != null) {
+                    final Map<String, MarketDetails> marketDetailsMap = createMarketDetailsMap(marketBalances, openMarketOrders);
+                    if (marketDetailsMap != null) {
                         mainFrame.getPieChartFrame().setIsConnected(true);
-                        updatePieChart(marketBalances, priceMap);
-                        stopLossOrders(openMarketOrders, priceMap);
+                        updatePieChart(marketBalances, marketDetailsMap);
+                        stopLossOrders(openMarketOrders, marketDetailsMap);
                     } else {
                         logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
                         mainFrame.getPieChartFrame().setIsConnected(false);
@@ -153,10 +153,10 @@ public class MarketMonitor {
      * Price map is used only to get last price.
      *
      * @param marketBalances
-     * @param priceMap
+     * @param marketDetailsMap
      */
     private static void updatePieChart(final MarketBalancesResponse marketBalances,
-                                       final Map<String, MarketDetails> priceMap) {
+                                       final Map<String, MarketDetails> marketDetailsMap) {
         if (!mainFrame.isPieChartVisible()) {
             return;
         }
@@ -169,7 +169,7 @@ public class MarketMonitor {
             if (marketName.equals("BTC")) {
                 map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
             } else {
-                double last = priceMap.get(marketName).getLast();
+                double last = marketDetailsMap.get(marketName).getLast();
                 double btc = last * result.getBalance();
                 if (marketName.equalsIgnoreCase("USDT-BTC")) {
                     btc = result.getBalance() * (1 / last);
@@ -223,6 +223,11 @@ public class MarketMonitor {
      */
     public static Map<String, MarketDetails> createMarketDetailsMap(MarketBalancesResponse
                                                                             marketBalancesResponse, MarketOrderResponse openMarketOrders) {
+        if (marketBalancesResponse == null || openMarketOrders == null) {
+            logger.error("Either MarketBalancesResponse or MarketOrderResponse. MarketDetailsMap not created.");
+            return null;
+        }
+
         Map<String, MarketDetails> map = new HashMap<>();
         // Take only non-zero currencies from market balance.
         for (MarketBalancesResponse.Result result : marketBalancesResponse.getResult()) {
@@ -281,7 +286,7 @@ public class MarketMonitor {
      * @param openMarketOrders
      * @return
      */
-    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> priceMap) {
+    private static void stopLossOrders(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> marketDetailsMap) {
         List<StopLossOption> stopLossOptionList = StopLossOptionManager.getInstance().getOptionList();
         logger.info("Number of stop-loss orders: " + stopLossOptionList.size());
         if (stopLossOptionList.size() > 0) {
@@ -312,7 +317,7 @@ public class MarketMonitor {
 //                    new Thread(new Runnable() {
 //                        @Override
 //                        public void run() {
-//                            executeStopLoss(priceMap, openMarketOrders, stopLossOption, null);
+//                            executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, null);
 //                        }
 //                    }).start();
 //                    logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
@@ -326,16 +331,16 @@ public class MarketMonitor {
 //            if (!stopLossOption.isSellAll()) {
 //                boolean valid = false;
 //                if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-//                    if (priceMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
+//                    if (marketDetailsMap.get(stopLossOption.getMarketName()).getLast() > stopLossOption.getCancelAt()) {
 //                        valid = true;
 //                    }
 //                } else {
-//                    if (priceMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
+//                    if (marketDetailsMap.get(stopLossOption.getMarketName()).getLast() < stopLossOption.getCancelAt()) {
 //                        valid = true;
 //                    }
 //                }
 //                if (valid) {
-//                    executeStopLoss(priceMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
+//                    executeStopLoss(marketDetailsMap, openMarketOrders, stopLossOption, stopLossOption.getMarketName());
 //                }
 //            }
 //        }
@@ -344,12 +349,12 @@ public class MarketMonitor {
     /**
      * Leave singleMarketName as NULL, to execute stop-loss for all markets. Pass any value to execute stop-loss just for one market.
      *
-     * @param priceMap
+     * @param marketDetailsMap
      * @param openMarketOrders
      * @param stopLossOption
      * @param singleMarketName
      */
-    private static void executeStopLoss(Map<String, MarketDetails> priceMap, MarketOrderResponse openMarketOrders, StopLossOption stopLossOption, final String singleMarketName) {
+    private static void executeStopLoss(Map<String, MarketDetails> marketDetailsMap, MarketOrderResponse openMarketOrders, StopLossOption stopLossOption, final String singleMarketName) {
         int count;
         boolean cancelFail = false;
         // Cancel all open orders
@@ -385,11 +390,11 @@ public class MarketMonitor {
             }
         }
         // Sell all alt coins. Allow retires.
-        for (Map.Entry<String, MarketDetails> entry : priceMap.entrySet()) {
+        for (Map.Entry<String, MarketDetails> entry : marketDetailsMap.entrySet()) {
             if (entry.getValue().getTotalAmount() > BALANCE_MINIMUM) {
                 String marketName = entry.getKey();
-                double last = priceMap.get(marketName).getLast();
-                double totalAmount = priceMap.get(marketName).getTotalAmount();
+                double last = marketDetailsMap.get(marketName).getLast();
+                double totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
                 count = 0;
                 if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
                     continue;
