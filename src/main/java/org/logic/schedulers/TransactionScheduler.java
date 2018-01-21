@@ -21,8 +21,8 @@ import java.util.concurrent.TimeUnit;
 public class TransactionScheduler {
 
     private static final int TIME = 4;
-    private static final String CURRENT_ALT_COIN = "EXP";
-    private static final int PERCENT_GAIN = 5;
+    private static final String CURRENT_ALT_COIN = "ADX";
+    private static final int PERCENT_GAIN = 2;
     private static final double sellAbove = 0.00061;
     private static final double buyBelow = 0.00059;
     private static final double stopBelow = 0.0005;
@@ -76,8 +76,8 @@ public class TransactionScheduler {
                 MarketOrderResponse marketOrderHistory = JSONParser.parseMarketOrder(response);
                 logger.debug(marketOrderHistory);
 
-//                placeOrder(marketSummary, marketOrderHistory, marketBalanceBtc, marketBalanceAlt);
-                placeOrderAlignToLowest(marketSummary, marketOrderHistory, marketBalanceBtc, marketBalanceAlt);
+                placeOrder(marketSummary, marketOrderHistory, marketBalanceBtc, marketBalanceAlt);
+//                placeOrderAlignToLowest(marketSummary, marketOrderHistory, marketBalanceBtc, marketBalanceAlt);
             } catch (Exception e) {
                 logger.error(e.getMessage());
             }
@@ -109,11 +109,18 @@ public class TransactionScheduler {
     private static void placeOrder(MarketSummaryResponse marketSummary, MarketOrderResponse marketOrderHistory,
                                    MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
         double last = marketSummary.getResult().get(0).getLast();
-        // Stop
-        if (last < stopBelow) {
-            logger.debug("Aborting - is below stop value.");
+        if (MarketMonitor.getInstance().priceHistoryMap.get("BTC-" + CURRENT_ALT_COIN).size() < MarketMonitor.LIST_MAX_SIZE) {
+            logger.debug("Too few records in the history map to start a bot!");
             return;
         }
+        double avg = MarketMonitor.getInstance().avgValueMap.get("BTC-" + CURRENT_ALT_COIN);
+        double buyBelow = avg * (PERCENT_GAIN / 200);
+        double sellAbove = avg * (1 + (PERCENT_GAIN / 200));
+//        // Stop
+//        if (last < stopBelow) {
+//            logger.debug("Aborting - is below stop value.");
+//            return;
+//        }
         // Now we sell or buy?
         boolean buy;
         try {

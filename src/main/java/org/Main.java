@@ -39,6 +39,6 @@ public class Main {
         // Start OrderMonitor
         logger.debug("Starting schedulers.");
         MarketMonitor.getInstance().start(mainFrame);
-//        TransactionScheduler.getInstance().start();
+        TransactionScheduler.getInstance().start();
     }
 }

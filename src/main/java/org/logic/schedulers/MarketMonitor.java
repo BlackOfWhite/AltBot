@@ -20,6 +20,7 @@ import org.ui.views.dialog.box.SingleInstanceDialog;
 import javax.mail.MessagingException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -42,6 +43,10 @@ public class MarketMonitor {
     private static SingleInstanceDialog dialog;
     private static int DIALOG_DELAY = 5; // show dialog every 5 runs
 
+    public static volatile HashMap<String, LinkedList<Double>> priceHistoryMap;
+    public static HashMap<String, Double> avgValueMap;
+    public static final int LIST_MAX_SIZE = 500;
+
     private static final int RETRY_COUNT = 3;
 
     private MarketMonitor() {
@@ -50,6 +55,8 @@ public class MarketMonitor {
     public static MarketMonitor getInstance() {
         if (instance == null) {
             instance = new MarketMonitor();
+            priceHistoryMap = new HashMap<>();
+            avgValueMap = new HashMap<>();
             ses = Executors.newScheduledThreadPool(10);
         }
         return instance;
@@ -261,6 +268,8 @@ public class MarketMonitor {
                     MarketDetails marketDetails = entry.getValue();
                     marketDetails.setLast(marketSummary.getResult().get(0).getLast());
                     entry.setValue(marketDetails);
+                    // Update map of average values
+                    updatePriceHistoryMap(entry.getKey(), marketDetails.getLast());
                 } catch (NullPointerException ex) {
                     logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
                     return null;
@@ -426,5 +435,23 @@ public class MarketMonitor {
                 }
             }
         }
+    }
+
+    private static void updatePriceHistoryMap(String marketName, double last) {
+        if (!priceHistoryMap.containsKey(marketName)) {
+            priceHistoryMap.put(marketName, new LinkedList<>());
+        }
+        if (priceHistoryMap.get(marketName).size() >= LIST_MAX_SIZE) {
+            priceHistoryMap.get(marketName).remove(0);
+        }
+        priceHistoryMap.get(marketName).add(last);
+        //
+        double avg = priceHistoryMap.get(marketName).stream().mapToDouble(val -> val).average().getAsDouble();
+        DecimalFormat df = new DecimalFormat("#");
+        df.setMaximumFractionDigits(8);
+        logger.debug("** Avg price for " + marketName + " is: " + df.format(avg) + ". Size: " + priceHistoryMap.get(marketName).size());
+
+        // Update avg price
+        avgValueMap.put(marketName, avg);
     }
 }

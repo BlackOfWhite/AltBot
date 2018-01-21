@@ -24,6 +24,9 @@ public class Constants {
     public static final double SELL_PRICE_RATIO = 0.997;
     public static final double BUY_PRICE_RATIO = 1.003;
 
+    // Bittrex transaction fees. Just to make sure rounding up/down doesn't mess the things up.
+    public static final double BITTREX_FEE = 0.0025 + 0.0001;
+
     // Dialogs
     public static final String DIALOG_FAILED_TO_LOAD_API_KEYS = "Failed to load one or more API keys! Please go to 'API Setup' section in the 'Settings' menu.";
     public static final String DIALOG_INVALID_API_KEYS = "API keys are invalid. Please go to 'API Setup' section in the 'Settings' menu.";
