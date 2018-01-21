@@ -217,8 +217,7 @@ public class TransactionScheduler {
 
     private static void buy(double quantity, double last) {
         try {
-            final String response = MarketRequests.placeOrderBuy("BTC-" + CURRENT_ALT_COIN, quantity, last + 0.00002);
-            OrderResponse orderResponse = JSONParser.parseOrderResponse(response);
+            OrderResponse orderResponse = ModelBuilder.buildBuyOrder("BTC-" + CURRENT_ALT_COIN, quantity, last + 0.00002);
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + CURRENT_ALT_COIN +
                         " for " + last + " each.");
@@ -233,8 +232,7 @@ public class TransactionScheduler {
 
     private static void sell(double quantity, double last) {
         try {
-            final String response = MarketRequests.placeOrderSell("BTC-" + CURRENT_ALT_COIN, quantity, last - 0.00002);
-            OrderResponse orderResponse = JSONParser.parseOrderResponse(response);
+            OrderResponse orderResponse = ModelBuilder.buildSellOrder("BTC-" + CURRENT_ALT_COIN, quantity, last);
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to sell " + quantity + " of " + CURRENT_ALT_COIN +
                         " for " + last + " each.");

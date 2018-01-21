@@ -24,7 +24,7 @@ public class StopLossOption implements Serializable, OptionImpl {
     }
 
     public StopLossOption(String marketName, double cancelAt, StopLossCondition condition, StopLossMode mode, boolean sellAll) {
-        this.marketName = marketName;
+        this.marketName = marketName.toUpperCase();
         this.cancelAt = cancelAt;
         this.condition = condition;
         this.mode = mode;
