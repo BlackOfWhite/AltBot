@@ -32,6 +32,8 @@ public class TransactionScheduler {
     private static TransactionScheduler instance;
     private static ScheduledExecutorService ses;
 
+    private static double lastTimeBought = -1;
+
 
     private TransactionScheduler() {
     }
@@ -148,6 +150,9 @@ public class TransactionScheduler {
             logger.debug("Trying to place sell order for " + CURRENT_ALT_COIN + ".");
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
+                if (lastTimeBought > 0 && (lastTimeBought * (1 + (PERCENT_GAIN / 200))) > last) {
+                    return;
+                }
                 if (last > sellAbove) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
@@ -224,10 +229,11 @@ public class TransactionScheduler {
 
     private static void buy(double quantity, double last) {
         try {
-            OrderResponse orderResponse = ModelBuilder.buildBuyOrder("BTC-" + CURRENT_ALT_COIN, quantity, last + 0.00002);
+            OrderResponse orderResponse = ModelBuilder.buildBuyOrder("BTC-" + CURRENT_ALT_COIN, quantity, last);
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + CURRENT_ALT_COIN +
                         " for " + last + " each.");
+                lastTimeBought = last;
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + CURRENT_ALT_COIN +
                         " for " + last + " each.\n" + orderResponse);
