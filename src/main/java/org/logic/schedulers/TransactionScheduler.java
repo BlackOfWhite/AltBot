@@ -20,11 +20,12 @@ import java.util.concurrent.TimeUnit;
 
 public class TransactionScheduler {
 
-    private static final int TIME = 4;
     public static final String CURRENT_ALT_COIN = "ADX";
+    private static final int TIME = 4;
     private static final int PERCENT_GAIN = 2;
-    private static final double sellAbove = 0.00061;
-    private static final double buyBelow = 0.00059;
+    private static final double sellAboveRatio = 1.02d; // 2% above avg
+    private static final double buyBelowRatio = 0.98d; // 2% below avg
+    private static final double totalGainRatio = 1.05d; // ~2.9% above bought price
     private static final double stopBelow = 0.0005;
     private static final double btc = 0.0155;
     public volatile static boolean active = false;
@@ -116,8 +117,8 @@ public class TransactionScheduler {
         }
         double last = marketSummary.getResult().get(0).getLast();
         double avg = MarketMonitor.getInstance().avgValueMap.get("BTC-" + CURRENT_ALT_COIN);
-        double buyBelow = avg * 0.98d;
-        double sellAbove = avg * 1.02d;
+        double buyBelow = avg * buyBelowRatio;
+        double sellAbove = avg * sellAboveRatio;
         // Now we sell or buy?
         boolean buy;
         try {
@@ -127,7 +128,7 @@ public class TransactionScheduler {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
-            logger.debug("Trying to place a buy order for " + CURRENT_ALT_COIN + ". Last: " + last + ", buyBelow: " + buyBelow);
+            logger.debug("Trying to place a buy order for " + CURRENT_ALT_COIN + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < btc) {
                 logger.debug("Not enough BTC. You have " + btcBalance);
@@ -141,12 +142,14 @@ public class TransactionScheduler {
             logger.debug("Trying to buy " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
             buy(quantity, last);
         } else {
-            logger.debug("Trying to place a sell order for " + CURRENT_ALT_COIN + ". Last: " + last + ", sellAbove: " + sellAbove);
+            logger.debug("Trying to place a sell order for " + CURRENT_ALT_COIN + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "].");
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
-                if (lastTimeBought > 0 && (lastTimeBought * (1 + (PERCENT_GAIN / 200))) > last) {
+                // Must have certain gain from this transaction.
+                if (lastTimeBought > 0 && (lastTimeBought * totalGainRatio) > last) {
                     return;
                 }
+                // Must be also above average.
                 if (last > sellAbove) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
