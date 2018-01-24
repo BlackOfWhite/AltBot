@@ -26,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.logic.schedulers.TransactionScheduler.CURRENT_ALT_COIN;
 import static org.preferences.Constants.*;
 
 public class MarketMonitor {
@@ -45,7 +46,8 @@ public class MarketMonitor {
 
     public static volatile HashMap<String, LinkedList<Double>> priceHistoryMap;
     public static HashMap<String, Double> avgValueMap;
-    public static final int LIST_MAX_SIZE = 500;
+    public static final int LIST_MAX_SIZE = 5000;
+    public static final int LIST_OK_SIZE = 750;
 
     private static final int RETRY_COUNT = 3;
 
@@ -259,9 +261,13 @@ public class MarketMonitor {
                 map.put(result.getExchange(), new MarketDetails(VALUE_NOT_SET, VALUE_NOT_SET));
             }
         }
-        // Marge and get last price.
+        // Add special currencies used just in TransactionScheduler. Just to collect their history.
+        if (!map.containsKey(CURRENT_ALT_COIN)) {
+            map.put("BTC-" + CURRENT_ALT_COIN, new MarketDetails(VALUE_NOT_SET, VALUE_NOT_SET, true));
+        }
+        // Merge and get last price.
         for (Map.Entry<String, MarketDetails> entry : map.entrySet()) {
-            if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM) {
+            if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM || entry.getValue().isAllowNoBalance()) {
                 MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
                 try {
                     // update last price

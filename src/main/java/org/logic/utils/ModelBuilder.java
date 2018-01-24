@@ -78,7 +78,7 @@ public class ModelBuilder {
     public static OrderResponse buildSellOrder(String marketName, double quantity, double rate) {
         OrderResponse orderResponse = null;
         rate = rate * SELL_PRICE_RATIO;
-        quantity = (1-BITTREX_FEE) * quantity;
+//        quantity = (1-BITTREX_FEE) * quantity;
         try {
             String response = MarketRequests.placeOrderSell(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
@@ -92,7 +92,7 @@ public class ModelBuilder {
     public static OrderResponse buildBuyOrder(String marketName, double quantity, double rate) {
         OrderResponse orderResponse = null;
         rate = rate * BUY_PRICE_RATIO;
-        quantity = (1-BITTREX_FEE) * quantity;
+//        quantity = (1-BITTREX_FEE) * quantity;
         try {
             String response = MarketRequests.placeOrderBuy(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
