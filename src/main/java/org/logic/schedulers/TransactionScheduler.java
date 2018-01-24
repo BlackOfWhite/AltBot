@@ -22,10 +22,8 @@ public class TransactionScheduler {
 
     public static final String CURRENT_ALT_COIN = "ADX";
     private static final int TIME = 4;
-    private static final int PERCENT_GAIN = 2;
-    private static final double sellAboveRatio = 1.02d; // 2% above avg
     private static final double buyBelowRatio = 0.98d; // 2% below avg
-    private static final double totalGainRatio = 1.05d; // ~2.9% above bought price
+    private static final double totalGainRatio = 1.04d; // 4% above bought price
     private static final double stopBelow = 0.0005;
     private static final double btc = 0.0155;
     public volatile static boolean active = false;
@@ -118,7 +116,7 @@ public class TransactionScheduler {
         double last = marketSummary.getResult().get(0).getLast();
         double avg = MarketMonitor.getInstance().avgValueMap.get("BTC-" + CURRENT_ALT_COIN);
         double buyBelow = avg * buyBelowRatio;
-        double sellAbove = avg * sellAboveRatio;
+        double sellAbove = lastTimeBought * totalGainRatio;
         // Now we sell or buy?
         boolean buy;
         try {
@@ -146,11 +144,7 @@ public class TransactionScheduler {
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
                 // Must have certain gain from this transaction.
-                if (lastTimeBought > 0 && (lastTimeBought * totalGainRatio) > last) {
-                    return;
-                }
-                // Must be also above average.
-                if (last > sellAbove) {
+                if (last >= sellAbove) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
                     sell(quantity, last);
