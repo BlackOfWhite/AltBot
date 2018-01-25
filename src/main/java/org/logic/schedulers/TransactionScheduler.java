@@ -31,6 +31,10 @@ public class TransactionScheduler {
     private static TransactionScheduler instance;
     private static ScheduledExecutorService ses;
 
+    // Cancel pending order after N tries, if occasion missed.
+    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 100;
+    private static int order_idle_counter = 0;
+
     private static double lastTimeBought = -1;
 
 
@@ -58,12 +62,22 @@ public class TransactionScheduler {
         ses.scheduleAtFixedRate(() -> {
             logger.debug("\nNew run..");
             try {
-                // Check if there are open orders for this coin:
+                // Check if there are open orders for this coin. Cancel idle orders.
                 MarketOrderResponse marketOrderResponse = ModelBuilder.buildAllOpenOrders();
                 for (MarketOrderResponse.Result result : marketOrderResponse.getResult()) {
-                    if (result.getExchange().endsWith(CURRENT_ALT_COIN)) {
+                    if (result.getExchange().endsWith(CURRENT_ALT_COIN) && order_idle_counter < CANCEL_IDLE_ORDER_AFTER_N_TRIES) {
                         logger.debug("There are still pending orders for " + CURRENT_ALT_COIN + ".");
+                        order_idle_counter++;
                         return;
+                    } else if (order_idle_counter >= CANCEL_IDLE_ORDER_AFTER_N_TRIES) {
+                        // Cancel idle order
+                        logger.debug("Trying to cancel idle " + result.getOrderType() + " order for " + result.getExchange() + " market.");
+                        OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(result.getOrderUuid());
+                        if (orderResponse.isSuccess()) {
+                            logger.debug("Successfully cancelled idle " + result.getOrderType() + " order for " + result.getExchange() + " market.");
+                            order_idle_counter = 0;
+                            return;
+                        }
                     }
                 }
 

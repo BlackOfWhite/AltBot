@@ -74,43 +74,41 @@ public class MarketMonitor {
             logger.debug("Recreating scheduler..");
             ses = Executors.newScheduledThreadPool(10);
         }
-        ses.scheduleAtFixedRate(new Runnable() {
-            public void run() {
-                logger.debug("\nNew run..");
-                try {
-                    // Open market orders & settings validation
-                    COUNTER = (COUNTER + 1) % 10000;
-                    if (!loadAPIKeys()) {
-                        return;
-                    }
-                    final MarketOrderResponse openMarketOrders = ModelBuilder.buildAllOpenOrders();
-                    if (!validateResponse(openMarketOrders)) {
-                        return;
-                    }
-
-                    // Main frame status bar
-                    sharedMarketOrders = openMarketOrders;
-                    final int totalOrdersCount = openMarketOrders.getResult().size();
-                    final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
-                    updateMainFrameStatus(totalOrdersCount, buyOrdersCount);
-
-                    MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
-
-                    // Market name - last price map
-                    final Map<String, MarketDetails> marketDetailsMap = createMarketDetailsMap(marketBalances, openMarketOrders);
-                    if (marketDetailsMap != null) {
-                        mainFrame.getPieChartFrame().setIsConnected(true);
-                        updatePieChart(marketBalances, marketDetailsMap);
-                        stopLossOrders(openMarketOrders, marketDetailsMap);
-                    } else {
-                        logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
-                        mainFrame.getPieChartFrame().setIsConnected(false);
-                    }
-                    sendNotification(totalOrdersCount);
-                } catch (Exception e) {
-                    logger.error(e.toString());
-                    e.printStackTrace();
+        ses.scheduleAtFixedRate(() -> {
+            logger.debug("\nNew run..");
+            try {
+                // Open market orders & settings validation
+                COUNTER = (COUNTER + 1) % 10000;
+                if (!loadAPIKeys()) {
+                    return;
                 }
+                final MarketOrderResponse openMarketOrders = ModelBuilder.buildAllOpenOrders();
+                if (!validateResponse(openMarketOrders)) {
+                    return;
+                }
+
+                // Main frame status bar
+                sharedMarketOrders = openMarketOrders;
+                final int totalOrdersCount = openMarketOrders.getResult().size();
+                final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
+                updateMainFrameStatus(totalOrdersCount, buyOrdersCount);
+
+                MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
+
+                // Market name - last price map
+                final Map<String, MarketDetails> marketDetailsMap = createMarketDetailsMap(marketBalances, openMarketOrders);
+                if (marketDetailsMap != null) {
+                    mainFrame.getPieChartFrame().setIsConnected(true);
+                    updatePieChart(marketBalances, marketDetailsMap);
+                    stopLossOrders(openMarketOrders, marketDetailsMap);
+                } else {
+                    logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
+                    mainFrame.getPieChartFrame().setIsConnected(false);
+                }
+                sendNotification(totalOrdersCount);
+            } catch (Exception e) {
+                logger.error(e.toString());
+                e.printStackTrace();
             }
         }, 0, SLEEP_TIME, TimeUnit.SECONDS);  // execute every x seconds
         active = true;

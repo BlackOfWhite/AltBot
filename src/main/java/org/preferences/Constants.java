@@ -21,11 +21,8 @@ public class Constants {
     public static final String ORDER_TYPE_BUY = "LIMIT_BUY";
 
     // Sell all transactions for SELL_PRICE_RATIO * last price.
-    public static final double SELL_PRICE_RATIO = 0.997;
-    public static final double BUY_PRICE_RATIO = 1.003;
-
-    // Bittrex transaction fees. Just to make sure rounding up/down doesn't mess the things up.
-    public static final double BITTREX_FEE = 0.0025 + 0.0001;
+    public static final double SELL_PRICE_RATIO = 0.998;
+    public static final double BUY_PRICE_RATIO = 1.002;
 
     // Dialogs
     public static final String DIALOG_FAILED_TO_LOAD_API_KEYS = "Failed to load one or more API keys! Please go to 'API Setup' section in the 'Settings' menu.";

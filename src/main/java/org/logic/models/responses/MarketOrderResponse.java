@@ -21,7 +21,7 @@ public class MarketOrderResponse extends Response {
         if (result == null) {
             result = new ArrayList<>();
         }
-        result.add(new Result(1,"", 1, "", exchange));
+        result.add(new Result(1, 1, "", 1, "", exchange));
     }
 
     @Override
@@ -64,8 +64,11 @@ public class MarketOrderResponse extends Response {
         String OrderUuid;
         @Expose
         String Exchange;
+        @Expose
+        double Price;
 
-        public Result(double pricePerUnit, String orderType, double quantityRemaining, String orderUuid, String exchange) {
+        public Result(double price, double pricePerUnit, String orderType, double quantityRemaining, String orderUuid, String exchange) {
+            Price = price;
             PricePerUnit = pricePerUnit;
             OrderType = orderType;
             QuantityRemaining = quantityRemaining;
@@ -89,6 +92,7 @@ public class MarketOrderResponse extends Response {
                     ", QuantityRemaining=" + QuantityRemaining +
                     ", OrderUuid='" + OrderUuid + '\'' +
                     ", Exchange='" + Exchange + '\'' +
+                    ", Price=" + Price +
                     '}';
         }
 
@@ -102,6 +106,10 @@ public class MarketOrderResponse extends Response {
 
         public String getOrderUuid() {
             return OrderUuid;
+        }
+
+        public double getPrice() {
+            return Price;
         }
     }
 
