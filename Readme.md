@@ -25,20 +25,19 @@
 
 ![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/ClassicTransactionCreator.png)
 
-# Steps to Setup the AltCoin:
 
+
+# Steps to Setup the AltCoin:
 1. Go to Bittrex Settings Tab, You need to generate API key to Place BUY or SELL order via Bot. Under API Keys in sidebar:
 * Click on Add New Key
 * Make *Read Info*, *Trade Limit*, *Trade Market* - ON. **Remember not to give Withdraw permission to your bot**
 * Put your 2-Factor Authentication Code and click Update Keys.
 * Now, you will get **KEY** and **SECRET**. Copy them and Store it at safe place as **SECRET** will vanish once page refreshes.
 
- 
-
 ![Screen Shot 2017-07-17 at 1.30.21 PM.png](https://steemitimages.com/DQmTb8v4ygvqdai46CWuFNVUsDQ3ye4MrBVfd6qzxwVPArH/Screen%20Shot%202017-07-17%20at%201.30.21%20PM.png)
 
-2. Download **AltCoin**:
 
+2. Download **AltCoin**:
 * Git (optional if you don't want to contribute, just download  the repo from github).
 * Go To my Github Repo, Download/Clone It: [AltCoin](https://github.com/BlackOfWhite/AltCoin.git)
    `git clone https://github.com/BlackOfWhite/AltCoin.git`
@@ -65,6 +64,14 @@
 * There is currently only one version of **AltCoin**, therefore it may still contain some bugs. Feel free to mail me at: **niewinskipiotr1993@gmail.com** in case you found any. 
 * However, even if this is just a test version / first release, it is **not possible** that your coins would be lost! Feel free to play around!
 * Any ideas of the features that should be included in the next release are welcome!
+
+
+
+# Bots
+
+* AVG-PRICE bot:
+
+
 
 
 # Future Scope

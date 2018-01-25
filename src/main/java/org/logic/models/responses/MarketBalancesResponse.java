@@ -72,26 +72,4 @@ public class MarketBalancesResponse extends Response {
             return Balance < BALANCE_MINIMUM && Available < BALANCE_MINIMUM;
         }
     }
-
-//    public void calculateTotalBalances() {
-//        balanceBTC = 0.0d;
-//        balanceUSD = 0.0d;
-//        for (Result result : result) {
-//            if (result.getBalance() > BALANCE_MINIMUM) {
-//                balanceBTC += result.getBalance();
-////                if (basecurrency is btc)
-//            }
-//        }
-//    }
-//
-//    public double getBalanceBTC() {
-//        return balanceBTC;
-//    }
-//
-//    public double getBalanceUSD() {
-//        return balanceUSD;
-//    }
-//
-//    "Balance" : 4.21549076,
-//            "Available" : 4.21549076,
 }
