@@ -24,6 +24,7 @@ public class TransactionScheduler {
     private static final int TIME = 4;
     private static final double buyBelowRatio = 0.98d; // 2% below avg
     private static final double totalGainRatio = 1.04d; // 4% above bought price
+    private static final double sellAndResetRatio = 0.095d; // 5% will auto sell also below this, below bought price
     private static final double stopBelow = 0.0005;
     private static final double btc = 0.0155;
     public volatile static boolean active = false;
@@ -113,9 +114,6 @@ public class TransactionScheduler {
             return;
         }
         double last = marketSummary.getResult().get(0).getLast();
-        double avg = MarketMonitor.getInstance().avgValueMap.get("BTC-" + CURRENT_ALT_COIN);
-        double buyBelow = avg * buyBelowRatio;
-        double sellAbove = lastTimeBought * totalGainRatio;
         // Now we sell or buy?
         boolean buy;
         try {
@@ -125,6 +123,8 @@ public class TransactionScheduler {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
+            double avg = MarketMonitor.getInstance().avgValueMap.get("BTC-" + CURRENT_ALT_COIN);
+            double buyBelow = avg * buyBelowRatio;
             logger.debug("Trying to place a buy order for " + CURRENT_ALT_COIN + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < btc) {
@@ -139,11 +139,13 @@ public class TransactionScheduler {
             logger.debug("Trying to buy " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
             buy(quantity, last);
         } else {
+            double sellAbove = lastTimeBought * totalGainRatio;
+            double sellAndResetBelow = lastTimeBought * sellAndResetRatio;
             logger.debug("Trying to place a sell order for " + CURRENT_ALT_COIN + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "].");
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
-                // Must have certain gain from this transaction.
-                if (last >= sellAbove) {
+                // Must have certain gain from this transaction. We also safe sell if price drops too much in relation to bought price.
+                if (last >= sellAbove || last < sellAndResetBelow) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + CURRENT_ALT_COIN + " for " + last + ".");
                     sell(quantity, last);
