@@ -47,7 +47,6 @@ public class MarketMonitor {
     public static volatile HashMap<String, LinkedList<Double>> priceHistoryMap;
     public static HashMap<String, Double> avgValueMap;
     public static final int LIST_MAX_SIZE = 1440; // 2h. Optimum?
-    public static final int LIST_OK_SIZE = 560; // 45min
 
     private static final int RETRY_COUNT = 3;
 

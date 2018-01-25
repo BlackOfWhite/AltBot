@@ -31,6 +31,10 @@ public class TransactionScheduler {
     private static TransactionScheduler instance;
     private static ScheduledExecutorService ses;
 
+    // History map
+    public static final int LIST_OK_SIZE = 560; // 45min
+
+
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 100;
     private static int order_idle_counter = 0;
@@ -123,8 +127,9 @@ public class TransactionScheduler {
      */
     private static void placeOrder(MarketSummaryResponse marketSummary, MarketOrderResponse marketOrderHistory,
                                    MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
-        if (MarketMonitor.getInstance().priceHistoryMap.get("BTC-" + CURRENT_ALT_COIN).size() < MarketMonitor.LIST_OK_SIZE) {
-            logger.debug("Too few records in the history map to start a bot!");
+        int size = MarketMonitor.getInstance().priceHistoryMap.get("BTC-" + CURRENT_ALT_COIN).size();
+        if (size < LIST_OK_SIZE) {
+            logger.debug("Too few records [" + size + "/" + LIST_OK_SIZE + "] in the history map to start a bot. Aborting.");
             return;
         }
         double last = marketSummary.getResult().get(0).getLast();

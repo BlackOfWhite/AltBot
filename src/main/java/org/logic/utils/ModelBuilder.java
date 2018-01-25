@@ -6,7 +6,6 @@ import org.logic.models.responses.*;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
 
-import static org.preferences.Constants.BITTREX_FEE;
 import static org.preferences.Constants.BUY_PRICE_RATIO;
 import static org.preferences.Constants.SELL_PRICE_RATIO;
 
