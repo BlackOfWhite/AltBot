@@ -33,7 +33,6 @@ public class TransactionScheduler {
 
     private static double lastTimeBought = -1;
 
-
     private TransactionScheduler() {
     }
 
