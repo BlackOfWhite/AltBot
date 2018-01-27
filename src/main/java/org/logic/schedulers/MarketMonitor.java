@@ -5,6 +5,8 @@ import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
 import org.logic.schedulers.model.MarketDetails;
 import org.logic.smtp.MailSender;
+import org.logic.transactions.model.buysell.BotAvgOption;
+import org.logic.transactions.model.buysell.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;
@@ -26,13 +28,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static org.logic.schedulers.TransactionScheduler.CURRENT_ALT_COIN;
 import static org.preferences.Constants.*;
+import static sun.security.x509.X509CertInfo.SUBJECT;
 
 public class MarketMonitor {
 
     private static final int SLEEP_TIME = 5;
-    private static final String SUBJECT = "Open orders status changed!";
     public volatile static boolean active = false;
     public volatile static int COUNTER = -1;
     private static Logger logger = Logger.getLogger(MarketMonitor.class);
@@ -259,8 +260,10 @@ public class MarketMonitor {
             }
         }
         // Add special currencies used just in TransactionScheduler. Just to collect their history.
-        if (!map.containsKey(CURRENT_ALT_COIN)) {
-            map.put("BTC-" + CURRENT_ALT_COIN, new MarketDetails(VALUE_NOT_SET, VALUE_NOT_SET, true));
+        for (BotAvgOption botAvgOption : BotAvgOptionManager.getInstance().getOptionList()) {
+            if (!map.containsKey(botAvgOption.getMarketName())) {
+                map.put(botAvgOption.getMarketName(), new MarketDetails(VALUE_NOT_SET, VALUE_NOT_SET, true));
+            }
         }
         // Merge and get last price.
         for (Map.Entry<String, MarketDetails> entry : map.entrySet()) {

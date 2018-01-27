@@ -14,4 +14,12 @@ public class MarketNameUtils {
         return "BTC-" + currency;
     }
 
+    public static String getCoinNameFromMarketName(String marketName) {
+        if (marketName.contains("-")) {
+            return marketName.substring(marketName.lastIndexOf("-") + 1);
+        } else {
+            return marketName;
+        }
+    }
+
 }

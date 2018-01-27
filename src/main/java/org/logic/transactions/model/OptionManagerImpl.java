@@ -2,7 +2,7 @@ package org.logic.transactions.model;
 
 import org.apache.log4j.Logger;
 import org.logic.exceptions.EntryExistsException;
-import org.logic.transactions.model.buysell.BuySellOptionManager;
+import org.logic.transactions.model.buysell.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossMode;
 
 import javax.xml.bind.JAXBException;
@@ -10,7 +10,7 @@ import java.io.IOException;
 
 public abstract class OptionManagerImpl<T extends OptionImpl> {
 
-    private static Logger logger = Logger.getLogger(BuySellOptionManager.class);
+    private static Logger logger = Logger.getLogger(BotAvgOptionManager.class);
 
     public abstract int removeOptionByMarketNameAndMode(String marketName, StopLossMode mode) throws IOException, JAXBException;
 

@@ -1,10 +1,10 @@
 package org.preferences.managers;
 
 import org.apache.log4j.Logger;
-import org.logic.transactions.model.buysell.BuySellOption;
-import org.logic.transactions.model.buysell.BuySellOptions;
-import org.logic.transactions.model.stoploss.StopLossOptions;
+import org.logic.transactions.model.buysell.BotAvgOption;
+import org.logic.transactions.model.buysell.BotAvgOptions;
 import org.logic.transactions.model.stoploss.StopLossOption;
+import org.logic.transactions.model.stoploss.StopLossOptions;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 public class PersistenceManager {
 
     private static final String STOP_LOSS_OPTIONS_FILE_NAME = "stopLossOptions.xml";
-    private static final String BUY_SELL_OPTIONS_FILE_NAME = "buySellOptions.xml";
+    private static final String BOT_AVG_OPTIONS_FILE_NAME = "botAvgOptions.xml";
 
     private static Logger logger = Logger.getLogger(PersistenceManager.class);
 
@@ -43,19 +43,19 @@ public class PersistenceManager {
         writer.close();
     }
 
-    public static void saveBuySellOptionCollection(ArrayList<BuySellOption> options) throws IOException, JAXBException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(BUY_SELL_OPTIONS_FILE_NAME));
-        JAXBContext context = JAXBContext.newInstance(BuySellOption.class);
+    public static void saveBotAvgOptionCollection(ArrayList<BotAvgOption> options) throws IOException, JAXBException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter(BOT_AVG_OPTIONS_FILE_NAME));
+        JAXBContext context = JAXBContext.newInstance(BotAvgOption.class);
         Marshaller m = context.createMarshaller();
         m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-        m.marshal(new BuySellOptions(options), writer);
+        m.marshal(new BotAvgOptions(options), writer);
         writer.close();
     }
 
-    public static ArrayList<BuySellOption> loadBuySellOptionCollection() throws IOException, ClassNotFoundException, NullPointerException, JAXBException {
-        JAXBContext context = JAXBContext.newInstance(BuySellOptions.class);
+    public static ArrayList<BotAvgOption> loadBotAvgOptionCollection() throws IOException, ClassNotFoundException, NullPointerException, JAXBException {
+        JAXBContext context = JAXBContext.newInstance(BotAvgOptions.class);
         Unmarshaller um = context.createUnmarshaller();
-        BuySellOptions collection = (BuySellOptions) um.unmarshal(new File(BUY_SELL_OPTIONS_FILE_NAME));
+        BotAvgOptions collection = (BotAvgOptions) um.unmarshal(new File(BOT_AVG_OPTIONS_FILE_NAME));
         return collection.getCollection();
     }
 
@@ -69,10 +69,10 @@ public class PersistenceManager {
     /**
      * Just for test purposes
      */
-    public static void clearBuySellOptionCollection() {
+    public static void clearBotAvgOptionCollection() {
         PrintWriter writer = null;
         try {
-            writer = new PrintWriter(BUY_SELL_OPTIONS_FILE_NAME);
+            writer = new PrintWriter(BOT_AVG_OPTIONS_FILE_NAME);
         } catch (FileNotFoundException e) {
             logger.error(e.getMessage());
         }

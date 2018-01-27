@@ -10,6 +10,7 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 
+import static org.logic.utils.MarketNameUtils.getCoinNameFromMarketName;
 import static org.preferences.Constants.MSG_REQUEST_TIMEOUT;
 import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
 import static org.preferences.Params.API_KEY;
@@ -50,20 +51,30 @@ public class MarketRequests {
         return sendRequest(url);
     }
 
-    public static String getOrderHistory(String altCoin) throws Exception {
+    /**
+     * Use just a coin name: BTC, XRP, MEO. Do not use market names.
+     * Update: can use also market names.
+     * @param coinName
+     * @return
+     * @throws Exception
+     */
+    public static String getOrderHistory(String coinName) throws Exception {
         long nonce = System.currentTimeMillis();
-        URL url = new URL("https://bittrex.com/api/v1.1/account/getorderhistory?apikey=" + API_KEY + "&nonce=" + nonce + "&market=btc-" + altCoin);
+        coinName = getCoinNameFromMarketName(coinName);
+        URL url = new URL("https://bittrex.com/api/v1.1/account/getorderhistory?apikey=" + API_KEY + "&nonce=" + nonce + "&market=btc-" + coinName);
         return sendRequest(url);
     }
 
     /**
-     * Currency in this form: BTC, XRP, MEO - not BTC-XRP
+     * Use just a coin name: BTC, XRP, MEO. Do not use market names.
+     * Update: can use also market names.
      * @param coinName
      * @return
      * @throws Exception
      */
     public static String getBalance(String coinName) throws Exception {
         long nonce = System.currentTimeMillis();
+        coinName = getCoinNameFromMarketName(coinName);
         URL url = new URL("https://bittrex.com/api/v1.1/account/getbalance?apikey=" + API_KEY + "&nonce=" + nonce + "&currency=" + coinName);
         return sendRequest(url);
     }

@@ -50,6 +50,18 @@ public class ModelBuilder {
         return openMarketOrders;
     }
 
+    public static MarketOrderResponse buildMarketOrderHistory(String coinName) {
+        MarketOrderResponse openMarketOrders = null;
+        try {
+            String response = MarketRequests.getOrderHistory(coinName);
+            openMarketOrders = JSONParser.parseMarketOrder(response);
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "\nFailed to create MarketOrderResponse object");
+        }
+        logger.debug(openMarketOrders);
+        return openMarketOrders;
+    }
+
     public static MarketSummaryResponse buildMarketSummary(String marketName) {
         MarketSummaryResponse marketSummary = null;
         try {
@@ -101,4 +113,6 @@ public class ModelBuilder {
 //        logger.debug(marketSummary);
         return orderResponse;
     }
+
+
 }

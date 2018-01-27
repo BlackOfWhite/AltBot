@@ -11,32 +11,32 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class BuySellOptionManager extends OptionManagerImpl {
+public class BotAvgOptionManager extends OptionManagerImpl {
 
-    private static final BuySellOptionManager instance = new BuySellOptionManager();
-    private static List<BuySellOption> optionList = Collections.synchronizedList(new ArrayList());
+    private static final BotAvgOptionManager instance = new BotAvgOptionManager();
+    private static List<BotAvgOption> optionList = Collections.synchronizedList(new ArrayList());
 
     //private constructor to avoid client applications to use constructor
-    private BuySellOptionManager() {
+    private BotAvgOptionManager() {
     }
 
-    public BuySellOptionManager getInstance() {
+    public static BotAvgOptionManager getInstance() {
         return instance;
     }
 
-    public List<BuySellOption> getOptionList() {
+    public List<BotAvgOption> getOptionList() {
         return optionList;
     }
 
     @Override
     public void addOption(final OptionImpl option) throws IOException, JAXBException {
-        BuySellOption buySellOption = (BuySellOption) option;
+        BotAvgOption buySellOption = (BotAvgOption) option;
         optionList.add(buySellOption);
-        ArrayList<BuySellOption> options = new ArrayList<>();
-        for (BuySellOption option1 : optionList) {
+        ArrayList<BotAvgOption> options = new ArrayList<>();
+        for (BotAvgOption option1 : optionList) {
             options.add(option1);
         }
-        PersistenceManager.saveBuySellOptionCollection(options);
+        PersistenceManager.saveBotAvgOptionCollection(options);
     }
 
 
@@ -47,13 +47,13 @@ public class BuySellOptionManager extends OptionManagerImpl {
 
     @Override
     public void loadOptions() throws IOException, ClassNotFoundException, JAXBException {
-        ArrayList<BuySellOption> options = PersistenceManager.loadBuySellOptionCollection();
+        ArrayList<BotAvgOption> options = PersistenceManager.loadBotAvgOptionCollection();
         optionList = Collections.synchronizedList(options);
     }
 
     @Override
     public void clearOptionCollection() {
-        PersistenceManager.clearBuySellOptionCollection();
+        PersistenceManager.clearBotAvgOptionCollection();
         optionList.clear();
     }
 }

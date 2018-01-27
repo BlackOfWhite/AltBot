@@ -8,19 +8,19 @@ import java.util.ArrayList;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "Options")
-public class BuySellOptions {
+public class BotAvgOptions {
 
-    public BuySellOptions() {
+    public BotAvgOptions() {
     }
 
-    @XmlElement(name = "BuySellOption", type = BuySellOption.class)
-    private ArrayList<BuySellOption> collection;
+    @XmlElement(name = "BotAvgOption", type = BotAvgOption.class)
+    private ArrayList<BotAvgOption> collection;
 
-    public BuySellOptions(ArrayList<BuySellOption> collection) {
+    public BotAvgOptions(ArrayList<BotAvgOption> collection) {
         this.collection = collection;
     }
 
-    public ArrayList<BuySellOption> getCollection() {
+    public ArrayList<BotAvgOption> getCollection() {
         return collection;
     }
 }
