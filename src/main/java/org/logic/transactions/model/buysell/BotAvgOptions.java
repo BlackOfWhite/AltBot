@@ -7,7 +7,7 @@ import javax.xml.bind.annotation.XmlRootElement;
 import java.util.ArrayList;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "Options")
+@XmlRootElement(name = "BotAvgOptions")
 public class BotAvgOptions {
 
     public BotAvgOptions() {

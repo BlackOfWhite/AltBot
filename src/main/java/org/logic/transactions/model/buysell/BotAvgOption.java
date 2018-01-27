@@ -14,7 +14,7 @@ public class BotAvgOption implements Serializable, OptionImpl {
     private String marketName;
     private double buyBelowRatio = 0.975d; // 2.5% below avg
     private double totalGainRatio = 1.035d; // 3.5% above bought price
-    private double sellAndResetRatio = 0.094d; // 6% will auto sell also below this, below bought price
+    private double sellAndResetRatio = 0.94d; // 6% will auto sell also below this, below bought price
     private double btc = 0.017;
 
     public BotAvgOption() {

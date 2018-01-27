@@ -3,6 +3,7 @@ package org;
 import org.apache.log4j.Logger;
 import org.logic.schedulers.MarketMonitor;
 import org.logic.schedulers.TransactionScheduler;
+import org.logic.transactions.model.buysell.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.ui.frames.MainFrame;
 
@@ -18,6 +19,7 @@ public class Main {
         logger.debug("MainFrame created.");
 
         StopLossOptionManager.getInstance().reload();
+        BotAvgOptionManager.getInstance().reload();
         startSchedulers(mainFrame);
     }
 
