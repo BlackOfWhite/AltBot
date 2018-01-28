@@ -46,6 +46,11 @@ public class StopLossOptionManager extends OptionManagerImpl {
         PersistenceManager.saveStopLossOptionCollection(stopLossOptions);
     }
 
+    @Override
+    public void updateOption(OptionImpl option) throws IOException, JAXBException, EntryExistsException {
+
+    }
+
     /**
      * Use full market name, e.g. BTC-ETH.
      * Only unique sets of marketName and mode! This is very important. Do not allow duplicates!

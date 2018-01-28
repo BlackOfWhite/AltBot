@@ -129,7 +129,10 @@ public class MainFrame extends JFrame {
         cp.add(donationPanel, BorderLayout.SOUTH);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(Constants.FRAME_WIDTH, Constants.FRAME_HEIGHT);
+        //setSize(Constants.FRAME_WIDTH, Constants.FRAME_HEIGHT);
+        // Full screen
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setUndecorated(true);
         setVisible(true);
 
         showPieChart();
