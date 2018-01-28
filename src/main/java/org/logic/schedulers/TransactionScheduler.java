@@ -35,7 +35,7 @@ public class TransactionScheduler {
     private static ScheduledExecutorService ses;
 
     // History map
-    public static final int LIST_OK_SIZE = 200; // 560 - 45min
+    public static final int LIST_OK_SIZE = 20; // 560 - 45min
 
 
     // Cancel pending order after N tries, if occasion missed.
@@ -268,6 +268,7 @@ public class TransactionScheduler {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.");
                 botAvgOption.setBoughtAt(last);
+                BotAvgOptionManager.getInstance().updateOption(botAvgOption);
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.\n" + orderResponse);

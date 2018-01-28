@@ -37,6 +37,20 @@ public class BotAvgOption implements Serializable, OptionImpl {
         this(marketName, 0.975d, 1.035d, 0.094d, 0.017d);
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        BotAvgOption that = (BotAvgOption) o;
+
+        return marketName.equals(that.marketName);
+    }
+
+    @Override
+    public int hashCode() {
+        return marketName.hashCode();
+    }
 
     public double getBuyBelowRatio() {
         return buyBelowRatio;

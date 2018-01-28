@@ -12,6 +12,8 @@ public abstract class OptionManagerImpl<T extends OptionImpl> {
 
     private static Logger logger = Logger.getLogger(BotAvgOptionManager.class);
 
+    public abstract void updateOption(OptionImpl option) throws IOException, JAXBException, EntryExistsException;
+
     public abstract int removeOptionByMarketNameAndMode(String marketName, StopLossMode mode) throws IOException, JAXBException;
 
     protected abstract void loadOptions() throws IOException, ClassNotFoundException, JAXBException;
