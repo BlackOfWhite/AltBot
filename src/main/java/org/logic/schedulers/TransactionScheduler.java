@@ -25,7 +25,7 @@ public class TransactionScheduler {
 
     //    public static final String marketName = "XVG";
     private static final int TIME = 4;
-//    private static final double buyBelowRatio = 0.975d; // 2.5% below avg
+    //    private static final double buyBelowRatio = 0.975d; // 2.5% below avg
 //    private static final double totalGainRatio = 1.035d; // 3.5% above bought price
 //    private static final double sellAndResetRatio = 0.094d; // 6% will auto sell also below this, below bought price
 //    private static final double btc = 0.017;
@@ -41,9 +41,6 @@ public class TransactionScheduler {
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 100;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
-
-    // Last time bought prices map.
-    private static HashMap<String, Double> lastTimeBoughts = new HashMap<>();
 
     private TransactionScheduler() {
     }
@@ -159,7 +156,7 @@ public class TransactionScheduler {
                                    MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
         int size = MarketMonitor.getInstance().priceHistoryMap.get(marketName).size();
         if (size < LIST_OK_SIZE) {
-            logger.debug("Too few records [" + size + "/" + LIST_OK_SIZE + "] in the history map to start a bot. Aborting.");
+            logger.debug("Too few records [" + size + "/" + LIST_OK_SIZE + "] in the history map to start a bot for " + marketName + ". Aborting.");
             return;
         }
         double last = marketSummary.getResult().get(0).getLast();
@@ -186,12 +183,13 @@ public class TransactionScheduler {
             }
             double quantity = round(botAvgOption.getBtc() / last);
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
-            buy(marketName, quantity, last);
+            buy(botAvgOption, quantity, last);
         } else {
-            double lastTimeBought = lastTimeBoughts.get(marketName);
+            double lastTimeBought = botAvgOption.getBoughtAt();
             double sellAbove = lastTimeBought * botAvgOption.getTotalGainRatio();
             double sellAndResetBelow = lastTimeBought * botAvgOption.getSellAndResetRatio();
-            logger.debug("Trying to place a sell order for " + marketName + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "].");
+            logger.debug("Trying to place a sell order for " + marketName + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "]." +
+                    " Reset at " + sellAndResetBelow + " [" + last / sellAndResetBelow + "]");
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
                 // Must have certain gain from this transaction. We also safe sell if price drops too much in relation to bought price.
@@ -258,17 +256,18 @@ public class TransactionScheduler {
     }
 
     /**
-     * @param marketName Use full market name, e.g. BTC-ETH.
+     * @param botAvgOption Use full market name, e.g. BTC-ETH.
      * @param quantity
      * @param last
      */
-    private static void buy(String marketName, double quantity, double last) {
+    private static void buy(BotAvgOption botAvgOption, double quantity, double last) {
+        String marketName = botAvgOption.getMarketName();
         try {
             OrderResponse orderResponse = ModelBuilder.buildBuyOrder(marketName, quantity, last);
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.");
-                lastTimeBoughts.put(marketName, last);
+                botAvgOption.setBoughtAt(last);
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.\n" + orderResponse);
