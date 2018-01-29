@@ -323,7 +323,7 @@ public class TransactionScheduler {
 
     private static void sell(String marketName, double quantity, double last) {
         try {
-            OrderResponse orderResponse = ModelBuilder.buildSellOrder("BTC-" + marketName, quantity, last);
+            OrderResponse orderResponse = ModelBuilder.buildSellOrder(marketName, quantity, last);
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to sell " + quantity + " of " + marketName +
                         " for " + last + " each.");
