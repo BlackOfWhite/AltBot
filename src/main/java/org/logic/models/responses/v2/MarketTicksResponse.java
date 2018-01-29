@@ -1,7 +1,6 @@
 package org.logic.models.responses.v2;
 
 import com.google.gson.annotations.Expose;
-import org.logic.models.responses.MarketBalancesResponse;
 import org.logic.models.responses.Response;
 
 import java.util.ArrayList;

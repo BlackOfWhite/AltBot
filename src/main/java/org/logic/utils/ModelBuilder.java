@@ -6,6 +6,7 @@ import org.logic.models.responses.*;
 import org.logic.models.responses.v2.MarketTicksResponse;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
+import org.logic.schedulers.TimeIntervalEnum;
 
 import static org.preferences.Constants.BUY_PRICE_RATIO;
 import static org.preferences.Constants.SELL_PRICE_RATIO;
@@ -115,10 +116,10 @@ public class ModelBuilder {
         return orderResponse;
     }
 
-    public static MarketTicksResponse buildMarketTicks(String marketName, long timestamp) {
+    public static MarketTicksResponse buildMarketTicks(String marketName, long timestamp, TimeIntervalEnum timeInterval, int timeout) {
         MarketTicksResponse orderResponse = null;
         try {
-            String response = PublicRequests.getMarketTicksWithInterval(marketName, 10);
+            String response = PublicRequests.getMarketTicksWithInterval(marketName, timestamp, timeInterval, timeout);
             orderResponse = JSONParser.parseMarketTicksResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
@@ -127,10 +128,10 @@ public class ModelBuilder {
         return orderResponse;
     }
 
-    public static MarketTicksResponse buildMarketLastTick(String marketName, long timestamp) {
+    public static MarketTicksResponse buildMarketLastTick(String marketName, long timestamp, TimeIntervalEnum timeInterval) {
         MarketTicksResponse orderResponse = null;
         try {
-            String response = PublicRequests.getMarketLastTick(marketName, 10);
+            String response = PublicRequests.getMarketLastTick(marketName, 10, timeInterval);
             orderResponse = JSONParser.parseMarketTicksResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");

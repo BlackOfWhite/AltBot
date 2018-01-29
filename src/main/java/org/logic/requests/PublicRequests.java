@@ -1,6 +1,7 @@
 package org.logic.requests;
 
 import org.apache.log4j.Logger;
+import org.logic.schedulers.TimeIntervalEnum;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -50,14 +51,16 @@ public class PublicRequests {
      *
      * @param marketName
      * @param timestamp
+     * @param timeInterval
+     * @param timeout_seconds Connection timeout. Default value would be used if null. Should be greater than 5.
      * @return
      * @throws Exception
      */
-    public static String getMarketTicksWithInterval(String marketName, long timestamp) throws Exception {
+    public static String getMarketTicksWithInterval(String marketName, long timestamp, TimeIntervalEnum timeInterval, Integer timeout_seconds) throws Exception {
         URL url = new URL("https://bittrex.com/Api/v2.0/pub/market/GetTicks?marketName=" + marketName +
-                "&tickInterval=thirtyMin&_=1500915289433");
+                "&tickInterval=" + timeInterval.name() + "&_=" + timestamp);
         URLConnection urlConnection = url.openConnection();
-        urlConnection.setReadTimeout(1000 * REQUEST_TIMEOUT_SECONDS * 3);
+        urlConnection.setReadTimeout(1000 * (timeout_seconds == null ? REQUEST_TIMEOUT_SECONDS : timeout_seconds));
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
                         urlConnection.getInputStream()));
@@ -80,11 +83,11 @@ public class PublicRequests {
      * @return
      * @throws Exception
      */
-    public static String getMarketLastTick(String marketName, long timestamp) throws Exception {
+    public static String getMarketLastTick(String marketName, long timestamp, TimeIntervalEnum timeInterval) throws Exception {
         URL url = new URL("https://bittrex.com/Api/v2.0/pub/market/GetLatestTick?marketName=" + marketName +
-                "&tickInterval=thirtyMin&_=1500915289433");
+                "&tickInterval=" + timeInterval.name() + "&_=" + timestamp);
         URLConnection urlConnection = url.openConnection();
-        urlConnection.setReadTimeout(1000 * REQUEST_TIMEOUT_SECONDS * 3);
+        urlConnection.setReadTimeout(1000 * REQUEST_TIMEOUT_SECONDS);
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
                         urlConnection.getInputStream()));

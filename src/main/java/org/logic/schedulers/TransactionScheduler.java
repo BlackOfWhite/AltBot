@@ -9,6 +9,7 @@ import org.logic.models.responses.v2.MarketTicksResponse;
 import org.logic.transactions.model.buysell.BotAvgOption;
 import org.logic.transactions.model.buysell.BotAvgOptionManager;
 import org.logic.utils.ModelBuilder;
+import org.logic.utils.TimeUtils;
 import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 
@@ -24,8 +25,12 @@ import java.util.concurrent.TimeUnit;
 
 public class TransactionScheduler {
 
-    //    public static final String marketName = "XVG";
-    private static final int TIME = 4;
+    // History map
+    private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2;
+    private static final int TIME = 5; // Use 60 second interval - lowest possible.
+    private static final TimeIntervalEnum POLL_INTERVAL = TimeIntervalEnum.oneMin;
+    // Cancel pending order after N tries, if occasion missed.
+    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 100;
     //    private static final double buyBelowRatio = 0.975d; // 2.5% below avg
 //    private static final double totalGainRatio = 1.035d; // 3.5% above bought price
 //    private static final double sellAndResetRatio = 0.094d; // 6% will auto sell also below this, below bought price
@@ -34,13 +39,6 @@ public class TransactionScheduler {
     private static Logger logger = Logger.getLogger(TransactionScheduler.class);
     private static TransactionScheduler instance;
     private static ScheduledExecutorService ses;
-
-    // History map
-    public static final int LIST_OK_SIZE = 20; // 560 - 45min
-
-
-    // Cancel pending order after N tries, if occasion missed.
-    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 100;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
 
     private TransactionScheduler() {
@@ -66,17 +64,16 @@ public class TransactionScheduler {
         }
         ses.scheduleAtFixedRate(() -> {
             logger.debug("\nNew run..");
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    logger.debug("RRRRUN");
-                    MarketTicksResponse marketTicksResponse =  ModelBuilder.buildMarketTicks("BTC-XVG", 10);
-                    logger.debug("AHAHA:" +marketTicksResponse);
-                }
-            }).start();
-
             HashSet<String> disabledMarkets = new HashSet<>();
             List<BotAvgOption> botAvgOptions = BotAvgOptionManager.getInstance().getOptionList();
+            logger.debug("pfffffffffffffffffff");
+            MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks("BTC-XRP", TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, 5);
+            if (!marketTicksResponse.isSuccess()) {
+                logger.debug("Failed to get all market ticks - aborting.");
+                return;
+            }
+            logger.debug("xsfdfdsfdsdsfdsf");
+            logger.debug(marketTicksResponse);
             try {
                 // Check for which coins there are no open orders. Cancel idle orders.
                 final MarketOrderResponse marketOrderResponse = ModelBuilder.buildAllOpenOrders();
@@ -164,11 +161,13 @@ public class TransactionScheduler {
      */
     private static void placeOrder(final String marketName, BotAvgOption botAvgOption, MarketSummaryResponse marketSummary, MarketOrderResponse marketOrderHistory,
                                    MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
-        int size = MarketMonitor.getInstance().priceHistoryMap.get(marketName).size();
-        if (size < LIST_OK_SIZE) {
-            logger.debug("Too few records [" + size + "/" + LIST_OK_SIZE + "] in the history map to start a bot for " + marketName + ". Aborting.");
+        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, 10);
+        if (!marketTicksResponse.isSuccess()) {
+            logger.debug("Failed to get all market ticks - aborting.");
             return;
         }
+        logger.debug("xsfdfdsfdsdsfdsf");
+        logger.debug(marketTicksResponse);
         double last = marketSummary.getResult().get(0).getLast();
         // Now we sell or buy?
         boolean buy;
@@ -179,7 +178,7 @@ public class TransactionScheduler {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
-            double avg = MarketMonitor.getInstance().avgValueMap.get(marketName);
+            double avg = 10000;//marketTicksResponse.getResult().stream().mapToDouble(val -> val.ge).average().getAsDouble();
             double buyBelow = avg * botAvgOption.getBuyBelowRatio();
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
