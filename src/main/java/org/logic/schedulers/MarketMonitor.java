@@ -22,7 +22,6 @@ import org.ui.views.dialog.box.SingleInstanceDialog;
 import javax.mail.MessagingException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,6 +33,7 @@ import static sun.security.x509.X509CertInfo.SUBJECT;
 public class MarketMonitor {
 
     private static final int SLEEP_TIME = 5;
+    private static final int RETRY_COUNT = 3;
     public volatile static boolean active = false;
     public volatile static int COUNTER = -1;
     private static Logger logger = Logger.getLogger(MarketMonitor.class);
@@ -44,12 +44,6 @@ public class MarketMonitor {
     private static MainFrame mainFrame;
     private static SingleInstanceDialog dialog;
     private static int DIALOG_DELAY = 5; // show dialog every 5 runs
-
-//    public static volatile HashMap<String, LinkedList<Double>> priceHistoryMap;
-//    public static HashMap<String, Double> avgValueMap;
-//    public static final int LIST_MAX_SIZE = 1440; // 2h. Optimum?
-
-    private static final int RETRY_COUNT = 3;
 
     private MarketMonitor() {
     }
@@ -440,22 +434,4 @@ public class MarketMonitor {
             }
         }
     }
-
-//    private static void updatePriceHistoryMap(String marketName, double last) {
-//        if (!priceHistoryMap.containsKey(marketName)) {
-//            priceHistoryMap.put(marketName, new LinkedList<>());
-//        }
-//        if (priceHistoryMap.get(marketName).size() >= LIST_MAX_SIZE) {
-//            priceHistoryMap.get(marketName).remove(0);
-//        }
-//        priceHistoryMap.get(marketName).add(last);
-//        //
-//        double avg = priceHistoryMap.get(marketName).stream().mapToDouble(val -> val).average().getAsDouble();
-//        DecimalFormat df = new DecimalFormat("#");
-//        df.setMaximumFractionDigits(8);
-//        logger.debug("** Avg price for " + marketName + " is: " + df.format(avg) + ". Size: " + priceHistoryMap.get(marketName).size());
-//
-//        // Update avg price
-//        avgValueMap.put(marketName, avg);
-//    }
 }

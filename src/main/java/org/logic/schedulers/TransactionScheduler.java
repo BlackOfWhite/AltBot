@@ -31,12 +31,13 @@ public class TransactionScheduler {
 
     private static final int TIME = 60; // Use 60 second interval - lowest possible. // TODO
 
-    private static final int VOLUME_RISE_INDICATOR = 4; // volume must grow by 4%
+    private static final int VOLUME_RISE_INDICATOR = 2; // volume must grow by 4%
+    private static final int AVG_RISE_INDICATOR = 2; // volume must grow by 4%
     // History map
     private static final TimeIntervalEnum POLL_INTERVAL = TimeIntervalEnum.oneMin;
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 30;
-    private static final int LIST_MAX_SIZE = 160; // apporx 2h
+    private static final int LIST_MAX_SIZE = 160; // approx 2h
     //    private static final double buyBelowRatio = 0.975d; // 2.5% below avg
 //    private static final double totalGainRatio = 1.035d; // 3.5% above bought price
 //    private static final double sellAndResetRatio = 0.094d; // 6% will auto sell also below this, below bought price
@@ -104,6 +105,7 @@ public class TransactionScheduler {
                         MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketLastTick(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL);
                         if (!marketTicksResponse.isSuccess()) {
                             logger.debug("Failed to get latest market ticks - aborting.");
+                            continue;
                         } else {
                             List<MarketTicksResponse.Result> history = marketHistoryMap.get(marketName);
                             history.add(marketTicksResponse.getResult().get(0));
@@ -200,6 +202,8 @@ public class TransactionScheduler {
 
     /**
      * If this is first order for this coin, it would be LIMIT_BUY.
+     * Place BUY order if there is enough BTC, last is above average and volume is rising.
+     * Place SELL order if last is below sellRatio * boughtAt price OR if last is below safeLoss * boughtAt.
      *
      * @param marketName         In "BTC-ETH" format.
      * @param marketSummary
@@ -220,7 +224,6 @@ public class TransactionScheduler {
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
             double priceAvg = calculateAverageClose(marketHistoryMap.get(marketName));
-            boolean volumeRises = checkIfVolumeRises(marketHistoryMap.get(marketName), VOLUME_RISE_INDICATOR);
             double buyBelow = priceAvg * botAvgOption.getBuyBelowRatio();
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
@@ -232,13 +235,19 @@ public class TransactionScheduler {
                 logger.debug("Last price is too low to place a buy order. Only buy if is ABOVE average.");
                 return;
             }
+            boolean avgRises = checkIfAvgRises(marketHistoryMap.get(marketName), AVG_RISE_INDICATOR);
+            if (!avgRises) {
+                logger.debug("Avg is decreasing for: " + marketName);
+                return;
+            }
+            boolean volumeRises = checkIfVolumeRises(marketHistoryMap.get(marketName), VOLUME_RISE_INDICATOR);
             if (!volumeRises) {
                 logger.debug("Volume is decreasing for: " + marketName);
                 return;
             }
             double quantity = round(botAvgOption.getBtc() / last);
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
-//            buy(botAvgOption, quantity, last);
+            buy(botAvgOption, quantity, last);
         } else {
             double lastTimeBought = botAvgOption.getBoughtAt();
             double sellAbove = lastTimeBought * botAvgOption.getTotalGainRatio();
@@ -251,52 +260,11 @@ public class TransactionScheduler {
                 if (last >= sellAbove || last < sellAndResetBelow) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
-//                    sell(marketName, quantity, last);
-                }
-            }
-        }
-    }
-
-   /*
-    private static void placeOrderAlignToLowest(String marketName, MarketSummaryResponse marketSummary, MarketOrderResponse marketOrderHistory,
-                                                MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
-        double last = marketSummary.getResult().get(0).getLast();
-        double low = marketSummary.getResult().get(0).getLow();
-        // Now we sell or buy?
-        boolean buy;
-        try {
-            buy = marketOrderHistory.getResult().get(0).getOrderType().equalsIgnoreCase("LIMIT_SELL");
-        } catch (Exception e) {
-            logger.debug("Failed to check if last was buy or sell. Is this a first transaction?");
-            buy = true;
-        }
-
-        if (marketBalanceAlt.getResult().isEmpty() && buy) {
-            logger.debug("Trying to place a buy order for " + marketName + ".");
-            double btcBalance = marketBalanceBtc.getResult().getAvailable();
-            if (btcBalance < btc) {
-                logger.debug("Not enough BTC. You have " + btcBalance);
-                return;
-            }
-            if (last > (1.005 * low)) {
-                logger.debug("Last price is too high to place a buy order.");
-                return;
-            }
-            double quantity = round((btcBalance * 0.95) / last);
-            logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
-            buy(marketName, quantity, last);
-        } else {
-            logger.debug("Trying to place sell order for " + marketName + ".");
-            if (!buy) {
-                // Last action was Buy so now we sell all alt.
-                if (last >= (low * 1.018)) {
-                    double quantity = marketBalanceAlt.getResult().getBalance();
-                    logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
                     sell(marketName, quantity, last);
                 }
             }
         }
-    }*/
+    }
 
     private static double round(double d) {
         DecimalFormat df = new DecimalFormat("#,####");
@@ -377,17 +345,37 @@ public class TransactionScheduler {
      * @return
      */
     private static boolean checkIfVolumeRises(LinkedList<MarketTicksResponse.Result> list, int percent) {
-        double lastC = list.get(list.size() - 1).getC();
-        double change = (lastC - list.get(0).getC()) * 100.0d / list.get(0).getC();
+        double lastV = list.getLast().getV();
+        double firstV = list.getFirst().getV();
+        double change = ((lastV - firstV) * 100.0d / firstV);
         if (change > 0 && change >= percent) {
             // Check if is above avg.
             double avg = calculateAverageVolume(list);
-            if (lastC > avg) {
+            if (lastV > avg) {
                 return true;
             }
         }
         return false;
     }
 
+    /**
+     * Checks if avg rised by given percent.
+     *
+     * @param list
+     * @return
+     */
+    private static boolean checkIfAvgRises(LinkedList<MarketTicksResponse.Result> list, int percent) {
+        double lastC = list.getLast().getC();
+        double firstC = list.getFirst().getC();
+        double change = ((lastC - firstC) * 100.0d / firstC);
+        if (change > 0 && change >= percent) {
+            // Check if is above avg.
+            double avg = calculateAverageClose(list);
+            if (lastC > avg) {
+                return true;
+            }
+        }
+        return false;
+    }
 }
 
