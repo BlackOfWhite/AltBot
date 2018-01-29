@@ -29,8 +29,9 @@ public class TransactionScheduler {
     // History map
     private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2; // does not work
 
-    private static final int TIME = 10; // Use 60 second interval - lowest possible. // TODO
+    private static final int TIME = 60; // Use 60 second interval - lowest possible. // TODO
 
+    private static final int VOLUME_RISE_INDICATOR = 4; // volume must grow by 4%
     // History map
     private static final TimeIntervalEnum POLL_INTERVAL = TimeIntervalEnum.oneMin;
     // Cancel pending order after N tries, if occasion missed.
@@ -78,17 +79,21 @@ public class TransactionScheduler {
                     String marketName = botAvgOption.getMarketName();
                     if (!marketHistoryMap.containsKey(marketName)) {
                         logger.debug("Bot first run for " + marketName + " - initializing market ticks history.");
-                        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, TIME / 2);
+                        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, TIME);
                         if (!marketTicksResponse.isSuccess()) {
                             logger.debug("Failed to get all market ticks - aborting.");
                             return;
                         }
+                        // Trim
                         LinkedList<MarketTicksResponse.Result> history = marketTicksResponse.getResult();
+                        List<MarketTicksResponse.Result> subHistory = new LinkedList<>();
                         if (history.size() > LIST_MAX_SIZE) {
-                            history = new LinkedList<>(history.subList(history.size() - LIST_MAX_SIZE, LIST_MAX_SIZE));
+                            int size = history.size();
+                            subHistory = history.subList(Math.max(size - LIST_MAX_SIZE, 0), size);
                         }
-                        marketHistoryMap.put(marketName, history);
-                        logger.debug(marketTicksResponse);
+                        marketHistoryMap.put(marketName, new LinkedList<>());
+                        marketHistoryMap.get(marketName).addAll(subHistory.size() > 0 ? subHistory : history);
+                        logger.debug("Got history for market: " + marketName + ", size: " + marketTicksResponse.getResult().size() + ".");
                     }
                 }
                 return;
@@ -100,13 +105,16 @@ public class TransactionScheduler {
                         if (!marketTicksResponse.isSuccess()) {
                             logger.debug("Failed to get latest market ticks - aborting.");
                         } else {
-                            LinkedList<MarketTicksResponse.Result> history = marketHistoryMap.get(marketName);
+                            List<MarketTicksResponse.Result> history = marketHistoryMap.get(marketName);
                             history.add(marketTicksResponse.getResult().get(0));
+                            // Trim
                             if (history.size() > LIST_MAX_SIZE) {
-                                history = new LinkedList<>(history.subList(history.size() - LIST_MAX_SIZE, LIST_MAX_SIZE));
+                                int size = history.size();
+                                List<MarketTicksResponse.Result> subHistory = history.subList(Math.max(size - LIST_MAX_SIZE, 0), size);
+                                marketHistoryMap.put(marketName, new LinkedList<>());
+                                marketHistoryMap.get(marketName).addAll(subHistory);
                             }
-                            marketHistoryMap.put(marketName, history);
-                            logger.debug("Added new latest tick - " + marketTicksResponse.getResult().get(0)); // TODO remove
+                            logger.debug("Added new tick for market: " + marketName + "." + history);
                         }
                     }
                 }
@@ -212,7 +220,7 @@ public class TransactionScheduler {
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
             double priceAvg = calculateAverageClose(marketHistoryMap.get(marketName));
-            double volumeAvg = calculateAverageVolume(marketHistoryMap.get(marketName));
+            boolean volumeRises = checkIfVolumeRises(marketHistoryMap.get(marketName), VOLUME_RISE_INDICATOR);
             double buyBelow = priceAvg * botAvgOption.getBuyBelowRatio();
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
@@ -220,13 +228,17 @@ public class TransactionScheduler {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
             }
-            if (last > buyBelow) {
-                logger.debug("Last price is too high to place a buy order.");
+            if (last < buyBelow) {
+                logger.debug("Last price is too low to place a buy order. Only buy if is ABOVE average.");
+                return;
+            }
+            if (!volumeRises) {
+                logger.debug("Volume is decreasing for: " + marketName);
                 return;
             }
             double quantity = round(botAvgOption.getBtc() / last);
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
-            buy(botAvgOption, quantity, last);
+//            buy(botAvgOption, quantity, last);
         } else {
             double lastTimeBought = botAvgOption.getBoughtAt();
             double sellAbove = lastTimeBought * botAvgOption.getTotalGainRatio();
@@ -239,7 +251,7 @@ public class TransactionScheduler {
                 if (last >= sellAbove || last < sellAndResetBelow) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
-                    sell(marketName, quantity, last);
+//                    sell(marketName, quantity, last);
                 }
             }
         }
@@ -351,11 +363,30 @@ public class TransactionScheduler {
         double sum = 0;
         if (!list.isEmpty()) {
             for (MarketTicksResponse.Result result : list) {
-                sum += result.getC();
+                sum += result.getV();
             }
             return sum / list.size();
         }
         return -1;
+    }
+
+    /**
+     * Checks if volume rised by given percent.
+     *
+     * @param list
+     * @return
+     */
+    private static boolean checkIfVolumeRises(LinkedList<MarketTicksResponse.Result> list, int percent) {
+        double lastC = list.get(list.size() - 1).getC();
+        double change = (lastC - list.get(0).getC()) * 100.0d / list.get(0).getC();
+        if (change > 0 && change >= percent) {
+            // Check if is above avg.
+            double avg = calculateAverageVolume(list);
+            if (lastC > avg) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
