@@ -15,6 +15,6 @@ public class TimeUtils {
      * @return
      */
     public static long getTimestampPast(int hours) {
-        return new Date(getTimestamp() - 60 * 1000 * 48).getTime();
+        return new Date(getTimestamp() - 60 * 1000 * hours).getTime();
     }
 }

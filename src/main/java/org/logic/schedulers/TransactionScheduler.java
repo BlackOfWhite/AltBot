@@ -17,6 +17,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -26,11 +27,15 @@ import java.util.concurrent.TimeUnit;
 public class TransactionScheduler {
 
     // History map
-    private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2;
-    private static final int TIME = 5; // Use 60 second interval - lowest possible.
+    private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2; // does not work
+
+    private static final int TIME = 10; // Use 60 second interval - lowest possible. // TODO
+
+    // History map
     private static final TimeIntervalEnum POLL_INTERVAL = TimeIntervalEnum.oneMin;
     // Cancel pending order after N tries, if occasion missed.
-    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 100;
+    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 30;
+    private static final int LIST_MAX_SIZE = 160; // apporx 2h
     //    private static final double buyBelowRatio = 0.975d; // 2.5% below avg
 //    private static final double totalGainRatio = 1.035d; // 3.5% above bought price
 //    private static final double sellAndResetRatio = 0.094d; // 6% will auto sell also below this, below bought price
@@ -40,6 +45,7 @@ public class TransactionScheduler {
     private static TransactionScheduler instance;
     private static ScheduledExecutorService ses;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
+    private static HashMap<String, LinkedList<MarketTicksResponse.Result>> marketHistoryMap = new HashMap<>();
 
     private TransactionScheduler() {
     }
@@ -64,18 +70,51 @@ public class TransactionScheduler {
         }
         ses.scheduleAtFixedRate(() -> {
             logger.debug("\nNew run..");
-            HashSet<String> disabledMarkets = new HashSet<>();
             List<BotAvgOption> botAvgOptions = BotAvgOptionManager.getInstance().getOptionList();
-            logger.debug("pfffffffffffffffffff");
-            MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks("BTC-XRP", TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, 5);
-            if (!marketTicksResponse.isSuccess()) {
-                logger.debug("Failed to get all market ticks - aborting.");
+
+            // 1. Initialize or update markets history
+            if (marketHistoryMap.size() != botAvgOptions.size()) {
+                for (BotAvgOption botAvgOption : botAvgOptions) {
+                    String marketName = botAvgOption.getMarketName();
+                    if (!marketHistoryMap.containsKey(marketName)) {
+                        logger.debug("Bot first run for " + marketName + " - initializing market ticks history.");
+                        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, TIME / 2);
+                        if (!marketTicksResponse.isSuccess()) {
+                            logger.debug("Failed to get all market ticks - aborting.");
+                            return;
+                        }
+                        LinkedList<MarketTicksResponse.Result> history = marketTicksResponse.getResult();
+                        if (history.size() > LIST_MAX_SIZE) {
+                            history = new LinkedList<>(history.subList(history.size() - LIST_MAX_SIZE, LIST_MAX_SIZE));
+                        }
+                        marketHistoryMap.put(marketName, history);
+                        logger.debug(marketTicksResponse);
+                    }
+                }
                 return;
+            } else {
+                for (BotAvgOption botAvgOption : botAvgOptions) {
+                    String marketName = botAvgOption.getMarketName();
+                    if (marketHistoryMap.containsKey(marketName)) {
+                        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketLastTick(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL);
+                        if (!marketTicksResponse.isSuccess()) {
+                            logger.debug("Failed to get latest market ticks - aborting.");
+                        } else {
+                            LinkedList<MarketTicksResponse.Result> history = marketHistoryMap.get(marketName);
+                            history.add(marketTicksResponse.getResult().get(0));
+                            if (history.size() > LIST_MAX_SIZE) {
+                                history = new LinkedList<>(history.subList(history.size() - LIST_MAX_SIZE, LIST_MAX_SIZE));
+                            }
+                            marketHistoryMap.put(marketName, history);
+                            logger.debug("Added new latest tick - " + marketTicksResponse.getResult().get(0)); // TODO remove
+                        }
+                    }
+                }
             }
-            logger.debug("xsfdfdsfdsdsfdsf");
-            logger.debug(marketTicksResponse);
+
+            // 2. Check for which coins there are no open orders. Cancel idle orders.
+            HashSet<String> disabledMarkets = new HashSet<>();
             try {
-                // Check for which coins there are no open orders. Cancel idle orders.
                 final MarketOrderResponse marketOrderResponse = ModelBuilder.buildAllOpenOrders();
                 for (BotAvgOption botAvgOption : botAvgOptions) {
                     String altCoin = botAvgOption.getMarketName();
@@ -108,6 +147,7 @@ public class TransactionScheduler {
                     }
                 }
 
+                // 3. Get necessary data.
                 MarketBalanceResponse marketBalanceBtc = ModelBuilder.buildMarketBalance("BTC");
                 logger.debug(marketBalanceBtc);
                 if (!marketBalanceBtc.isSuccess()) {
@@ -161,13 +201,6 @@ public class TransactionScheduler {
      */
     private static void placeOrder(final String marketName, BotAvgOption botAvgOption, MarketSummaryResponse marketSummary, MarketOrderResponse marketOrderHistory,
                                    MarketBalanceResponse marketBalanceBtc, MarketBalanceResponse marketBalanceAlt) {
-        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL, 10);
-        if (!marketTicksResponse.isSuccess()) {
-            logger.debug("Failed to get all market ticks - aborting.");
-            return;
-        }
-        logger.debug("xsfdfdsfdsdsfdsf");
-        logger.debug(marketTicksResponse);
         double last = marketSummary.getResult().get(0).getLast();
         // Now we sell or buy?
         boolean buy;
@@ -178,8 +211,9 @@ public class TransactionScheduler {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
-            double avg = 10000;//marketTicksResponse.getResult().stream().mapToDouble(val -> val.ge).average().getAsDouble();
-            double buyBelow = avg * botAvgOption.getBuyBelowRatio();
+            double priceAvg = calculateAverageClose(marketHistoryMap.get(marketName));
+            double volumeAvg = calculateAverageVolume(marketHistoryMap.get(marketName));
+            double buyBelow = priceAvg * botAvgOption.getBuyBelowRatio();
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < botAvgOption.getBtc()) {
@@ -301,5 +335,28 @@ public class TransactionScheduler {
             logger.error("Failed to place an order to sell " + quantity + " alt. FAIL.");
         }
     }
+
+    private static double calculateAverageClose(LinkedList<MarketTicksResponse.Result> list) {
+        double sum = 0;
+        if (!list.isEmpty()) {
+            for (MarketTicksResponse.Result result : list) {
+                sum += result.getC();
+            }
+            return sum / list.size();
+        }
+        return -1;
+    }
+
+    private static double calculateAverageVolume(LinkedList<MarketTicksResponse.Result> list) {
+        double sum = 0;
+        if (!list.isEmpty()) {
+            for (MarketTicksResponse.Result result : list) {
+                sum += result.getC();
+            }
+            return sum / list.size();
+        }
+        return -1;
+    }
+
 }
 

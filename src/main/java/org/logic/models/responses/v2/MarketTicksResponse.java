@@ -4,13 +4,14 @@ import com.google.gson.annotations.Expose;
 import org.logic.models.responses.Response;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 public class MarketTicksResponse extends Response {
 
     @Expose
-    private ArrayList<MarketTicksResponse.Result> result;
+    private LinkedList<Result> result;
 
-    public ArrayList<MarketTicksResponse.Result> getResult() {
+    public LinkedList<Result> getResult() {
         return result;
     }
 
