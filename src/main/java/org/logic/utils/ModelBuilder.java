@@ -1,5 +1,6 @@
 package org.logic.utils;
 
+import com.sun.istack.internal.NotNull;
 import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.responses.*;
@@ -22,6 +23,8 @@ public class ModelBuilder {
             marketBalances = JSONParser.parseMarketBalances(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketBalancesResponse object");
+            marketBalances = new MarketBalancesResponse();
+            marketBalances.setSuccess(false);
         }
 //        logger.debug(marketBalances);
         return marketBalances;
@@ -34,7 +37,8 @@ public class ModelBuilder {
             marketBalance = JSONParser.parseMarketBalance(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketBalanceResponse object");
-            e.printStackTrace();
+            marketBalance = new MarketBalanceResponse();
+            marketBalance.setSuccess(false);
         }
 //        logger.debug(marketBalance);
         return marketBalance;
@@ -47,6 +51,8 @@ public class ModelBuilder {
             openMarketOrders = JSONParser.parseMarketOrder(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketOrderResponse object");
+            openMarketOrders = new MarketOrderResponse();
+            openMarketOrders.setSuccess(false);
         }
         logger.debug(openMarketOrders);
         return openMarketOrders;
@@ -59,6 +65,8 @@ public class ModelBuilder {
             openMarketOrders = JSONParser.parseMarketOrder(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketOrderResponse object");
+            openMarketOrders = new MarketOrderResponse();
+            openMarketOrders.setSuccess(false);
         }
         logger.debug(openMarketOrders);
         return openMarketOrders;
@@ -71,11 +79,18 @@ public class ModelBuilder {
             marketSummary = JSONParser.parseMarketSummary(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketSummaryResponse object");
+            marketSummary = new MarketSummaryResponse();
+            marketSummary.setSuccess(false);
         }
 //        logger.debug(marketSummary);
         return marketSummary;
     }
 
+    /**
+     *
+     * @param uuid
+     * @return notNull
+     */
     public static OrderResponse buildCancelOrderById(String uuid) {
         OrderResponse orderResponse = null;
         try {
@@ -83,6 +98,8 @@ public class ModelBuilder {
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+            orderResponse = new OrderResponse();
+            orderResponse.setSuccess(false);
         }
 //        logger.debug(marketSummary);
         return orderResponse;
@@ -91,12 +108,13 @@ public class ModelBuilder {
     public static OrderResponse buildSellOrder(String marketName, double quantity, double rate) {
         OrderResponse orderResponse = null;
         rate = rate * SELL_PRICE_RATIO;
-//        quantity = (1-BITTREX_FEE) * quantity;
         try {
             String response = MarketRequests.placeOrderSell(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+            orderResponse = new OrderResponse();
+            orderResponse.setSuccess(false);
         }
 //        logger.debug(marketSummary);
         return orderResponse;
@@ -105,12 +123,13 @@ public class ModelBuilder {
     public static OrderResponse buildBuyOrder(String marketName, double quantity, double rate) {
         OrderResponse orderResponse = null;
         rate = rate * BUY_PRICE_RATIO;
-//        quantity = (1-BITTREX_FEE) * quantity;
         try {
             String response = MarketRequests.placeOrderBuy(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+            orderResponse = new OrderResponse();
+            orderResponse.setSuccess(false);
         }
 //        logger.debug(marketSummary);
         return orderResponse;
@@ -123,6 +142,8 @@ public class ModelBuilder {
             orderResponse = JSONParser.parseMarketTicksResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+            orderResponse = new MarketTicksResponse();
+            orderResponse.setSuccess(false);
         }
 //        logger.debug(marketSummary);
         return orderResponse;
@@ -131,10 +152,12 @@ public class ModelBuilder {
     public static MarketTicksResponse buildMarketLastTick(String marketName, long timestamp, TimeIntervalEnum timeInterval) {
         MarketTicksResponse orderResponse = null;
         try {
-            String response = PublicRequests.getMarketLastTick(marketName, 10, timeInterval);
+            String response = PublicRequests.getMarketLastTick(marketName, timestamp, timeInterval);
             orderResponse = JSONParser.parseMarketTicksResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+            orderResponse = new MarketTicksResponse();
+            orderResponse.setSuccess(false);
         }
 //        logger.debug(marketSummary);
         return orderResponse;

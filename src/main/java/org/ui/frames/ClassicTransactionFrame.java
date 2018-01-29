@@ -109,12 +109,12 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
                     @Override
                     public void run() {
                         MarketSummaryResponse marketSummaryResponse = ModelBuilder.buildMarketSummary(marketName);
-                        if (marketSummaryResponse != null && marketSummaryResponse.isSuccess()) {
+                        if (marketSummaryResponse.isSuccess()) {
                             labelRate.setText("Rate: (Last: " + marketSummaryResponse.getResult().get(0).getLast() + ")");
                         }
                         String coin = marketName.substring(4, marketName.length());
                         MarketBalanceResponse marketBalanceResponse = ModelBuilder.buildMarketBalance(coin);
-                        if (marketBalanceResponse != null && marketBalanceResponse.isSuccess()) {
+                        if (marketBalanceResponse.isSuccess()) {
                             labelAmount.setText("Amount: (Available: " + marketBalanceResponse.getResult().getAvailable() + ")");
                         }
                     }

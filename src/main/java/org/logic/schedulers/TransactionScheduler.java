@@ -102,7 +102,8 @@ public class TransactionScheduler {
                 for (BotAvgOption botAvgOption : botAvgOptions) {
                     String marketName = botAvgOption.getMarketName();
                     if (marketHistoryMap.containsKey(marketName)) {
-                        MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketLastTick(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL);
+                        MarketTicksResponse marketTicksResponse = null;
+                        marketTicksResponse = ModelBuilder.buildMarketLastTick(marketName, TimeUtils.getTimestampPast(MARKET_TICKS_TIMESTAMP_PAST_HOURS), POLL_INTERVAL);
                         if (!marketTicksResponse.isSuccess()) {
                             logger.debug("Failed to get latest market ticks - aborting.");
                             continue;
@@ -140,7 +141,6 @@ public class TransactionScheduler {
                                 logger.debug("There are still pending orders for " + altCoin + ".");
                                 idleOrderCounter++;
                                 idleOrderCounters.put(altCoin, idleOrderCounter);
-                                continue;
                             } else {
                                 // Cancel idle order
                                 logger.debug("Trying to cancel idle " + result.getOrderType() + " order for " + altCoin + " market.");
@@ -151,7 +151,6 @@ public class TransactionScheduler {
                                 } else {
                                     logger.debug("Failed to cancel idle " + result.getOrderType() + " order for " + altCoin + " market.");
                                 }
-                                continue;
                             }
                         }
                     }

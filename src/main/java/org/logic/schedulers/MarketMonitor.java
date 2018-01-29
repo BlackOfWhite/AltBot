@@ -383,7 +383,7 @@ public class MarketMonitor {
                         logger.debug("One of the cancel operations failed! Aborting stop-loss all!");
                         return;
                     }
-                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
+                    OrderResponse orderResponse = null;
                     if (orderResponse.isSuccess()) {
                         logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
                         marketNamesToSell.add(marketName);
