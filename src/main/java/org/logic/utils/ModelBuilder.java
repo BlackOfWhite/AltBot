@@ -118,7 +118,19 @@ public class ModelBuilder {
     public static MarketTicksResponse buildMarketTicks(String marketName, long timestamp) {
         MarketTicksResponse orderResponse = null;
         try {
-            String response = PublicRequests.getMarketTickIntervalString(marketName, 10);
+            String response = PublicRequests.getMarketTicksWithInterval(marketName, 10);
+            orderResponse = JSONParser.parseMarketTicksResponse(response);
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+        }
+//        logger.debug(marketSummary);
+        return orderResponse;
+    }
+
+    public static MarketTicksResponse buildMarketLastTick(String marketName, long timestamp) {
+        MarketTicksResponse orderResponse = null;
+        try {
+            String response = PublicRequests.getMarketLastTick(marketName, 10);
             orderResponse = JSONParser.parseMarketTicksResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
