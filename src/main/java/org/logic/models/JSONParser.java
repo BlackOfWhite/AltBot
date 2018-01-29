@@ -3,6 +3,7 @@ package org.logic.models;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.logic.models.responses.*;
+import org.logic.models.responses.v2.MarketTicksResponse;
 
 import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
 
@@ -30,6 +31,12 @@ public class JSONParser {
         Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
         MarketBalancesResponse marketBalances = g.fromJson(json, MarketBalancesResponse.class);
         return marketBalances;
+    }
+
+    public static MarketTicksResponse parseMarketTicksResponse(String json) {
+        Gson g = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create();
+        MarketTicksResponse marketTicksResponse = g.fromJson(json, MarketTicksResponse.class);
+        return marketTicksResponse;
     }
 
     public static OrderResponse parseOrderResponse(String json) {

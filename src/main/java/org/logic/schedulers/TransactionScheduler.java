@@ -5,6 +5,7 @@ import org.logic.models.responses.MarketBalanceResponse;
 import org.logic.models.responses.MarketOrderResponse;
 import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.models.responses.OrderResponse;
+import org.logic.models.responses.v2.MarketTicksResponse;
 import org.logic.transactions.model.buysell.BotAvgOption;
 import org.logic.transactions.model.buysell.BotAvgOptionManager;
 import org.logic.utils.ModelBuilder;
@@ -65,6 +66,15 @@ public class TransactionScheduler {
         }
         ses.scheduleAtFixedRate(() -> {
             logger.debug("\nNew run..");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    logger.debug("RRRRUN");
+                    MarketTicksResponse marketTicksResponse =  ModelBuilder.buildMarketTicks("BTC-XVG", 10);
+                    logger.debug("AHAHA:" +marketTicksResponse);
+                }
+            }).start();
+
             HashSet<String> disabledMarkets = new HashSet<>();
             List<BotAvgOption> botAvgOptions = BotAvgOptionManager.getInstance().getOptionList();
             try {

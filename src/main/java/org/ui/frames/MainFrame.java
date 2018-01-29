@@ -3,6 +3,8 @@ package org.ui.frames;
 import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
+import org.logic.models.responses.v2.MarketTicksResponse;
+import org.logic.utils.ModelBuilder;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 

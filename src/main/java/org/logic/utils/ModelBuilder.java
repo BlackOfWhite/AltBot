@@ -3,6 +3,7 @@ package org.logic.utils;
 import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.responses.*;
+import org.logic.models.responses.v2.MarketTicksResponse;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
 
@@ -107,6 +108,18 @@ public class ModelBuilder {
         try {
             String response = MarketRequests.placeOrderBuy(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
+        } catch (Exception e) {
+            logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
+        }
+//        logger.debug(marketSummary);
+        return orderResponse;
+    }
+
+    public static MarketTicksResponse buildMarketTicks(String marketName, long timestamp) {
+        MarketTicksResponse orderResponse = null;
+        try {
+            String response = PublicRequests.getMarketTickIntervalString(marketName, 10);
+            orderResponse = JSONParser.parseMarketTicksResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
         }
