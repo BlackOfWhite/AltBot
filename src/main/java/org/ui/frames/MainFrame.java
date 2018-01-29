@@ -132,7 +132,6 @@ public class MainFrame extends JFrame {
         //setSize(Constants.FRAME_WIDTH, Constants.FRAME_HEIGHT);
         // Full screen
         setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setUndecorated(true);
         setVisible(true);
 
         showPieChart();
