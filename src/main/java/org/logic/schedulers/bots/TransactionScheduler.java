@@ -43,7 +43,8 @@ public class TransactionScheduler {
     private static final TimeIntervalEnum POLL_INTERVAL = TimeIntervalEnum.oneMin;
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 30;
-    private static final int LIST_MAX_SIZE = 160; // approx 2h
+    private static final int INIT_LIST_MAX_SIZE = 160; // approx 2h - 160 * 1 min
+    private static final int LIST_MAX_SIZE = 1800;// 30min = 10 * 6 * 30 = 1800
 
     public volatile static boolean active = false;
     private static Logger logger = Logger.getLogger(TransactionScheduler.class);
@@ -107,7 +108,7 @@ public class TransactionScheduler {
                     LinkedList<MarketTicksResponse.Result> history = marketTicksResponse.getResult();
                     LinkedList<MarketVolumeAndLast> copy = new LinkedList<>();
                     int size = history.size();
-                    int start = history.size() > LIST_MAX_SIZE ? (size - LIST_MAX_SIZE) : 0;
+                    int start = history.size() > INIT_LIST_MAX_SIZE ? (size - INIT_LIST_MAX_SIZE) : 0;
                     for (int x = start; x < size; x++) {
                         copy.add(new MarketVolumeAndLast(history.get(x).getV(), history.get(x).getC()));
                     }
@@ -262,15 +263,17 @@ public class TransactionScheduler {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
-            double priceAvg = calculateAverageClose(marketHistoryMap.get(marketName));
+            double priceAvg = calculateAverageLast(marketHistoryMap.get(marketName), 0);
+            double priceAvgHalf = calculateAverageLast(marketHistoryMap.get(marketName), marketHistoryMap.get(marketName).size() / 2);
             double buyBelow = priceAvg * botAvgOption.getBuyBelowRatio();
+            double buyBelow2 = priceAvgHalf * botAvgOption.getBuyBelowRatio();
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < botAvgOption.getBtc()) {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
             }
-            if (last < buyBelow) {
+            if (last < buyBelow || last < buyBelow2) {
                 logger.debug("Last price is too low to place a buy order. Only buy if is ABOVE average.");
                 return;
             }
@@ -362,22 +365,22 @@ public class TransactionScheduler {
         }
     }
 
-    private static double calculateAverageClose(LinkedList<MarketVolumeAndLast> list) {
+    private static double calculateAverageLast(LinkedList<MarketVolumeAndLast> list, int start) {
         double sum = 0;
         if (!list.isEmpty()) {
-            for (MarketVolumeAndLast result : list) {
-                sum += result.getLast();
+            for (int i = start; i < list.size(); i++) {
+                sum += list.get(i).getLast();
             }
             return sum / list.size();
         }
         return -1;
     }
 
-    private static double calculateAverageVolume(LinkedList<MarketVolumeAndLast> list) {
+    private static double calculateAverageVolume(LinkedList<MarketVolumeAndLast> list, int start) {
         double sum = 0;
         if (!list.isEmpty()) {
-            for (MarketVolumeAndLast result : list) {
-                sum += result.getVolume();
+            for (int i = start; i < list.size(); i++) {
+                sum += list.get(i).getVolume();
             }
             return sum / list.size();
         }
@@ -396,7 +399,7 @@ public class TransactionScheduler {
         double change = ((lastV - firstV) * 100.0d / firstV);
         if (change > 0 && change >= percent) {
             // Check if is above avg.
-            double avg = calculateAverageVolume(list);
+            double avg = calculateAverageVolume(list, 0);
             if (lastV > avg) {
                 return true;
             }
@@ -405,7 +408,7 @@ public class TransactionScheduler {
     }
 
     /**
-     * Checks if avg rised by given percent.
+     * Checks if avg raised by given percent.
      *
      * @param list
      * @return
@@ -416,7 +419,7 @@ public class TransactionScheduler {
         double change = ((lastC - firstC) * 100.0d / firstC);
         if (change > 0 && change >= percent) {
             // Check if is above avg.
-            double avg = calculateAverageClose(list);
+            double avg = calculateAverageLast(list, 0);
             if (lastC > avg) {
                 return true;
             }
