@@ -1,11 +1,10 @@
 package org.logic.models.responses;
 
 import com.google.gson.annotations.Expose;
-import org.logic.models.responses.Response;
 
 import java.util.ArrayList;
 
-public class MarketSummaryResponse extends Response{
+public class MarketSummaryResponse extends Response {
 
     @Override
     public String toString() {
@@ -32,6 +31,7 @@ public class MarketSummaryResponse extends Response{
                     ", Ask=" + Ask +
                     ", Bid=" + Bid +
                     ", Last=" + Last +
+                    ", Volume=" + Volume +
                     '}';
         }
 
@@ -39,8 +39,12 @@ public class MarketSummaryResponse extends Response{
         double High;
         @Expose
         double Last;
+        @Expose
+        double Volume;
 
-        public double getLast() { return Last;}
+        public double getLast() {
+            return Last;
+        }
 
         public double getHigh() {
             return High;
@@ -56,6 +60,10 @@ public class MarketSummaryResponse extends Response{
 
         public double getBid() {
             return Bid;
+        }
+
+        public double getVolume() {
+            return Volume;
         }
 
         @Expose
