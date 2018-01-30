@@ -29,7 +29,7 @@ public class TransactionScheduler {
     // History map
     private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2; // does not work
 
-    private static final int TIME = 60; // Use 60 second interval - lowest possible. // TODO
+    private static final int TIME = 60; // Use 60 second interval - lowest possible.
 
     private static final int VOLUME_RISE_INDICATOR = 2; // volume must grow by 4%
     private static final int AVG_RISE_INDICATOR = 2; // volume must grow by 4%
@@ -117,7 +117,7 @@ public class TransactionScheduler {
                                 marketHistoryMap.put(marketName, new LinkedList<>());
                                 marketHistoryMap.get(marketName).addAll(subHistory);
                             }
-                            logger.debug("Added new tick for market: " + marketName + "." + history);
+                            logger.debug("Added new tick for market: " + marketName + ".");
                         }
                     }
                 }
@@ -265,9 +265,15 @@ public class TransactionScheduler {
         }
     }
 
+    /**
+     * Rounds down up to 6 decimal places. For example, 11,08654291 would be rounded to 11,086542.
+     *
+     * @param d
+     * @return
+     */
     private static double round(double d) {
-        DecimalFormat df = new DecimalFormat("#,####");
-        df.setRoundingMode(RoundingMode.CEILING);
+        DecimalFormat df = new DecimalFormat("##.000000");
+        df.setRoundingMode(RoundingMode.FLOOR);
         return Double.parseDouble(df.format(d));
     }
 
@@ -289,14 +295,15 @@ public class TransactionScheduler {
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.");
-                botAvgOption.setBoughtAt(last);
+                botAvgOption.setBoughtAt(last); // TODO. Didn't save.
                 BotAvgOptionManager.getInstance().updateOption(botAvgOption);
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.\n" + orderResponse);
             }
         } catch (Exception e) {
-            logger.error("Failed to place an order to buy " + quantity + " alt. FAIL.");
+            logger.error("Failed to place an order to buy " + quantity + " alt.");
+            e.printStackTrace(); // TODO. Remove later.
         }
     }
 
