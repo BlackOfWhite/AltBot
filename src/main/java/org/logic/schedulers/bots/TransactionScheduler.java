@@ -44,10 +44,7 @@ public class TransactionScheduler {
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 30;
     private static final int LIST_MAX_SIZE = 160; // approx 2h
-    //    private static final double buyBelowRatio = 0.975d; // 2.5% below avg
-//    private static final double totalGainRatio = 1.035d; // 3.5% above bought price
-//    private static final double sellAndResetRatio = 0.094d; // 6% will auto sell also below this, below bought price
-//    private static final double btc = 0.017;
+
     public volatile static boolean active = false;
     private static Logger logger = Logger.getLogger(TransactionScheduler.class);
     private static TransactionScheduler instance;
@@ -83,7 +80,13 @@ public class TransactionScheduler {
     }
 
     /**
-     * Execute scheduler's tasks.
+     * Execute scheduler's tasks. There are 2 modes - HISTORY and NORMAL. HISTORY mode is used to fetch historical
+     * data from Bittrex. It has fixed poll time equal to TIME_HISTORY_POLL. In this mode bot will not execute any
+     * other actions.
+     * <p>
+     * After all historical data was fetched, bot switches NORMAL mode with fixed poll time equal to TIME_NORMAL_POLL.
+     * In this mode it will fetch latest data from monitored markets. Then it will execute all operations related to
+     * BOT_AVG.
      */
     private static void executeRun() {
         logger.debug("\nNew run..");
