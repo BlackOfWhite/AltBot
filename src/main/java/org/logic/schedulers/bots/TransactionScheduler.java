@@ -1,14 +1,13 @@
 package org.logic.schedulers.bots;
 
 import org.apache.log4j.Logger;
-import org.logic.exceptions.EntryExistsException;
 import org.logic.models.responses.MarketBalanceResponse;
 import org.logic.models.responses.MarketOrderResponse;
 import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.models.responses.OrderResponse;
 import org.logic.models.responses.v2.MarketTicksResponse;
-import org.logic.schedulers.bots.model.TimeIntervalEnum;
 import org.logic.schedulers.bots.model.MarketVolumeAndLast;
+import org.logic.schedulers.bots.model.TimeIntervalEnum;
 import org.logic.transactions.model.bots.BotAvgOption;
 import org.logic.transactions.model.bots.BotAvgOptionManager;
 import org.logic.utils.ModelBuilder;
@@ -16,8 +15,6 @@ import org.logic.utils.TimeUtils;
 import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 
-import javax.xml.bind.JAXBException;
-import java.io.IOException;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.util.HashMap;
@@ -84,25 +81,13 @@ public class TransactionScheduler {
         }, 0, TIME_HISTORY_POLL, TimeUnit.SECONDS);  // execute every x seconds
         active = true;
     }
-static int i = 0;
+
+    /**
+     * Execute scheduler's tasks.
+     */
     private static void executeRun() {
         logger.debug("\nNew run..");
         List<BotAvgOption> botAvgOptions = BotAvgOptionManager.getInstance().getOptionList();
-        try {
-            BotAvgOption botAvgOption = new BotAvgOption("BTC-ETH", 0, 0, 0, 0);
-botAvgOption.setBoughtAt(100*i);
-i++;
-            BotAvgOptionManager.getInstance().updateOption(botAvgOption);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (JAXBException e) {
-            e.printStackTrace();
-        } catch (EntryExistsException e) {
-            e.printStackTrace();
-        }
-        if (1>0) {
-            return;
-        }
 
         // 1. Initialize or update markets history
         if (marketHistoryMap.size() != botAvgOptions.size()) {
