@@ -1,10 +1,8 @@
-package org.logic.transactions.model.buysell;
+package org.logic.transactions.model.bots;
 
 import org.logic.exceptions.EntryExistsException;
-import org.logic.transactions.BuySellTransaction;
 import org.logic.transactions.model.OptionImpl;
 import org.logic.transactions.model.OptionManagerImpl;
-import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.modes.StopLossMode;
 import org.preferences.managers.PersistenceManager;
 

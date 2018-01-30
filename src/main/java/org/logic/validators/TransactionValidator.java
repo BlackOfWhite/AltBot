@@ -1,7 +1,7 @@
 package org.logic.validators;
 
 import org.logic.models.responses.MarketOrderResponse;
-import org.logic.schedulers.MarketMonitor;
+import org.logic.schedulers.monitors.MarketMonitor;
 
 public class TransactionValidator {
 

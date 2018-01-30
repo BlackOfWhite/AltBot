@@ -1,13 +1,12 @@
 package org.logic.utils;
 
-import com.sun.istack.internal.NotNull;
 import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.responses.*;
 import org.logic.models.responses.v2.MarketTicksResponse;
 import org.logic.requests.MarketRequests;
 import org.logic.requests.PublicRequests;
-import org.logic.schedulers.TimeIntervalEnum;
+import org.logic.schedulers.bots.model.TimeIntervalEnum;
 
 import static org.preferences.Constants.BUY_PRICE_RATIO;
 import static org.preferences.Constants.SELL_PRICE_RATIO;

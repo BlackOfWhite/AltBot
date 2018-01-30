@@ -2,7 +2,7 @@ package org.logic.transactions.model;
 
 import org.apache.log4j.Logger;
 import org.logic.exceptions.EntryExistsException;
-import org.logic.transactions.model.buysell.BotAvgOptionManager;
+import org.logic.transactions.model.bots.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossMode;
 
 import javax.xml.bind.JAXBException;

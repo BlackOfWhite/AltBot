@@ -1,4 +1,4 @@
-package org.logic.transactions.model.buysell;
+package org.logic.transactions.model.bots;
 
 import org.logic.transactions.model.OptionImpl;
 

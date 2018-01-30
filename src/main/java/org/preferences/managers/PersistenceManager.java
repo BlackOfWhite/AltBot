@@ -1,8 +1,8 @@
 package org.preferences.managers;
 
 import org.apache.log4j.Logger;
-import org.logic.transactions.model.buysell.BotAvgOption;
-import org.logic.transactions.model.buysell.BotAvgOptions;
+import org.logic.transactions.model.bots.BotAvgOption;
+import org.logic.transactions.model.bots.BotAvgOptions;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptions;
 
@@ -45,7 +45,7 @@ public class PersistenceManager {
 
     public static void saveBotAvgOptionCollection(ArrayList<BotAvgOption> options) throws IOException, JAXBException {
         BufferedWriter writer = new BufferedWriter(new FileWriter(BOT_AVG_OPTIONS_FILE_NAME));
-        JAXBContext context = JAXBContext.newInstance(BotAvgOption.class);
+        JAXBContext context = JAXBContext.newInstance(BotAvgOptions.class);
         Marshaller m = context.createMarshaller();
         m.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
         m.marshal(new BotAvgOptions(options), writer);

@@ -1,7 +1,7 @@
 package org.logic.requests;
 
 import org.apache.log4j.Logger;
-import org.logic.schedulers.TimeIntervalEnum;
+import org.logic.schedulers.bots.model.TimeIntervalEnum;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

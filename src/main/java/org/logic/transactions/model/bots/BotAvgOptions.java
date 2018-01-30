@@ -1,4 +1,4 @@
-package org.logic.transactions.model.buysell;
+package org.logic.transactions.model.bots;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;

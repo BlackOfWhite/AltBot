@@ -1,4 +1,4 @@
-package org.logic.schedulers.model;
+package org.logic.schedulers.bots.model;
 
 public class MarketVolumeAndLast {
 
@@ -16,5 +16,13 @@ public class MarketVolumeAndLast {
     public MarketVolumeAndLast(double volume, double last) {
         this.volume = volume;
         this.last = last;
+    }
+
+    @Override
+    public String toString() {
+        return "MarketVolumeAndLast{" +
+                "volume=" + volume +
+                ", last=" + last +
+                '}';
     }
 }

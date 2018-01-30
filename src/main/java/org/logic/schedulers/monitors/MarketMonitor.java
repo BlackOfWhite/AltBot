@@ -1,12 +1,12 @@
-package org.logic.schedulers;
+package org.logic.schedulers.monitors;
 
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
-import org.logic.schedulers.model.MarketDetails;
+import org.logic.schedulers.monitors.model.MarketDetails;
 import org.logic.smtp.MailSender;
-import org.logic.transactions.model.buysell.BotAvgOption;
-import org.logic.transactions.model.buysell.BotAvgOptionManager;
+import org.logic.transactions.model.bots.BotAvgOption;
+import org.logic.transactions.model.bots.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;

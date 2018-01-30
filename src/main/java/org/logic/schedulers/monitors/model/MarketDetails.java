@@ -1,4 +1,4 @@
-package org.logic.schedulers.model;
+package org.logic.schedulers.monitors.model;
 
 public class MarketDetails {
     private double last;
