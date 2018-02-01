@@ -213,8 +213,7 @@ public class DeepBot {
             }
             double quantity = round(botAvgOption.getBtc() / last);
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
-            logger.debug("DEEEEP for " + marketName + "!");
-//            buy(botAvgOption, quantity, last);
+            buy(botAvgOption, quantity, last);
         } else {
             double sellAbove = botAvgOption.getSellAbove();
             double sellAndResetBelow = botAvgOption.getStopLoss();
@@ -226,7 +225,7 @@ public class DeepBot {
                 if (last >= sellAbove || last < sellAndResetBelow) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
-//                    sell(marketName, quantity, last);
+                    sell(marketName, quantity, last);
                 }
             }
         }
@@ -245,6 +244,7 @@ public class DeepBot {
         double preLast = list.get(list.size() - 2).getLast();
         if (preLast * MIN_DROP_RATIO > last) {
             sellAbove = calculateGainRatio(preLast, last);
+            logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast/last);
             return true;
         }
         return false;
