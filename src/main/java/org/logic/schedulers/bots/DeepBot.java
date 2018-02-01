@@ -280,6 +280,7 @@ public class DeepBot {
 
     /**
      * Checks if distance of 95% of all values of price history is lower than 1% of price.
+     * Last price is not considered.
      *
      * @param avg
      * @return
@@ -288,12 +289,14 @@ public class DeepBot {
         int count = 0;
         double maxDistance = avg * 1.01d;
         double minDistance = avg * 0.99d;
-        for (MarketVolumeAndLast marketVolumeAndLast : marketHistoryMap.get(marketName)) {
-            if (marketVolumeAndLast.getLast() >= minDistance && marketVolumeAndLast.getLast() <= maxDistance) {
+        LinkedList<MarketVolumeAndLast> list = marketHistoryMap.get(marketName);
+        for (int x = 0; x < list.size() - 1; x++) {
+            double last = list.get(x).getLast();
+            if (last >= minDistance && last <= maxDistance) {
                 count++;
             }
         }
-        double ratio = count / marketHistoryMap.get(marketName).size();
+        double ratio = count / (marketHistoryMap.get(marketName).size() - 1);
         return (ratio >= 0.95d);
     }
 
