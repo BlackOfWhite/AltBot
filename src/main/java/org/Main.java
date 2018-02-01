@@ -3,7 +3,6 @@ package org;
 import org.apache.log4j.Logger;
 import org.logic.schedulers.bots.DeepBot;
 import org.logic.schedulers.monitors.MarketMonitor;
-import org.logic.schedulers.bots.TransactionScheduler;
 import org.logic.transactions.model.bots.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.ui.frames.MainFrame;

@@ -33,7 +33,4 @@ public class Constants {
     public static final String BTC_DONATION_ADDRESS = "168zdkYPAqMjwjior2GRyfbo1djBJL9LTH";
     public static final String ETH_DONATION_ADDRESS = "0xE69Cb31ddD790F072E79aC789f0152dF85b16AF4";
     public static final String LTC_DONATION_ADDRESS = "LPBDpTsHd9n6e8ZG4xhUoyUx91CdNmXZWW";
-
-    // EMail
-    public static final String MAIL_SUBJECT = "Open orders status changed!";
 }

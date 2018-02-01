@@ -100,7 +100,7 @@ public class DeepBot {
                         marketSummaryResponse.getResult().get(0).getLast()));
                 marketHistoryMap.put(marketName, history);
             }
-            logger.debug("Added new tick for market: " + marketName + " [ " + history.size() + "/" + LIST_MAX_SIZE + "].");
+//            logger.debug("Added new tick for market: " + marketName + " [ " + history.size() + "/" + LIST_MAX_SIZE + "].");
         }
 
         // 2. Check for which coins there are no open orders. Cancel idle orders.

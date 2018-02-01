@@ -27,7 +27,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 
-public class TransactionScheduler {
+public class AvgBot {
 
     // History map
     private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2; // does not work
@@ -47,18 +47,18 @@ public class TransactionScheduler {
     private static final int LIST_MAX_SIZE = 1800;// 30min = 10 * 6 * 30 = 1800
 
     public volatile static boolean active = false;
-    private static Logger logger = Logger.getLogger(TransactionScheduler.class);
-    private static TransactionScheduler instance;
+    private static Logger logger = Logger.getLogger(AvgBot.class);
+    private static AvgBot instance;
     private static ScheduledExecutorService ses;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
     private static HashMap<String, LinkedList<MarketVolumeAndLast>> marketHistoryMap = new HashMap<>();
 
-    private TransactionScheduler() {
+    private AvgBot() {
     }
 
-    public static TransactionScheduler getInstance() {
+    public static AvgBot getInstance() {
         if (instance == null) {
-            instance = new TransactionScheduler();
+            instance = new AvgBot();
             ses = Executors.newScheduledThreadPool(10);
         }
         loadAPIKeys();
