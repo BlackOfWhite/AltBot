@@ -27,11 +27,11 @@ public class DeepBot {
     private static final int TIME_NORMAL_POLL = 5; // Use this one if history data was populated.
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 180;
-    private static final int LIST_MAX_SIZE = 360;// 30min = TIME_NORMAL_POLL * 12 * 30 = 360
-    private static final double DROP_RATIO = 0.985;
-    private static final double GAIN_RATIO = 0.01;
-
+    private static final int LIST_MAX_SIZE = 120;// 30min = TIME_NORMAL_POLL * 12 * 30 = 360
     public volatile static boolean active = false;
+    private static volatile double sellAbove = 0.01;
+    private static final double MIN_DROP_RATIO = 0.99;
+    private static final double STOP_LOSS_RATIO = 0.95; // sell if rate of sellAbove * this ratio is lower.
     private static Logger logger = Logger.getLogger(DeepBot.class);
     private static DeepBot instance;
     private static ScheduledExecutorService ses;
@@ -100,7 +100,7 @@ public class DeepBot {
                         marketSummaryResponse.getResult().get(0).getLast()));
                 marketHistoryMap.put(marketName, history);
             }
-//            logger.debug("Added new tick for market: " + marketName + " [ " + history.size() + "/" + LIST_MAX_SIZE + "].");
+            logger.debug("Added new tick for market: " + marketName + " [" + history.size() + "/" + LIST_MAX_SIZE + "].");
         }
 
         // 2. Check for which coins there are no open orders. Cancel idle orders.
@@ -216,9 +216,8 @@ public class DeepBot {
             logger.debug("DEEEEP for " + marketName + "!");
 //            buy(botAvgOption, quantity, last);
         } else {
-            double lastTimeBought = botAvgOption.getBoughtAt();
-            double sellAbove = lastTimeBought * GAIN_RATIO;
-            double sellAndResetBelow = lastTimeBought * botAvgOption.getSellAndResetRatio();
+            double sellAbove = botAvgOption.getSellAbove();
+            double sellAndResetBelow = botAvgOption.getStopLoss();
             logger.debug("Trying to place a sell order for " + marketName + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "]." +
                     " Reset at " + sellAndResetBelow + " [" + last / sellAndResetBelow + "]");
             if (!buy) {
@@ -243,12 +242,25 @@ public class DeepBot {
         }
         // Last must be below DROP_RATE. Compare to 3 last objects. Last 15 sec.
         LinkedList<MarketVolumeAndLast> list = marketHistoryMap.get(marketName);
-        for (int x = LIST_MAX_SIZE - 3; x < list.size(); x++) {
-            if (list.get(x).getLast() * DROP_RATIO > last) {
-                return true;
-            }
+        double preLast = list.get(list.size() - 2).getLast();
+        if (preLast * MIN_DROP_RATIO > last) {
+            sellAbove = calculateGainRatio(preLast, last);
+            return true;
         }
         return false;
+    }
+
+    private static double calculateGainRatio(double dropTo, double last) {
+        double ratio = dropTo / last;
+        if (ratio > 0.99d) {
+            return -1;
+        } else if (ratio > 0.98) {
+            return 0.995 * last; // max 1.5% gain
+        } else if (ratio > 0.96){
+            return 0.99 * last; // max 2.5% gain
+        } else {
+            return 0.98 * last; // min 3.1% gain
+        }
     }
 
     /**
@@ -285,7 +297,8 @@ public class DeepBot {
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.");
-                botAvgOption.setBoughtAt(last); // TODO. Didn't save.
+                botAvgOption.setSellAbove(sellAbove);
+                botAvgOption.setStopLoss(sellAbove * STOP_LOSS_RATIO);
                 BotAvgOptionManager.getInstance().updateOption(botAvgOption);
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + marketName +

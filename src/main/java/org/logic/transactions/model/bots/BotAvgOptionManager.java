@@ -50,7 +50,8 @@ public class BotAvgOptionManager extends OptionManagerImpl {
         if (optionList.contains(option)) {
             for (BotAvgOption botAvgOption1 : optionList) {
                 if (botAvgOption1.equals(botAvgOption)) {
-                    botAvgOption1.setBoughtAt(botAvgOption.getBoughtAt());
+                    botAvgOption1.setSellAbove(botAvgOption.getSellAbove());
+                    botAvgOption1.setStopLoss(botAvgOption.getStopLoss());
                     break;
                 }
             }
