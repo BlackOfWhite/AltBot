@@ -26,12 +26,12 @@ public class DeepBot {
 
     private static final int TIME_NORMAL_POLL = 5; // Use this one if history data was populated.
     // Cancel pending order after N tries, if occasion missed.
-    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 180;
-    private static final int LIST_MAX_SIZE = 120;// 30min = TIME_NORMAL_POLL * 12 * 30 = 360
-    public volatile static boolean active = false;
-    private static volatile double sellAbove = 0.01;
+    private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 12; // must be short. this bot is very quick. 12 * TIME_NORMAL_POLL sec = 60 sec.
+    private static final int LIST_MAX_SIZE = 120;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
     private static final double MIN_DROP_RATIO = 0.99;
     private static final double STOP_LOSS_RATIO = 0.95; // sell if rate of sellAbove * this ratio is lower.
+    public volatile static boolean active = false;
+    private static volatile double sellAbove = 0.01;
     private static Logger logger = Logger.getLogger(DeepBot.class);
     private static DeepBot instance;
     private static ScheduledExecutorService ses;
@@ -244,7 +244,7 @@ public class DeepBot {
         double preLast = list.get(list.size() - 2).getLast();
         if (preLast * MIN_DROP_RATIO > last) {
             sellAbove = calculateGainRatio(preLast, last);
-            logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast/last);
+            logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast / last);
             return true;
         }
         return false;
@@ -256,7 +256,7 @@ public class DeepBot {
             return -1;
         } else if (ratio > 0.98) {
             return 0.995 * last; // max 1.5% gain
-        } else if (ratio > 0.96){
+        } else if (ratio > 0.96) {
             return 0.99 * last; // max 2.5% gain
         } else {
             return 0.98 * last; // min 3.1% gain
