@@ -27,7 +27,7 @@ public class DeepBot {
     private static final int TIME_NORMAL_POLL = 5; // Use this one if history data was populated.
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 24; // must be short. this bot is very quick. 24 * TIME_NORMAL_POLL sec = 120 sec.
-    private static final int LIST_MAX_SIZE = 3;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
+    private static final int LIST_MAX_SIZE = 120;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
     private static final double MIN_DROP_RATIO = 0.99;
     private static final double STOP_LOSS_RATIO = 0.95; // sell if rate of sellAbove * this ratio is lower.
     public volatile static boolean active = false;
@@ -207,13 +207,17 @@ public class DeepBot {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
             }
-            if (!shouldPlaceBuyOrder(priceAvg, last, marketName)) {
+            if (!checkPriceSpread(marketName, priceAvg)) {
+                logger.debug("Prices spread is too big.");
+                return;
+            }
+            if (!shouldPlaceBuyOrder(last, marketName)) {
                 logger.debug("Conditions not met to place a DEEP BOT's buy order.");
                 return;
             }
             double quantity = round(botAvgOption.getBtc() / last);
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
-//            buy(botAvgOption, quantity, last);
+            buy(botAvgOption, quantity, last);
         } else {
             double sellAbove = botAvgOption.getSellAbove();
             double sellAndResetBelow = botAvgOption.getStopLoss();
@@ -222,7 +226,7 @@ public class DeepBot {
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
                 // Must have certain gain from this transaction. We also safe sell if price drops too much in relation to bought price.
-                if ((last >= sellAbove && sellAbove > 0)|| (last < sellAndResetBelow && sellAndResetBelow > 0)) {
+                if ((last >= sellAbove && sellAbove > 0) || (last < sellAndResetBelow && sellAndResetBelow > 0)) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
                     sell(marketName, quantity, last);
@@ -232,29 +236,39 @@ public class DeepBot {
     }
 
     /**
-     *
+     * Compare prices from 2 last measurements. Returns true if latest price is lower by at least 1% then the price before it.
      */
-    private static boolean shouldPlaceBuyOrder(double priceAvg, double last, String marketName) {
+    private static boolean shouldPlaceBuyOrder(double last, String marketName) {
         LinkedList<MarketVolumeAndLast> list = marketHistoryMap.get(marketName);
         // Last below 99% of avg. Last should be not too small.
         double preLast = list.get(list.size() - 2).getLast();
         // This condition is important.
-        if (priceAvg * 0.99d > last || (preLast / last) > 0.99d) {
+        if (preLast / last > 0.99d) {
             return false;
         }
         // Last must be below DROP_RATE. Compare to 3 last objects. Last 15 sec.
         if (preLast * MIN_DROP_RATIO > last) {
             sellAbove = calculateGainRatio(preLast, last);
+            if (sellAbove <= 0) {
+                return false;
+            }
             logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast / last);
             return true;
         }
         return false;
     }
 
+    /**
+     * Calculates gain ratio depending on price drop.
+     *
+     * @param dropTo
+     * @param last
+     * @return
+     */
     private static double calculateGainRatio(double dropTo, double last) {
         double ratio = dropTo / last;
         if (ratio > 0.99d) {
-            return 1000000;
+            return -99999;
         } else if (ratio > 0.98) {
             return 0.995 * last; // max 1.5% gain
         } else if (ratio > 0.96) {
@@ -262,6 +276,25 @@ public class DeepBot {
         } else {
             return 0.98 * last; // min 3.1% gain
         }
+    }
+
+    /**
+     * Checks if distance of 95% of all values of price history is lower than 1% of price.
+     *
+     * @param avg
+     * @return
+     */
+    private static boolean checkPriceSpread(String marketName, double avg) {
+        int count = 0;
+        double maxDistance = avg * 1.01d;
+        double minDistance = avg * 0.99d;
+        for (MarketVolumeAndLast marketVolumeAndLast : marketHistoryMap.get(marketName)) {
+            if (marketVolumeAndLast.getLast() >= minDistance && marketVolumeAndLast.getLast() <= maxDistance) {
+                count++;
+            }
+        }
+        double ratio = count / marketHistoryMap.get(marketName).size();
+        return (ratio >= 0.95d);
     }
 
     /**
