@@ -9,7 +9,7 @@ import org.logic.validators.TransactionValidator;
 
 import java.io.IOException;
 
-public class ClassicTransaction implements TransactionImpl {
+public class ClassicTransaction {
 
     private String marketName;
     private double rate, amount;
@@ -56,8 +56,7 @@ public class ClassicTransaction implements TransactionImpl {
     public double getAmount() {
         return amount;
     }
-
-    @Override
+    
     public boolean isOnlyOnePerMarketAllowed() {
         return false;
     }
