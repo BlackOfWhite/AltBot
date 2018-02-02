@@ -240,6 +240,7 @@ public class DeepBot {
             if (stopLossActivationMap.containsKey(marketName)) {
                 int count = stopLossActivationMap.get(marketName);
                 if (count < STOP_LOSS_ACTIVATION_TIME) {
+                    count++;
                     stopLossActivationMap.put(marketName, count);
                     allowStopLoss = false;
                 } else {
@@ -253,12 +254,11 @@ public class DeepBot {
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
                 // Must have certain gain from this transaction. We also safe sell if price drops too much in relation to bought price.
+                double quantity = marketBalanceAlt.getResult().getBalance();
                 if ((last >= sellAbove && sellAbove > 0)) {
-                    double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
                     sell(marketName, quantity, last);
-                } else if ((last < sellAndResetBelow && sellAndResetBelow > 0 && allowStopLoss)) {
-                    double quantity = marketBalanceAlt.getResult().getBalance();
+                } else if ((last <= sellAndResetBelow && sellAndResetBelow > 0 && allowStopLoss)) {
                     logger.debug("Trying to stop-loss " + quantity + " units of " + marketName + " for " + last + ".");
                     sell(marketName, quantity, last);
                 }
