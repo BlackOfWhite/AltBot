@@ -249,13 +249,17 @@ public class DeepBot {
             double sellAbove = botAvgOption.getSellAbove();
             double sellAndResetBelow = botAvgOption.getStopLoss();
             logger.debug("Trying to place a sell order for " + marketName + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "]." +
-                    " Reset at " + sellAndResetBelow + " [" + last / sellAndResetBelow + "]");
+                    " Stop-loss at " + sellAndResetBelow + " [" + last / sellAndResetBelow + "]");
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
                 // Must have certain gain from this transaction. We also safe sell if price drops too much in relation to bought price.
-                if ((last >= sellAbove && sellAbove > 0) || (last < sellAndResetBelow && sellAndResetBelow > 0 && allowStopLoss)) {
+                if ((last >= sellAbove && sellAbove > 0)) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
+                    sell(marketName, quantity, last);
+                } else if ((last < sellAndResetBelow && sellAndResetBelow > 0 && allowStopLoss)) {
+                    double quantity = marketBalanceAlt.getResult().getBalance();
+                    logger.debug("Trying to stop-loss " + quantity + " units of " + marketName + " for " + last + ".");
                     sell(marketName, quantity, last);
                 }
             }
