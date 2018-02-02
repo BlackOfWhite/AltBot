@@ -26,16 +26,20 @@ public class DeepBot {
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 24; // must be short. this bot is very quick. 24 * TIME_NORMAL_POLL sec = 120 sec.
     private static final int LIST_MAX_SIZE = 120;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
     private static final double MIN_DROP_RATIO = 0.99;
-    private static final double STOP_LOSS_RATIO = 0.95; // sell if rate of sellAbove * this ratio is lower.
+    private static final double STOP_LOSS_RATIO = 0.985; // in relation to pre-last price.
     private static final int EXHAUSTION_TIME = 120; // 10 minutes. Market is disabled for 10 minutes after successful sell.
     public volatile static boolean active = false;
-    private static volatile double sellAbove = 0.01;
+    private static volatile double sellAbove;
     private static Logger logger = Logger.getLogger(DeepBot.class);
     private static DeepBot instance;
     private static ScheduledExecutorService ses;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
     private static HashMap<String, LinkedList<MarketVolumeAndLast>> marketHistoryMap = new HashMap<>();
     private static HashMap<String, Integer> marketExhausted = new HashMap<>();
+
+    // After 2minutes stop loss options can be executed. Used to not interfere with quick sells.
+    private static final int STOP_LOSS_ACTIVATION_TIME = 24;
+    private static HashMap<String, Integer> stopLossActivationMap = new HashMap<>();
 
     private DeepBot() {
     }
@@ -231,6 +235,17 @@ public class DeepBot {
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
             buy(botAvgOption, quantity, last);
         } else {
+            // Start stop-loss activator
+            boolean allowStopLoss = true;
+            if (stopLossActivationMap.containsKey(marketName)) {
+                int count = stopLossActivationMap.get(marketName);
+                if (count < STOP_LOSS_ACTIVATION_TIME) {
+                    stopLossActivationMap.put(marketName, count);
+                    allowStopLoss = false;
+                } else {
+                    stopLossActivationMap.remove(marketName);
+                }
+            }
             double sellAbove = botAvgOption.getSellAbove();
             double sellAndResetBelow = botAvgOption.getStopLoss();
             logger.debug("Trying to place a sell order for " + marketName + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "]." +
@@ -238,7 +253,7 @@ public class DeepBot {
             if (!buy) {
                 // Last action was Buy so now we sell all alt.
                 // Must have certain gain from this transaction. We also safe sell if price drops too much in relation to bought price.
-                if ((last >= sellAbove && sellAbove > 0) || (last < sellAndResetBelow && sellAndResetBelow > 0)) {
+                if ((last >= sellAbove && sellAbove > 0) || (last < sellAndResetBelow && sellAndResetBelow > 0 && allowStopLoss)) {
                     double quantity = marketBalanceAlt.getResult().getBalance();
                     logger.debug("Trying to sell " + quantity + " units of " + marketName + " for " + last + ".");
                     sell(marketName, quantity, last);
@@ -348,6 +363,8 @@ public class DeepBot {
                 botAvgOption.setSellAbove(sellAbove);
                 botAvgOption.setStopLoss(last * STOP_LOSS_RATIO);
                 BotAvgOptionManager.getInstance().updateOption(botAvgOption);
+                // Activate new stop loss.
+                stopLossActivationMap.put(marketName, 0);
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.\n" + orderResponse);
