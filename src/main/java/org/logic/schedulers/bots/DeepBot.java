@@ -14,10 +14,7 @@ import org.preferences.managers.PreferenceManager;
 
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +27,7 @@ public class DeepBot {
     private static final int LIST_MAX_SIZE = 120;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
     private static final double MIN_DROP_RATIO = 0.99;
     private static final double STOP_LOSS_RATIO = 0.95; // sell if rate of sellAbove * this ratio is lower.
+    private static final int EXHAUSTION_TIME = 120; // 10 minutes. Market is disabled for 10 minutes after successful sell.
     public volatile static boolean active = false;
     private static volatile double sellAbove = 0.01;
     private static Logger logger = Logger.getLogger(DeepBot.class);
@@ -37,6 +35,7 @@ public class DeepBot {
     private static ScheduledExecutorService ses;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
     private static HashMap<String, LinkedList<MarketVolumeAndLast>> marketHistoryMap = new HashMap<>();
+    private static HashMap<String, Integer> marketExhausted = new HashMap<>();
 
     private DeepBot() {
     }
@@ -100,7 +99,7 @@ public class DeepBot {
                         marketSummaryResponse.getResult().get(0).getLast()));
                 marketHistoryMap.put(marketName, history);
             }
-            logger.debug("Added new tick for market: " + marketName + " [" + history.size() + "/" + LIST_MAX_SIZE + "].");
+//            logger.debug("Added new tick for market: " + marketName + " [" + history.size() + "/" + LIST_MAX_SIZE + "].");
         }
 
         // 2. Check for which coins there are no open orders. Cancel idle orders.
@@ -136,7 +135,20 @@ public class DeepBot {
                 }
             }
 
-            // 3. Get necessary data.
+            // 3. Check exhausted markets. This prevents scenarios like buy/sell/buy from happening.
+            // Market is exhausted after single buy/sell.
+            Iterator<Map.Entry<String, Integer>> it = marketExhausted.entrySet().iterator();
+            while (it.hasNext()) {
+                Map.Entry<String, Integer> entry = it.next();
+                int value = entry.getValue();
+                if (value < EXHAUSTION_TIME) {
+                    entry.setValue(value + 1);
+                } else {
+                    it.remove();
+                }
+            }
+
+            // 4. Get necessary data.
             MarketBalanceResponse marketBalanceBtc = ModelBuilder.buildMarketBalance("BTC");
             logger.debug(marketBalanceBtc);
             if (!marketBalanceBtc.isSuccess()) {
@@ -146,7 +158,7 @@ public class DeepBot {
 
             for (BotAvgOption botAvgOption : botAvgOptions) {
                 final String altCoin = botAvgOption.getMarketName();
-                if (disabledMarkets.contains(altCoin) || marketHistoryMap.get(altCoin).size() < LIST_MAX_SIZE) {
+                if (disabledMarkets.contains(altCoin) || marketHistoryMap.get(altCoin).size() < LIST_MAX_SIZE || marketExhausted.containsKey(altCoin)) {
                     continue;
                 }
                 MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(altCoin);
@@ -243,39 +255,38 @@ public class DeepBot {
         // Last below 99% of avg. Last should be not too small.
         double preLast = list.get(list.size() - 2).getLast();
         // This condition is important.
-        if (preLast / last > 0.99d) {
+        if (last / preLast > MIN_DROP_RATIO) {
             return false;
         }
         // Last must be below DROP_RATE. Compare to 3 last objects. Last 15 sec.
-        if (preLast * MIN_DROP_RATIO > last) {
-            sellAbove = calculateGainRatio(preLast, last);
-            if (sellAbove <= 0) {
-                return false;
-            }
-            logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast / last);
-            return true;
+        sellAbove = calculateGainRatio(preLast, last);
+        if (sellAbove <= 0) {
+            return false;
         }
-        return false;
+        logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast / last);
+        return true;
     }
 
     /**
-     * Calculates gain ratio depending on price drop.
+     * Calculates gain ratio depending on price drop. Drop is calculated from pre-last price, not from last price.
+     * Ratios:
+     * 0.99 || +0.3%
+     * 0.985 || +0.7%
+     * 0.98 || +1.1%
+     * 0.975 || +1.5%
      *
-     * @param dropTo
+     * @param preLast
      * @param last
      * @return
      */
-    private static double calculateGainRatio(double dropTo, double last) {
-        double ratio = dropTo / last;
+    private static double calculateGainRatio(double preLast, double last) {
+        double ratio = last / preLast;
         if (ratio > 0.99d) {
             return -99999;
-        } else if (ratio > 0.98) {
-            return 0.995 * last; // max 1.5% gain
-        } else if (ratio > 0.96) {
-            return 0.99 * last; // max 2.5% gain
-        } else {
-            return 0.98 * last; // min 3.1% gain
         }
+        double ratioDrop = 1 - ratio; // min 1 - 0.99 = 0.01
+        double distFromPreLast = ratioDrop * 0.2d; // min 0.01 * 0.2 = 0.002
+        return preLast - (distFromPreLast * preLast);
     }
 
     /**
@@ -287,8 +298,8 @@ public class DeepBot {
      */
     private static boolean checkPriceSpread(String marketName, double avg) {
         int count = 0;
-        double maxDistance = avg * 1.01d;
-        double minDistance = avg * 0.99d;
+        double maxDistance = avg * 1.02d;
+        double minDistance = avg * 0.98d;
         LinkedList<MarketVolumeAndLast> list = marketHistoryMap.get(marketName);
         for (int x = 0; x < list.size() - 1; x++) {
             double last = list.get(x).getLast();
@@ -352,6 +363,8 @@ public class DeepBot {
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to sell " + quantity + " of " + marketName +
                         " for " + last + " each.");
+                // Mark market as exhausted.
+                marketExhausted.put(marketName, 0);
             } else {
                 logger.debug("Fail - Placed an order to sell " + quantity + " of " + marketName +
                         " for " + last + " each.\n" + orderResponse);
