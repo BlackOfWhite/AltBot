@@ -12,11 +12,14 @@ import static org.preferences.Params.API_SECRET_KEY;
 
 public class Converter {
 
+    private static final String HMAC_SHA256 = "HmacSHA512";
+    private static SecretKeySpec secretKeySpec = null;
     private String uri;
     private Logger logger = Logger.getLogger(Converter.class);
 
-    public Converter(String uri) {
+    public Converter(String uri) throws UnsupportedEncodingException {
         this.uri = uri;
+        this.secretKeySpec = generateSecretKey();
     }
 
     public static String bytesToHex(byte[] bytes) {
@@ -30,16 +33,17 @@ public class Converter {
         return new String(hexChars);
     }
 
+    private SecretKeySpec generateSecretKey() throws UnsupportedEncodingException {
+        byte[] byteKey = API_SECRET_KEY.getBytes("UTF-8");
+        return new SecretKeySpec(byteKey, HMAC_SHA256);
+    }
+
     public String calculate() {
         Mac sha512_HMAC = null;
         String result = null;
-        String key = API_SECRET_KEY;
         try {
-            byte[] byteKey = key.getBytes("UTF-8");
-            final String HMAC_SHA256 = "HmacSHA512";
             sha512_HMAC = Mac.getInstance(HMAC_SHA256);
-            SecretKeySpec keySpec = new SecretKeySpec(byteKey, HMAC_SHA256);
-            sha512_HMAC.init(keySpec);
+            sha512_HMAC.init(secretKeySpec);
             byte[] mac_data = sha512_HMAC.
                     doFinal(uri.getBytes("UTF-8"));
             //result = Base64.encode(mac_data);

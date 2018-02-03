@@ -6,6 +6,7 @@ import org.logic.utils.Converter;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -91,7 +92,7 @@ public class MarketRequests {
         return sendRequest(url);
     }
 
-    private static String sendRequest(URL url) {
+    private static String sendRequest(URL url) throws UnsupportedEncodingException {
         // prepare sign
         String response = "";
         Converter converter = new Converter(url.toString());
