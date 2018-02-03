@@ -225,7 +225,7 @@ public class MainFrame extends JFrame {
             this.labelEmailAddress.setText("Welcome: " + email);
         }
         this.labelEmailAddress.validate();
-        logger.debug("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
+        logger.info("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
     }
 
     public void updateAPIStatusBar() {

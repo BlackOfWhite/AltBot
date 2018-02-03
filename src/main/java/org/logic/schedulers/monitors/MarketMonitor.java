@@ -94,7 +94,7 @@ public class MarketMonitor {
                     updatePieChart(marketBalances, marketDetailsMap);
                     stopLossOrders(openMarketOrders, marketDetailsMap);
                 } else {
-                    logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
+                    logger.warn("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
                     mainFrame.getPieChartFrame().setIsConnected(false);
                 }
                 sendNotification(totalOrdersCount);
