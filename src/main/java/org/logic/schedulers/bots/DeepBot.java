@@ -25,7 +25,7 @@ public class DeepBot {
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 24; // must be short. this bot is very quick. 24 * TIME_NORMAL_POLL sec = 120 sec.
     private static final int LIST_MAX_SIZE = 120;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
-    private static final double MIN_DROP_RATIO = 0.99;
+    private static final double MIN_DROP_RATIO = 0.985;
     private static final double STOP_LOSS_RATIO = 0.99; // in relation to last price (bought price).
     // Market is disabled for 10 minutes after successful sell.
     private static final int EXHAUSTION_TIME = 120;
@@ -47,7 +47,7 @@ public class DeepBot {
     public static DeepBot getInstance() {
         if (instance == null) {
             instance = new DeepBot();
-            ses = Executors.newScheduledThreadPool(10);
+            ses = Executors.newScheduledThreadPool(100);
         }
         loadAPIKeys();
         return instance;
@@ -60,7 +60,7 @@ public class DeepBot {
         }
         if (ses.isShutdown()) {
             logger.debug("Recreating scheduler");
-            ses = Executors.newScheduledThreadPool(10);
+            ses = Executors.newScheduledThreadPool(100);
         }
         ses.scheduleAtFixedRate(() -> {
             executeRun();
@@ -79,8 +79,9 @@ public class DeepBot {
      */
     private static void executeRun() {
         logger.debug("\nNew run..");
+        long start = System.currentTimeMillis();
         List<BotAvgOption> botAvgOptions = BotAvgOptionManager.getInstance().getOptionList();
-        // There is already market history.
+        // 1. Get market history.
         for (BotAvgOption botAvgOption : botAvgOptions) {
             String marketName = botAvgOption.getMarketName();
             MarketSummaryResponse marketSummaryResponse = ModelBuilder.buildMarketSummary(marketName);
@@ -105,6 +106,8 @@ public class DeepBot {
             }
 //            logger.debug("Added new tick for market: " + marketName + " [" + history.size() + "/" + LIST_MAX_SIZE + "].");
         }
+        double elapsed = (System.currentTimeMillis() - start);
+        logger.debug("Elapsed: " + elapsed + " " + (int) (elapsed / 1000) + "." + elapsed % 1000);
 
         // 2. Check for which coins there are no open orders. Cancel idle orders.
         HashSet<String> disabledMarkets = new HashSet<>();
@@ -141,14 +144,16 @@ public class DeepBot {
 
             // 3. Check exhausted markets. This prevents scenarios like buy/sell/buy from happening.
             // Market is exhausted after single buy/sell.
-            Iterator<Map.Entry<String, Integer>> it = marketExhausted.entrySet().iterator();
-            while (it.hasNext()) {
-                Map.Entry<String, Integer> entry = it.next();
-                int value = entry.getValue();
-                if (value < EXHAUSTION_TIME) {
-                    entry.setValue(value + 1);
-                } else {
-                    it.remove();
+            if (marketExhausted.size() > 0) {
+                Iterator<Map.Entry<String, Integer>> it = marketExhausted.entrySet().iterator();
+                while (it.hasNext()) {
+                    Map.Entry<String, Integer> entry = it.next();
+                    int value = entry.getValue();
+                    if (value < EXHAUSTION_TIME) {
+                        entry.setValue(value + 1);
+                    } else {
+                        it.remove();
+                    }
                 }
             }
 
@@ -216,17 +221,17 @@ public class DeepBot {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
-            double priceAvg = calculateAverageLast(marketHistoryMap.get(marketName), 0);
-            logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", avg: " + priceAvg + ".");
+//            double priceAvg = calculateAverageLast(marketHistoryMap.get(marketName), 0);
+            logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ".");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < botAvgOption.getBtc()) {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
             }
-            if (!checkPriceSpread(marketName, priceAvg)) {
-                logger.debug("Prices spread is too big.");
-                return;
-            }
+//            if (!checkPriceSpread(marketName, priceAvg)) {
+//                logger.debug("Prices spread is too big.");
+//                return;
+//            }
             if (!shouldPlaceBuyOrder(last, marketName)) {
                 logger.debug("Conditions not met to place a DEEP BOT's buy order.");
                 return;
@@ -268,39 +273,38 @@ public class DeepBot {
 
     /**
      * Compare prices from 2 last measurements. Returns true if latest price is lower by at least 1% then the price before it.
+     *
+     * @param last       Coin's last price.
+     * @param marketName Full market name.
+     * @return
      */
     private static boolean shouldPlaceBuyOrder(double last, String marketName) {
         LinkedList<MarketVolumeAndLast> list = marketHistoryMap.get(marketName);
         // Last below 99% of avg. Last should be not too small.
         double preLast = list.get(list.size() - 2).getLast();
+        double deepRatio = last / preLast;
         // This condition is important.
-        if (last / preLast > MIN_DROP_RATIO) {
-            return false;
-        }
+        logger.debug("Looking for deep: " + preLast + ", " + last + ", " + deepRatio);
         // Last must be below DROP_RATE. Compare to 3 last objects. Last 15 sec.
-        sellAbove = calculateGainRatio(preLast, last);
-        if (sellAbove <= 0) {
-            return false;
-        }
-        logger.debug("Deep found: " + preLast + ", " + last + ", " + preLast / last);
-        return true;
+        sellAbove = calculateSellPrice(preLast, last);
+        return !(sellAbove <= 0);
     }
 
     /**
      * Calculates gain ratio depending on price drop. Drop is calculated from pre-last price, not from last price.
-     * Ratios:
+     * Ratios examples:
      * 0.99 || +0.3%
      * 0.985 || +0.7%
      * 0.98 || +1.1%
      * 0.975 || +1.5%
      *
-     * @param preLast
-     * @param last
-     * @return
+     * @param preLast Coin's second last value.
+     * @param last    Coin's last value.
+     * @return Sell price. Returns negative value if drop ratio was too low.
      */
-    private static double calculateGainRatio(double preLast, double last) {
+    private static double calculateSellPrice(double preLast, double last) {
         double ratio = last / preLast;
-        if (ratio > 0.99d) {
+        if (ratio > MIN_DROP_RATIO) {
             return -99999;
         }
         double ratioDrop = 1 - ratio; // min 1 - 0.99 = 0.01
