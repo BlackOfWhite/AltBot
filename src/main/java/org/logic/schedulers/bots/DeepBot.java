@@ -1,14 +1,19 @@
 package org.logic.schedulers.bots;
 
 import org.apache.log4j.Logger;
+import org.logic.exceptions.TooFewRecordsException;
 import org.logic.models.responses.MarketBalanceResponse;
 import org.logic.models.responses.MarketOrderResponse;
 import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.models.responses.OrderResponse;
+import org.logic.models.responses.v2.MarketTicksResponse;
 import org.logic.schedulers.bots.model.MarketVolumeAndLast;
+import org.logic.schedulers.bots.model.TimeIntervalEnum;
 import org.logic.transactions.model.bots.BotAvgOption;
 import org.logic.transactions.model.bots.BotAvgOptionManager;
 import org.logic.utils.ModelBuilder;
+import org.logic.utils.regression.LinearRegression;
+import org.logic.utils.regression.Point;
 import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 
@@ -24,13 +29,14 @@ public class DeepBot {
     private static final int TIME_NORMAL_POLL = 5; // Use this one if history data was populated.
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 24; // must be short. this bot is very quick. 24 * TIME_NORMAL_POLL sec = 120 sec.
-    private static final int LIST_MAX_SIZE = 120;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
-    private static final double MIN_DROP_RATIO = 0.985;
+    private static final int LIST_MAX_SIZE = 3;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
+    private static final double MIN_DROP_RATIO = 0.988;
     private static final double STOP_LOSS_RATIO = 0.99; // in relation to last price (bought price).
     // Market is disabled for 10 minutes after successful sell.
     private static final int EXHAUSTION_TIME = 120;
     // After 2minutes stop loss options can be executed. Used to not interfere with quick sells.
     private static final int STOP_LOSS_ACTIVATION_TIME = 24;
+    private static final int HISTORICAL_DATA_MAX_SIZE = 45; // 4h. every minute
     public volatile static boolean active = false;
     private static volatile double sellAbove;
     private static Logger logger = Logger.getLogger(DeepBot.class);
@@ -40,6 +46,10 @@ public class DeepBot {
     private static HashMap<String, LinkedList<MarketVolumeAndLast>> marketHistoryMap = new HashMap<>();
     private static HashMap<String, Integer> marketExhausted = new HashMap<>();
     private static HashMap<String, Integer> stopLossActivationMap = new HashMap<>();
+    // Historical
+    private static HashMap<String, LinkedList<MarketVolumeAndLast>> historicalData = new HashMap<>();
+    private static HashMap<String, Double> historicalDataRatio = new HashMap<>();
+    private static int TICKS = 0;
 
     private DeepBot() {
     }
@@ -157,7 +167,13 @@ public class DeepBot {
                 }
             }
 
-            // 4. Get necessary data.
+            // 4. Tick & historical data
+            if (tickOneMin()) {
+                getHistoricalData(botAvgOptions);
+            }
+            tick();
+
+            // 5. Get necessary data.
             MarketBalanceResponse marketBalanceBtc = ModelBuilder.buildMarketBalance("BTC");
             logger.debug(marketBalanceBtc);
             if (!marketBalanceBtc.isSuccess()) {
@@ -197,7 +213,6 @@ public class DeepBot {
         return active;
     }
 
-
     /**
      * If this is first order for this coin, it would be LIMIT_BUY.
      * Place BUY order if there is enough BTC, last is above average and volume is rising.
@@ -224,18 +239,37 @@ public class DeepBot {
 //            double priceAvg = calculateAverageLast(marketHistoryMap.get(marketName), 0);
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ".");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
+            // Check if there is enough btc in the wallet.
             if (btcBalance < botAvgOption.getBtc()) {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
             }
-//            if (!checkPriceSpread(marketName, priceAvg)) {
-//                logger.debug("Prices spread is too big.");
-//                return;
-//            }
+
+            // Check if price drop matches the conditions.
             if (!shouldPlaceBuyOrder(last, marketName)) {
                 logger.debug("Conditions not met to place a DEEP BOT's buy order.");
                 return;
             }
+
+            // Check if market values are decreasing.
+            try {
+                // There is no key in the map if new historical data was fetched.
+                if (!historicalDataRatio.containsKey(marketName)) {
+                    if (isMarketInDeep(marketName)) {
+                        logger.debug("Market is in deep.");
+                        return;
+                    }
+                } else {
+                    if (historicalDataRatio.get(marketName) < 0d) {
+                        logger.debug("Market is in deep.");
+                        return;
+                    }
+                }
+            } catch (TooFewRecordsException e) {
+                logger.error(e.getMessage());
+                return;
+            }
+
             double quantity = round(botAvgOption.getBtc() / last);
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
             buy(botAvgOption, quantity, last);
@@ -408,5 +442,82 @@ public class DeepBot {
             return sum / list.size();
         }
         return -1;
+    }
+
+    private static void tick() {
+        TICKS++;
+        TICKS = TICKS % 100000;
+    }
+
+    /**
+     * Time normal poll must be lower than 30 sec.
+     *
+     * @return
+     */
+    private static boolean tickOneMin() {
+        return TICKS % (60 / TIME_NORMAL_POLL) == 0;
+    }
+
+    /**
+     * Get last price and volume data from 180 minutes.
+     *
+     * @param botAvgOptions
+     */
+    private static void getHistoricalData(List<BotAvgOption> botAvgOptions) {
+        // There is already market history.
+        for (BotAvgOption botAvgOption : botAvgOptions) {
+            String marketName = botAvgOption.getMarketName();
+            LinkedList<MarketVolumeAndLast> history = null;
+            if (historicalData.containsKey(marketName)) {
+                MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketLastTick(marketName, 1, TimeIntervalEnum.oneMin);
+                if (!marketTicksResponse.isSuccess()) {
+                    logger.debug("Failed to get market's last value.");
+                    continue;
+
+                }
+                history = historicalData.get(marketName);
+                history.add(new MarketVolumeAndLast(marketTicksResponse.getResult().get(0).getV(),
+                        marketTicksResponse.getResult().get(0).getL()));
+                // Trim
+                if (history.size() > HISTORICAL_DATA_MAX_SIZE) {
+                    history.removeFirst();
+                }
+                logger.debug("Added new historical tick for " + marketName + " coin.");
+                // Remove last cached ratio.
+                historicalDataRatio.remove(marketName);
+            } else {
+                MarketTicksResponse marketTicksResponse = ModelBuilder.buildMarketTicks(marketName, 1, TimeIntervalEnum.oneMin, 3);
+                if (!marketTicksResponse.isSuccess()) {
+                    logger.debug("Failed to get market's last value.");
+                    continue;
+                }
+                history = new LinkedList<>();
+                int size = marketTicksResponse.getResult().size();
+                for (int x = size - HISTORICAL_DATA_MAX_SIZE; x < size; x++) {
+                    history.add(new MarketVolumeAndLast(marketTicksResponse.getResult().get(x).getV(),
+                            marketTicksResponse.getResult().get(x).getL()));
+                }
+                historicalData.put(marketName, history);
+                logger.debug("Fetched historical data for " + marketName + ", size:" + history.size() + ".");
+            }
+        }
+    }
+
+    private static boolean isMarketInDeep(String marketName) throws TooFewRecordsException {
+        if (historicalData.get(marketName).size() < HISTORICAL_DATA_MAX_SIZE) {
+            String msg = "Too few objects in the historical data for " + marketName + " coin.";
+            throw new TooFewRecordsException(msg);
+        }
+        int x = 0;
+        List<Point> points = new ArrayList<>();
+        for (MarketVolumeAndLast m : historicalData.get(marketName)) {
+            points.add(new Point(x, m.getLast()));
+            x++;
+        }
+        // Remove last one.
+        points.remove(points.size() - 1);
+        double ratioA = LinearRegression.linearRegression(points);
+        historicalDataRatio.put(marketName, ratioA);
+        return ratioA < 0;
     }
 }
