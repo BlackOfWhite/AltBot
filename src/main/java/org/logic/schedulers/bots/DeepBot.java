@@ -30,7 +30,7 @@ public class DeepBot {
     // Cancel pending order after N tries, if occasion missed.
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 24; // must be short. this bot is very quick. 24 * TIME_NORMAL_POLL sec = 120 sec.
     private static final int LIST_MAX_SIZE = 3;// 10 min = TIME_NORMAL_POLL * 12 * 10 = 120
-    private static final double MIN_DROP_RATIO = 0.988;
+    private static final double MIN_DROP_RATIO = 0.989;
     private static final double STOP_LOSS_RATIO = 0.99; // in relation to last price (bought price).
     // Market is disabled for 10 minutes after successful sell.
     private static final int EXHAUSTION_TIME = 120;
@@ -180,7 +180,6 @@ public class DeepBot {
                 logger.debug("Failed to get total BTC balance - aborting!");
                 return;
             }
-
             for (BotAvgOption botAvgOption : botAvgOptions) {
                 final String altCoin = botAvgOption.getMarketName();
                 if (disabledMarkets.contains(altCoin) || marketHistoryMap.get(altCoin).size() < LIST_MAX_SIZE || marketExhausted.containsKey(altCoin)) {
@@ -236,13 +235,17 @@ public class DeepBot {
             buy = true;
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
-//            double priceAvg = calculateAverageLast(marketHistoryMap.get(marketName), 0);
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ".");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             // Check if there is enough btc in the wallet.
             if (btcBalance < botAvgOption.getBtc()) {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
+            }
+
+            // More buy orders than sell order
+            if (marketSummary.getResult().get(0).getOpenBuyOrders() < marketSummary.getResult().get(0).getOpenSellOrders()) {
+                logger.debug("There is more sell orders than buy orders.");
             }
 
             // Check if price drop matches the conditions.

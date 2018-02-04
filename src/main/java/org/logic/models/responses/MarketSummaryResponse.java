@@ -62,6 +62,14 @@ public class MarketSummaryResponse extends Response {
             return Bid;
         }
 
+        public int getOpenBuyOrders() {
+            return OpenBuyOrders;
+        }
+
+        public int getOpenSellOrders() {
+            return OpenSellOrders;
+        }
+
         public double getVolume() {
             return Volume;
         }
@@ -72,6 +80,10 @@ public class MarketSummaryResponse extends Response {
         double Ask; // willing to sell;
         @Expose
         double Bid; // po tyle chca kupic
+        @Expose
+        int OpenBuyOrders;
+        @Expose
+        int OpenSellOrders;
     }
 
     //    "success" : true,
