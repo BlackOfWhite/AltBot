@@ -22,7 +22,10 @@ import org.ui.views.dialog.box.SingleInstanceDialog;
 import javax.mail.MessagingException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -323,8 +326,8 @@ public class MarketMonitor {
                     }
                 }
                 if (valid) {
-                    new Thread(() -> executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, null)).start();
                     logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
+                    new Thread(() -> executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, null)).start();
                     return;
                 }
             }
@@ -346,6 +349,7 @@ public class MarketMonitor {
                     }
                 }
                 if (valid) {
+                    logger.debug("Trying to execute stop-loss for " + marketName);
                     executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, stopLossOption.getMarketName());
                 }
             }
@@ -364,7 +368,6 @@ public class MarketMonitor {
                                         MarketOrderResponse openMarketOrders,
                                         StopLossOption stopLossOption, final String singleMarketName) {
         int count;
-        Set<String> marketNamesToSell = new HashSet<>();
         // Cancel all open orders
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             count = 0;
@@ -383,10 +386,9 @@ public class MarketMonitor {
                         logger.debug("One of the cancel operations failed! Aborting stop-loss all!");
                         return;
                     }
-                    OrderResponse orderResponse = null;
+                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
                     if (orderResponse.isSuccess()) {
                         logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
-                        marketNamesToSell.add(marketName);
                         break;
                     } else {
                         count++;
@@ -396,11 +398,13 @@ public class MarketMonitor {
         }
 
         // Sell all alt coins. Allow retires.
-        for (String marketName : marketNamesToSell) {
+        for (Map.Entry<String, MarketDetails> marketDetails : marketDetailsMap.entrySet()) {
             count = 0;
+            String marketName = marketDetails.getKey();
             double totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
             if (totalAmount > BALANCE_MINIMUM) {
                 double last = marketDetailsMap.get(marketName).getLast();
+                // Check if is in the single market mode.
                 if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
                     continue;
                 }

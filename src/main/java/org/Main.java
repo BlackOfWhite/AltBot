@@ -42,6 +42,6 @@ public class Main {
         logger.debug("Starting schedulers.");
         MarketMonitor.getInstance().start(mainFrame);
 //        TransactionScheduler.getInstance().start();
-        DeepBot.getInstance().start();
+//        DeepBot.getInstance().start();
     }
 }
