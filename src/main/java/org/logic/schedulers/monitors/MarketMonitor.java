@@ -1,6 +1,7 @@
 package org.logic.schedulers.monitors;
 
 import org.apache.log4j.Logger;
+import org.logic.exceptions.ValueNotSetException;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
 import org.logic.schedulers.monitors.model.MarketDetails;
@@ -173,7 +174,13 @@ public class MarketMonitor {
             if (marketName.equals("BTC")) {
                 map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
             } else {
-                double last = marketDetailsMap.get(marketName).getLast();
+                double last = 0;
+                try {
+                    last = marketDetailsMap.get(marketName).getLast();
+                } catch (ValueNotSetException e) {
+                    logger.warn("Last value not set for " + marketName);
+                    continue;
+                }
                 double btc = last * result.getBalance();
                 if (marketName.equalsIgnoreCase("USDT-BTC")) {
                     btc = result.getBalance() * (1 / last);
@@ -227,7 +234,7 @@ public class MarketMonitor {
      */
     public static Map<String, MarketDetails> createMarketDetailsMap(MarketBalancesResponse
                                                                             marketBalancesResponse, MarketOrderResponse openMarketOrders) {
-        if (marketBalancesResponse == null || openMarketOrders == null) {
+        if (marketBalancesResponse == null || openMarketOrders == null || !marketBalancesResponse.isSuccess() || !openMarketOrders.isSuccess()) {
             logger.error("Either MarketBalancesResponse or MarketOrderResponse is null. MarketDetailsMap not created.");
             return null;
         }
@@ -262,22 +269,27 @@ public class MarketMonitor {
         }
         // Merge and get last price.
         for (Map.Entry<String, MarketDetails> entry : map.entrySet()) {
-            if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM || entry.getValue().isAllowNoBalance()) {
-                MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
-                try {
-                    // update last price
-                    MarketDetails marketDetails = entry.getValue();
-                    marketDetails.setLast(marketSummary.getResult().get(0).getLast());
-                    entry.setValue(marketDetails);
-                    // Update map of average values
-//                    updatePriceHistoryMap(entry.getKey(), marketDetails.getLast());
-                } catch (NullPointerException ex) {
-                    logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
-                    return null;
-                } catch (Exception ex) {
-                    logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
-                    return null;
+            try {
+                if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM || entry.getValue().isAllowNoBalance()) {
+                    MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
+                    try {
+                        // update last price
+                        MarketDetails marketDetails = entry.getValue();
+                        marketDetails.setLast(marketSummary.getResult().get(0).getLast());
+                        entry.setValue(marketDetails);
+                        // Update map of average values
+                        //                    updatePriceHistoryMap(entry.getKey(), marketDetails.getLast());
+                    } catch (NullPointerException ex) {
+                        logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
+                        return null;
+                    } catch (Exception ex) {
+                        logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
+                        return null;
+                    }
                 }
+            } catch (ValueNotSetException e) {
+//                logger.warn("Failed to get total amount for " + entry.getKey());
+                continue;
             }
         }
         logger.debug("MarketDetails map: " + map.toString());
@@ -336,15 +348,25 @@ public class MarketMonitor {
         // Check if there are any valid stop-loss orders for single order.
         for (StopLossOption stopLossOption : stopLossOptionList) {
             String marketName = stopLossOption.getMarketName();
+            if (marketName.equalsIgnoreCase("ALL")) {
+                continue;
+            }
+            double last;
+            try {
+                last = marketDetailsMap.get(marketName).getLast();
+            } catch (ValueNotSetException e) {
+//                logger.warn("Last value not set for " + marketName);
+                continue;
+            }
             double cancelAt = stopLossOption.getCancelAt();
             if (!stopLossOption.isSellAll() && marketDetailsMap.containsKey(marketName)) {
                 boolean valid = false;
                 if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (marketDetailsMap.get(marketName).getLast() > cancelAt) {
+                    if (last > cancelAt) {
                         valid = true;
                     }
                 } else {
-                    if (marketDetailsMap.get(marketName).getLast() < cancelAt) {
+                    if (last < cancelAt) {
                         valid = true;
                     }
                 }
@@ -397,13 +419,25 @@ public class MarketMonitor {
             }
         }
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         // Sell all alt coins. Allow retires.
         for (Map.Entry<String, MarketDetails> marketDetails : marketDetailsMap.entrySet()) {
             count = 0;
             String marketName = marketDetails.getKey();
-            double totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
+            double totalAmount = -1, last;
+            try {
+                totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
+                last = marketDetailsMap.get(marketName).getLast();
+            } catch (ValueNotSetException e) {
+//                logger.warn("TotalAmount or last values not set.");
+                continue;
+            }
             if (totalAmount > BALANCE_MINIMUM) {
-                double last = marketDetailsMap.get(marketName).getLast();
                 // Check if is in the single market mode.
                 if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
                     continue;
