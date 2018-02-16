@@ -2,7 +2,7 @@ package org.ui;
 
 public class Constants {
 
-    public final static String VERSION = "1.0";
+    public final static String VERSION = "v1.1";
 
     public final static int CHART_FRAME_WIDTH = 700;
     public final static int CHART_FRAME_HEIGHT = 700;

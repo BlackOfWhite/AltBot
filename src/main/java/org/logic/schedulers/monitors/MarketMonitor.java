@@ -36,7 +36,7 @@ import static sun.security.x509.X509CertInfo.SUBJECT;
 
 public class MarketMonitor {
 
-    private static final int SLEEP_TIME = 5;
+    private static final int SLEEP_TIME = 3;
     private static final int RETRY_COUNT = 3;
     public volatile static boolean active = false;
     public volatile static int COUNTER = -1;
@@ -72,6 +72,7 @@ public class MarketMonitor {
         }
         ses.scheduleAtFixedRate(() -> {
             logger.debug("\nNew run..");
+            long start = System.currentTimeMillis();
             try {
                 // Open market orders & settings validation
                 COUNTER = (COUNTER + 1) % 10000;
@@ -106,6 +107,8 @@ public class MarketMonitor {
                 logger.error(e.toString());
                 e.printStackTrace();
             }
+            double elapsed = (System.currentTimeMillis() - start);
+            logger.debug("ELAPSED: " + (elapsed/1000));
         }, 0, SLEEP_TIME, TimeUnit.SECONDS);  // execute every x seconds
         active = true;
         logger.debug("Scheduler started");
