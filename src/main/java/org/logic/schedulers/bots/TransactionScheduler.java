@@ -408,7 +408,7 @@ public class TransactionScheduler {
     }
 
     /**
-     * Checks if avg raised by given percent.
+     * Checks if avg ra\ised by given percent.
      *
      * @param list
      * @return
