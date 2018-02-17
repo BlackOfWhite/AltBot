@@ -1,10 +1,9 @@
 package org.ui.frames;
 
 import javafx.application.Platform;
+import javafx.embed.swing.JFXPanel;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
-import org.logic.models.responses.v2.MarketTicksResponse;
-import org.logic.utils.ModelBuilder;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 
@@ -28,14 +27,20 @@ public class MainFrame extends JFrame {
     private static Logger logger = Logger.getLogger(MainFrame.class);
     private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
-    private JTextArea jtaScrollPane;
-    private JScrollPane jScrollPane;
     private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
     private StopLossFrame stopLossFrame;
-    private PieChartFrame pieChartFrame;
     private EmailSetupFrame emailSetupFrame;
     private APISetupFrame apiSetupFrame;
+
+    private PieChart pieChartPanel;
+
+    private double LEFT_PANE_WIDTH_RATIO = 0.4f;
+    private double CENTER_PANE_WIDTH_RATIO = 0.3f;
+    private double RIGHT_PANE_WIDTH_RATIO = 0.3f;
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    int width = (int) screenSize.getWidth();
+    int height = (int) screenSize.getHeight();
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -44,15 +49,45 @@ public class MainFrame extends JFrame {
         GridBagLayout bag = new GridBagLayout();
         cp.setLayout(bag);
 
+        JPanel leftPanel = createLeftPanel();
+
+        // Merge all main column panels. Add grid layout.
+        this.setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.NORTHWEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0.4;
+        c.weighty = 1;
+        c.gridx = 0;
+        this.add(leftPanel, c);
+        JButton empty1 = new JButton("DAAisfiofdsjsdjsdjofsdijsfdoijsiodfjidsfjsdfojidsfoifsdjF");
+        JButton empty2 = new JButton("DAidsjijsfdoifsdjoidsfjiosfjsfodijfdsojfdsojfsdodfsjoidsfAF");
+        c.gridx = 1;
+        c.weightx = 0.3;
+        this.add(empty1, c);
+        c.gridx = 2;
+        this.add(empty2, c);
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setVisible(true);
+
+//        showPieChart();
+    }
+
+    private JPanel createLeftPanel() {
         // Top left panel.
         JPanel leftPanel = new JPanel();
         leftPanel.setBorder(new TitledBorder(new EtchedBorder()));
-        leftPanel.setLayout(new GridLayout(3, 1));
-
+        leftPanel.setLayout(new BorderLayout());
+        leftPanel.setPreferredSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), height));
+        leftPanel.setMinimumSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), height));
 
         JPanel pMain = new JPanel();
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
         pMain.setLayout(new GridLayout(4, 1));
+        pMain.setPreferredSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 120));
+        pMain.setMinimumSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 120));
 
         // Status bar
         JPanel statusBar = new JPanel();
@@ -90,6 +125,7 @@ public class MainFrame extends JFrame {
         apiStatusBar.add(apiStatusBar2);
         pMain.add(apiStatusBar);
 
+        // Combo box
         jComboBoxMode = new JComboBox<>(ARR_MODES);
         btnCreateTransaction = new JButton("Create transaction");
         btnCreateTransaction.addActionListener(new ActionListener() {
@@ -110,19 +146,17 @@ public class MainFrame extends JFrame {
         });
         pMain.add(jComboBoxMode);
         pMain.add(btnCreateTransaction);
-        pMain.setPreferredSize(new Dimension(pMain.getWidth(), 300));
         leftPanel.add(pMain, BorderLayout.NORTH);
 
-        jtaScrollPane = new JTextArea(getWidth(), 300);
-        jtaScrollPane.setEditable(false);
-        jScrollPane = new JScrollPane(jtaScrollPane);
-        jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        leftPanel.add(jScrollPane, BorderLayout.CENTER);
+        // Mid view.
+        pieChartPanel = new PieChart(width, height);
+        leftPanel.add(pieChartPanel, BorderLayout.CENTER);
 
+        // Bottom view
         JPanel donationPanel = new JPanel();
-        donationPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        donationPanel.setBorder(new TitledBorder(new EtchedBorder()));
         donationPanel.setLayout(new GridLayout(3, 1));
+        donationPanel.setMaximumSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 60));
+        donationPanel.setPreferredSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 60));
         Border border = LineBorder.createGrayLineBorder();
         JTextField btcLabel = new JTextField("Donate BTC: " + BTC_DONATION_ADDRESS);
         btcLabel.setEditable(false);
@@ -136,24 +170,8 @@ public class MainFrame extends JFrame {
         ltcLabel.setEditable(false);
         ltcLabel.setBorder(border);
         donationPanel.add(ltcLabel);
-        donationPanel.setPreferredSize(new Dimension(pMain.getWidth(), 300));
         leftPanel.add(donationPanel, BorderLayout.SOUTH);
-
-        // Merge all main column panels.
-        GridBagConstraints c = new GridBagConstraints();
-        c.anchor = GridBagConstraints.NORTHWEST;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        c.weightx = 0.25;
-        bag.setConstraints(leftPanel, c);
-        cp.add(leftPanel);
-
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        //setSize(Constants.FRAME_WIDTH, Constants.FRAME_HEIGHT);
-        // Full screen
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
-        setVisible(true);
-
-        showPieChart();
+        return leftPanel;
     }
 
     private void createMenuBar() {
@@ -221,7 +239,7 @@ public class MainFrame extends JFrame {
         button.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                showPieChart();
+
             }
         });
 
@@ -262,33 +280,19 @@ public class MainFrame extends JFrame {
         }
     }
 
-    private void showPieChart() {
-        if (pieChartFrame == null || pieChartFrame.isClosed()) {
-            pieChartFrame = new PieChartFrame();
-            return;
-        }
-        if (!pieChartFrame.isActive() || !pieChartFrame.isVisible()) {
-            pieChartFrame.toFront();
-        }
-    }
-
     public void updatePieChartFrame(Map<String, BalancesSet> map) {
-        if (pieChartFrame != null && !pieChartFrame.isClosed()) {
+        if (pieChartPanel != null) {
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
-                    pieChartFrame.updateChart(map);
+                    pieChartPanel.updateChart(map);
                 }
             });
         }
     }
 
-    public PieChartFrame getPieChartFrame() {
-        return pieChartFrame;
-    }
-
-    public boolean isPieChartVisible() {
-        return pieChartFrame != null && !pieChartFrame.isClosed();
+    public PieChart getPieChartFrame() {
+        return pieChartPanel;
     }
 }
 

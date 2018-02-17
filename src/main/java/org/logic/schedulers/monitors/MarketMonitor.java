@@ -165,9 +165,6 @@ public class MarketMonitor {
      */
     private static void updatePieChart(final MarketBalancesResponse marketBalances,
                                        final Map<String, MarketDetails> marketDetailsMap) {
-        if (!mainFrame.isPieChartVisible()) {
-            return;
-        }
         Map<String, BalancesSet> map = new HashMap<>();
         for (MarketBalancesResponse.Result result : marketBalances.getResult()) {
             if (result.getBalance() < BALANCE_MINIMUM) {
