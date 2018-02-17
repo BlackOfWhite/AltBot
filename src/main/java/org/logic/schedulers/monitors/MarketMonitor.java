@@ -108,7 +108,7 @@ public class MarketMonitor {
                 e.printStackTrace();
             }
             double elapsed = (System.currentTimeMillis() - start);
-            logger.debug("ELAPSED: " + (elapsed/1000));
+            logger.debug("ELAPSED: " + (elapsed / 1000));
         }, 0, SLEEP_TIME, TimeUnit.SECONDS);  // execute every x seconds
         active = true;
         logger.debug("Scheduler started");
@@ -357,6 +357,9 @@ public class MarketMonitor {
             double last;
             try {
                 last = marketDetailsMap.get(marketName).getLast();
+            } catch (NullPointerException e) {
+//                logger.warn(marketName + " is present in .xml file, but you don't own it - aborting.");
+                continue;
             } catch (ValueNotSetException e) {
 //                logger.warn("Last value not set for " + marketName);
                 continue;
