@@ -27,16 +27,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 
-public class TransactionScheduler {
+public class AvgBot {
 
     // History map
     private static final int MARKET_TICKS_TIMESTAMP_PAST_HOURS = 2; // does not work
 
     private static final int TIME_HISTORY_POLL = 60; // Use 60 second interval - lowest possible.
     private static final int TIME_NORMAL_POLL = 10; // Use this one if history data was populated.
-    private static ScheduledFuture<?> handle;
-    private static boolean NORMAL_MODE_RUNNING = false;
-
     private static final int VOLUME_RISE_INDICATOR = 2; // volume must grow by 4%
     private static final int AVG_RISE_INDICATOR = 2; // volume must grow by 4%
     // History map
@@ -45,20 +42,25 @@ public class TransactionScheduler {
     private static final int CANCEL_IDLE_ORDER_AFTER_N_TRIES = 30;
     private static final int INIT_LIST_MAX_SIZE = 160; // approx 2h - 160 * 1 min
     private static final int LIST_MAX_SIZE = 1800;// 30min = 10 * 6 * 30 = 1800
-
+    // Ratios
+    private static final double BUY_BELOW_RATIO = 0.99d;
+    private static final double SELL_ABOVE_RATIO = 1.01d; //2.02% gain
+    private static final double STOP_LOSS_RATIO = 0.95d; //2.02% gain
     public volatile static boolean active = false;
-    private static Logger logger = Logger.getLogger(TransactionScheduler.class);
-    private static TransactionScheduler instance;
+    private static ScheduledFuture<?> handle;
+    private static boolean NORMAL_MODE_RUNNING = false;
+    private static Logger logger = Logger.getLogger(AvgBot.class);
+    private static AvgBot instance;
     private static ScheduledExecutorService ses;
     private static HashMap<String, Integer> idleOrderCounters = new HashMap<>();
     private static HashMap<String, LinkedList<MarketVolumeAndLast>> marketHistoryMap = new HashMap<>();
 
-    private TransactionScheduler() {
+    private AvgBot() {
     }
 
-    public static TransactionScheduler getInstance() {
+    public static AvgBot getInstance() {
         if (instance == null) {
-            instance = new TransactionScheduler();
+            instance = new AvgBot();
             ses = Executors.newScheduledThreadPool(10);
         }
         loadAPIKeys();
@@ -264,17 +266,15 @@ public class TransactionScheduler {
         }
         if (marketBalanceAlt.getResult().isEmpty() && buy) {
             double priceAvg = calculateAverageLast(marketHistoryMap.get(marketName), 0);
-            double priceAvgHalf = calculateAverageLast(marketHistoryMap.get(marketName), marketHistoryMap.get(marketName).size() / 2);
-            double buyBelow = priceAvg * botAvgOption.getBuyBelowRatio();
-            double buyBelow2 = priceAvgHalf * botAvgOption.getBuyBelowRatio();
+            double buyBelow = priceAvg * BUY_BELOW_RATIO;
             logger.debug("Trying to place a buy order for " + marketName + ". Last: " + last + ", buyBelow: " + buyBelow + " [" + (last / buyBelow) + "].");
             double btcBalance = marketBalanceBtc.getResult().getAvailable();
             if (btcBalance < botAvgOption.getBtc()) {
                 logger.debug("Not enough BTC. You have " + btcBalance);
                 return;
             }
-            if (last < buyBelow || last < buyBelow2) {
-                logger.debug("Last price is too low to place a buy order. Only buy if is ABOVE average.");
+            if (last >= buyBelow) {
+                logger.debug("Last price is too high to place a buy order.");
                 return;
             }
             boolean avgRises = checkIfAvgRises(marketHistoryMap.get(marketName), AVG_RISE_INDICATOR);
@@ -291,9 +291,8 @@ public class TransactionScheduler {
             logger.debug("Trying to buy " + quantity + " units of " + marketName + " for " + last + ".");
             buy(botAvgOption, quantity, last);
         } else {
-            double lastTimeBought = botAvgOption.getBoughtAt();
-            double sellAbove = lastTimeBought * botAvgOption.getTotalGainRatio();
-            double sellAndResetBelow = lastTimeBought * botAvgOption.getSellAndResetRatio();
+            double sellAbove = botAvgOption.getSellAbove();
+            double sellAndResetBelow = botAvgOption.getStopLoss();
             logger.debug("Trying to place a sell order for " + marketName + ". Last: " + last + ", sellAbove: " + sellAbove + " [" + (last / sellAbove) + "]." +
                     " Reset at " + sellAndResetBelow + " [" + last / sellAndResetBelow + "]");
             if (!buy) {
@@ -338,7 +337,8 @@ public class TransactionScheduler {
             if (orderResponse.isSuccess()) {
                 logger.debug("Success - Placed an order to buy " + quantity + " " + marketName +
                         " for " + last + " each.");
-                botAvgOption.setBoughtAt(last); // TODO. Didn't save.
+                botAvgOption.setSellAbove(last * SELL_ABOVE_RATIO);
+                botAvgOption.setStopLoss(last * STOP_LOSS_RATIO);
                 BotAvgOptionManager.getInstance().updateOption(botAvgOption);
             } else {
                 logger.debug("Fail - Placed an order to buy " + quantity + " " + marketName +

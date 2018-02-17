@@ -49,8 +49,4 @@ public class PieChartFx extends Application {
         primaryStage.setScene(new Scene(root, 500, 400));
         primaryStage.show();
     }
-
-    public Parent getView() {
-        return view;
-    }
 }

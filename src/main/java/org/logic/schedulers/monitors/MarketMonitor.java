@@ -1,6 +1,7 @@
 package org.logic.schedulers.monitors;
 
 import org.apache.log4j.Logger;
+import org.logic.exceptions.ValueNotSetException;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.*;
 import org.logic.schedulers.monitors.model.MarketDetails;
@@ -22,7 +23,10 @@ import org.ui.views.dialog.box.SingleInstanceDialog;
 import javax.mail.MessagingException;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +36,7 @@ import static sun.security.x509.X509CertInfo.SUBJECT;
 
 public class MarketMonitor {
 
-    private static final int SLEEP_TIME = 5;
+    private static final int SLEEP_TIME = 3;
     private static final int RETRY_COUNT = 3;
     public volatile static boolean active = false;
     public volatile static int COUNTER = -1;
@@ -68,6 +72,7 @@ public class MarketMonitor {
         }
         ses.scheduleAtFixedRate(() -> {
             logger.debug("\nNew run..");
+            long start = System.currentTimeMillis();
             try {
                 // Open market orders & settings validation
                 COUNTER = (COUNTER + 1) % 10000;
@@ -94,7 +99,7 @@ public class MarketMonitor {
                     updatePieChart(marketBalances, marketDetailsMap);
                     stopLossOrders(openMarketOrders, marketDetailsMap);
                 } else {
-                    logger.debug("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
+                    logger.warn("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
                     mainFrame.getPieChartFrame().setIsConnected(false);
                 }
                 sendNotification(totalOrdersCount);
@@ -102,6 +107,8 @@ public class MarketMonitor {
                 logger.error(e.toString());
                 e.printStackTrace();
             }
+            double elapsed = (System.currentTimeMillis() - start);
+            logger.debug("ELAPSED: " + (elapsed/1000));
         }, 0, SLEEP_TIME, TimeUnit.SECONDS);  // execute every x seconds
         active = true;
         logger.debug("Scheduler started");
@@ -170,7 +177,13 @@ public class MarketMonitor {
             if (marketName.equals("BTC")) {
                 map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
             } else {
-                double last = marketDetailsMap.get(marketName).getLast();
+                double last = 0;
+                try {
+                    last = marketDetailsMap.get(marketName).getLast();
+                } catch (ValueNotSetException e) {
+                    logger.warn("Last value not set for " + marketName);
+                    continue;
+                }
                 double btc = last * result.getBalance();
                 if (marketName.equalsIgnoreCase("USDT-BTC")) {
                     btc = result.getBalance() * (1 / last);
@@ -224,7 +237,7 @@ public class MarketMonitor {
      */
     public static Map<String, MarketDetails> createMarketDetailsMap(MarketBalancesResponse
                                                                             marketBalancesResponse, MarketOrderResponse openMarketOrders) {
-        if (marketBalancesResponse == null || openMarketOrders == null) {
+        if (marketBalancesResponse == null || openMarketOrders == null || !marketBalancesResponse.isSuccess() || !openMarketOrders.isSuccess()) {
             logger.error("Either MarketBalancesResponse or MarketOrderResponse is null. MarketDetailsMap not created.");
             return null;
         }
@@ -259,22 +272,27 @@ public class MarketMonitor {
         }
         // Merge and get last price.
         for (Map.Entry<String, MarketDetails> entry : map.entrySet()) {
-            if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM || entry.getValue().isAllowNoBalance()) {
-                MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
-                try {
-                    // update last price
-                    MarketDetails marketDetails = entry.getValue();
-                    marketDetails.setLast(marketSummary.getResult().get(0).getLast());
-                    entry.setValue(marketDetails);
-                    // Update map of average values
-//                    updatePriceHistoryMap(entry.getKey(), marketDetails.getLast());
-                } catch (NullPointerException ex) {
-                    logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
-                    return null;
-                } catch (Exception ex) {
-                    logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
-                    return null;
+            try {
+                if (map.get(entry.getKey()).getTotalAmount() > BALANCE_MINIMUM || entry.getValue().isAllowNoBalance()) {
+                    MarketSummaryResponse marketSummary = ModelBuilder.buildMarketSummary(entry.getKey());
+                    try {
+                        // update last price
+                        MarketDetails marketDetails = entry.getValue();
+                        marketDetails.setLast(marketSummary.getResult().get(0).getLast());
+                        entry.setValue(marketDetails);
+                        // Update map of average values
+                        //                    updatePriceHistoryMap(entry.getKey(), marketDetails.getLast());
+                    } catch (NullPointerException ex) {
+                        logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
+                        return null;
+                    } catch (Exception ex) {
+                        logger.error("Invalid market:" + entry.getKey() + "\n" + ex);
+                        return null;
+                    }
                 }
+            } catch (ValueNotSetException e) {
+//                logger.warn("Failed to get total amount for " + entry.getKey());
+                continue;
             }
         }
         logger.debug("MarketDetails map: " + map.toString());
@@ -323,8 +341,8 @@ public class MarketMonitor {
                     }
                 }
                 if (valid) {
-                    new Thread(() -> executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, null)).start();
                     logger.debug("Stop-loss ALL found, other stop-loss operations will be skipped!");
+                    new Thread(() -> executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, null)).start();
                     return;
                 }
             }
@@ -333,19 +351,30 @@ public class MarketMonitor {
         // Check if there are any valid stop-loss orders for single order.
         for (StopLossOption stopLossOption : stopLossOptionList) {
             String marketName = stopLossOption.getMarketName();
+            if (marketName.equalsIgnoreCase("ALL")) {
+                continue;
+            }
+            double last;
+            try {
+                last = marketDetailsMap.get(marketName).getLast();
+            } catch (ValueNotSetException e) {
+//                logger.warn("Last value not set for " + marketName);
+                continue;
+            }
             double cancelAt = stopLossOption.getCancelAt();
             if (!stopLossOption.isSellAll() && marketDetailsMap.containsKey(marketName)) {
                 boolean valid = false;
                 if (stopLossOption.getCondition().equals(StopLossCondition.ABOVE)) {
-                    if (marketDetailsMap.get(marketName).getLast() > cancelAt) {
+                    if (last > cancelAt) {
                         valid = true;
                     }
                 } else {
-                    if (marketDetailsMap.get(marketName).getLast() < cancelAt) {
+                    if (last < cancelAt) {
                         valid = true;
                     }
                 }
                 if (valid) {
+                    logger.debug("Trying to execute stop-loss for " + marketName);
                     executeStopLoss(new HashMap<>(marketDetailsMap), openMarketOrders, stopLossOption, stopLossOption.getMarketName());
                 }
             }
@@ -364,7 +393,6 @@ public class MarketMonitor {
                                         MarketOrderResponse openMarketOrders,
                                         StopLossOption stopLossOption, final String singleMarketName) {
         int count;
-        Set<String> marketNamesToSell = new HashSet<>();
         // Cancel all open orders
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             count = 0;
@@ -383,10 +411,9 @@ public class MarketMonitor {
                         logger.debug("One of the cancel operations failed! Aborting stop-loss all!");
                         return;
                     }
-                    OrderResponse orderResponse = null;
+                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
                     if (orderResponse.isSuccess()) {
                         logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + marketName);
-                        marketNamesToSell.add(marketName);
                         break;
                     } else {
                         count++;
@@ -395,12 +422,26 @@ public class MarketMonitor {
             }
         }
 
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         // Sell all alt coins. Allow retires.
-        for (String marketName : marketNamesToSell) {
+        for (Map.Entry<String, MarketDetails> marketDetails : marketDetailsMap.entrySet()) {
             count = 0;
-            double totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
+            String marketName = marketDetails.getKey();
+            double totalAmount = -1, last;
+            try {
+                totalAmount = marketDetailsMap.get(marketName).getTotalAmount();
+                last = marketDetailsMap.get(marketName).getLast();
+            } catch (ValueNotSetException e) {
+//                logger.warn("TotalAmount or last values not set.");
+                continue;
+            }
             if (totalAmount > BALANCE_MINIMUM) {
-                double last = marketDetailsMap.get(marketName).getLast();
+                // Check if is in the single market mode.
                 if (singleMarketName != null && !marketName.equalsIgnoreCase(singleMarketName)) {
                     continue;
                 }

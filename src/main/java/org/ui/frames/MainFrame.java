@@ -40,8 +40,16 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
         createMenuBar();
-
         Container cp = getContentPane();
+        GridBagLayout bag = new GridBagLayout();
+        cp.setLayout(bag);
+
+        // Top left panel.
+        JPanel leftPanel = new JPanel();
+        leftPanel.setBorder(new TitledBorder(new EtchedBorder()));
+        leftPanel.setLayout(new GridLayout(3, 1));
+
+
         JPanel pMain = new JPanel();
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
         pMain.setLayout(new GridLayout(4, 1));
@@ -102,14 +110,14 @@ public class MainFrame extends JFrame {
         });
         pMain.add(jComboBoxMode);
         pMain.add(btnCreateTransaction);
-        cp.add(pMain, BorderLayout.NORTH);
+        pMain.setPreferredSize(new Dimension(pMain.getWidth(), 300));
+        leftPanel.add(pMain, BorderLayout.NORTH);
 
         jtaScrollPane = new JTextArea(getWidth(), 300);
         jtaScrollPane.setEditable(false);
         jScrollPane = new JScrollPane(jtaScrollPane);
         jScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-
-        cp.add(jScrollPane, BorderLayout.CENTER);
+        leftPanel.add(jScrollPane, BorderLayout.CENTER);
 
         JPanel donationPanel = new JPanel();
         donationPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -128,7 +136,16 @@ public class MainFrame extends JFrame {
         ltcLabel.setEditable(false);
         ltcLabel.setBorder(border);
         donationPanel.add(ltcLabel);
-        cp.add(donationPanel, BorderLayout.SOUTH);
+        donationPanel.setPreferredSize(new Dimension(pMain.getWidth(), 300));
+        leftPanel.add(donationPanel, BorderLayout.SOUTH);
+
+        // Merge all main column panels.
+        GridBagConstraints c = new GridBagConstraints();
+        c.anchor = GridBagConstraints.NORTHWEST;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.weightx = 0.25;
+        bag.setConstraints(leftPanel, c);
+        cp.add(leftPanel);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //setSize(Constants.FRAME_WIDTH, Constants.FRAME_HEIGHT);
@@ -225,7 +242,7 @@ public class MainFrame extends JFrame {
             this.labelEmailAddress.setText("Welcome: " + email);
         }
         this.labelEmailAddress.validate();
-        logger.debug("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
+        logger.info("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
     }
 
     public void updateAPIStatusBar() {

@@ -1,34 +1,43 @@
 package org.logic.schedulers.monitors.model;
 
+import org.logic.exceptions.ValueNotSetException;
+
+import static org.preferences.Constants.VALUE_NOT_SET;
+
 public class MarketDetails {
-    private double last;
-    private double totalAmount;
+    private Double last;
+    private Double totalAmount;
     private boolean allowNoBalance;
 
-    public MarketDetails(double last, double totalAmount) {
+    public MarketDetails(Double last, Double totalAmount) {
         this(last, totalAmount, false);
     }
 
-    public MarketDetails(double last, double totalAmount, boolean allowNoBalance) {
+    public MarketDetails(Double last, Double totalAmount, boolean allowNoBalance) {
         this.last = last;
         this.totalAmount = totalAmount;
         this.allowNoBalance = allowNoBalance;
     }
 
-
-    public double getLast() {
+    public Double getLast() throws ValueNotSetException {
+        if (last == VALUE_NOT_SET) {
+            throw new ValueNotSetException("Last value not set.");
+        }
         return last;
     }
 
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public void setLast(double last) {
+    public void setLast(Double last) {
         this.last = last;
     }
 
-    public void setTotalAmount(double totalAmount) {
+    public Double getTotalAmount() throws ValueNotSetException {
+        if (totalAmount == VALUE_NOT_SET) {
+            throw new ValueNotSetException("TotalAmount not set.");
+        }
+        return totalAmount;
+    }
+
+    public void setTotalAmount(Double totalAmount) {
         this.totalAmount = totalAmount;
     }
 
