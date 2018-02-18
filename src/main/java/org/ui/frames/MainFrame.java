@@ -149,7 +149,7 @@ public class MainFrame extends JFrame {
         leftPanel.add(pMain, BorderLayout.NORTH);
 
         // Mid view.
-        pieChartPanel = new PieChart(width, height);
+        pieChartPanel = new PieChart((int)(width * LEFT_PANE_WIDTH_RATIO), height);
         leftPanel.add(pieChartPanel, BorderLayout.CENTER);
 
         // Bottom view

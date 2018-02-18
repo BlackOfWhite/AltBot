@@ -6,6 +6,7 @@ import javafx.collections.ObservableList;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Group;
 import javafx.scene.Scene;
+import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
 import org.preferences.managers.PreferenceManager;
 
@@ -15,6 +16,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static org.preferences.Constants.BALANCE_MINIMUM;
 import static org.preferences.Constants.CHART_SIGNIFICANT_MINIMUM;
@@ -28,6 +32,7 @@ public class PieChart extends JPanel {
     private ObservableList<javafx.scene.chart.PieChart.Data> pieChartData;
     private static boolean isConnected = true;
     private static double btcSum = 0.0d;
+    private static Logger logger = Logger.getLogger(PieChart.class);
 
     private int width, height;
 
@@ -59,20 +64,30 @@ public class PieChart extends JPanel {
     }
 
     private void resizeThread(JPanel panel, JFXPanel jfxPanel) {
-        new Thread(new Runnable() {
+        ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+        exec.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
-                if (jfxPanel.getSize().getWidth() < panel.getSize().getWidth()) {
-                    jfxPanel.setSize(panel.getSize());
+                int pWidth = panel.getWidth();
+                int fxWidth = jfxPanel.getWidth();
+                if (fxWidth != pWidth && pWidth != 0) {
+                    // must be more than preferred width
+                    if (pWidth >= width) {
+                        jfxPanel.setSize(panel.getSize());
+                        logger.debug("resize");
+                    }
+                } else {
+                    if (pWidth > 0 && fxWidth > 0) {
+                        logger.debug("SHUT");
+                        revalidate();
+                        repaint();
+                        exec.shutdown();
+                    }
                 }
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                resizeThread(panel, jfxPanel);
+                logger.debug("SZIE: " + panel.getSize() + " " + jfxPanel.getSize() + " " + width);
+                logger.debug("SCNEE: " + jfxPanel.getScene().getWidth() + " " + jfxPanel.getScene().getHeight());
             }
-        }).start();
+        }, 0, 5, TimeUnit.SECONDS);
     }
 
     private Scene createScene() {
