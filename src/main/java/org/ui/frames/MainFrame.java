@@ -1,7 +1,6 @@
 package org.ui.frames;
 
 import javafx.application.Platform;
-import javafx.embed.swing.JFXPanel;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
 import org.preferences.managers.PreferenceManager;
@@ -9,7 +8,10 @@ import org.ui.Constants;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -25,6 +27,9 @@ public class MainFrame extends JFrame {
 
     private final static String[] ARR_MODES = {"Classic", "Stop-loss", "Buy&Sell"};
     private static Logger logger = Logger.getLogger(MainFrame.class);
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+    int width = (int) screenSize.getWidth();
+    int height = (int) screenSize.getHeight();
     private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
     private JButton btnCreateTransaction;
@@ -32,15 +37,10 @@ public class MainFrame extends JFrame {
     private StopLossFrame stopLossFrame;
     private EmailSetupFrame emailSetupFrame;
     private APISetupFrame apiSetupFrame;
-
     private PieChart pieChartPanel;
-
     private double LEFT_PANE_WIDTH_RATIO = 0.4f;
     private double CENTER_PANE_WIDTH_RATIO = 0.3f;
     private double RIGHT_PANE_WIDTH_RATIO = 0.3f;
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    int width = (int) screenSize.getWidth();
-    int height = (int) screenSize.getHeight();
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -72,7 +72,8 @@ public class MainFrame extends JFrame {
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setVisible(true);
 
-//        showPieChart();
+        // Initialize only after all components sizes were calculated.
+        pieChartPanel.initChart();
     }
 
     private JPanel createLeftPanel() {
@@ -80,14 +81,14 @@ public class MainFrame extends JFrame {
         JPanel leftPanel = new JPanel();
         leftPanel.setBorder(new TitledBorder(new EtchedBorder()));
         leftPanel.setLayout(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), height));
-        leftPanel.setMinimumSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), height));
+        leftPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
+        leftPanel.setMinimumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
 
         JPanel pMain = new JPanel();
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
         pMain.setLayout(new GridLayout(4, 1));
-        pMain.setPreferredSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 120));
-        pMain.setMinimumSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 120));
+        pMain.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
+        pMain.setMinimumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
 
         // Status bar
         JPanel statusBar = new JPanel();
@@ -149,14 +150,14 @@ public class MainFrame extends JFrame {
         leftPanel.add(pMain, BorderLayout.NORTH);
 
         // Mid view.
-        pieChartPanel = new PieChart((int)(width * LEFT_PANE_WIDTH_RATIO), height);
+        pieChartPanel = new PieChart((int) (width * LEFT_PANE_WIDTH_RATIO), height);
         leftPanel.add(pieChartPanel, BorderLayout.CENTER);
 
         // Bottom view
         JPanel donationPanel = new JPanel();
         donationPanel.setLayout(new GridLayout(3, 1));
-        donationPanel.setMaximumSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 60));
-        donationPanel.setPreferredSize(new Dimension((int)(width * LEFT_PANE_WIDTH_RATIO), 60));
+        donationPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 60));
+        donationPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 60));
         Border border = LineBorder.createGrayLineBorder();
         JTextField btcLabel = new JTextField("Donate BTC: " + BTC_DONATION_ADDRESS);
         btcLabel.setEditable(false);
