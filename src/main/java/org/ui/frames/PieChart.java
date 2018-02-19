@@ -11,8 +11,6 @@ import org.preferences.managers.PreferenceManager;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -33,7 +31,6 @@ public class PieChart extends JPanel {
     public PieChart(int width, int height) {
         pieChartData = FXCollections.observableArrayList();
         pieChartData.add(new javafx.scene.chart.PieChart.Data(LOADING_MESSAGE, 100));
-        createMenuBar();
         this.setMinimumSize(new Dimension(width, height));
         this.add(jfxPanel, CENTER_ALIGNMENT);
     }
@@ -139,38 +136,6 @@ public class PieChart extends JPanel {
             }
         }
         pieChartData.sorted();
-    }
-
-    private void createMenuBar() {
-        JMenuBar jMenuBar = new JMenuBar();
-        ImageIcon icon = new ImageIcon("exit.png");
-
-        // File
-        JMenu file = new JMenu("File");
-        file.setMnemonic(KeyEvent.VK_F);
-        JMenuItem eMenuItem = new JMenuItem("Exit", icon);
-        eMenuItem.setMnemonic(KeyEvent.VK_E);
-        eMenuItem.setToolTipText("Exit application");
-        eMenuItem.addActionListener((ActionEvent event) -> {
-            System.exit(0);
-        });
-        file.add(eMenuItem);
-
-        // Settings
-        JMenu settings = new JMenu("Settings");
-        file.setMnemonic(KeyEvent.VK_S);
-        JCheckBoxMenuItem jCheckBoxMenuItem = new JCheckBoxMenuItem("Hide if insignificant");
-        jCheckBoxMenuItem.setMnemonic(KeyEvent.VK_H);
-        jCheckBoxMenuItem.setToolTipText("Hide when value less than " + CHART_SIGNIFICANT_MINIMUM + " BTC");
-        jCheckBoxMenuItem.addActionListener((ActionEvent event) -> {
-            PreferenceManager.changeHideInsignificantEnabled();
-            jCheckBoxMenuItem.setState(PreferenceManager.isHideInsignificantEnabled());
-        });
-        jCheckBoxMenuItem.setState(PreferenceManager.isHideInsignificantEnabled());
-        settings.add(jCheckBoxMenuItem);
-
-        jMenuBar.add(file);
-        jMenuBar.add(settings);
     }
 
     private String makeKey(Map.Entry<String, BalancesSet> entry, double btcSum) {

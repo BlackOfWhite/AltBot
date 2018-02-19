@@ -6,7 +6,6 @@ import org.logic.models.misc.BalancesSet;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
@@ -194,6 +193,7 @@ public class MainFrame extends JFrame {
         JMenu settings = new JMenu("Settings");
         file.setMnemonic(KeyEvent.VK_S);
         JCheckBoxMenuItem jCheckBoxMenuItem = new JCheckBoxMenuItem("Email notifications");
+        jCheckBoxMenuItem.setToolTipText("Enable email notifications.");
         jCheckBoxMenuItem.setState(PreferenceManager.isEmailNotificationEnabled());
         jCheckBoxMenuItem.addActionListener(new ActionListener() {
             @Override
@@ -222,31 +222,24 @@ public class MainFrame extends JFrame {
                 }
             }
         });
-        settings.add(apiSetupMenuItem);
-        settings.add(jCheckBoxMenuItem);
-        settings.add(emailSetupMenuItem);
-
-        // Chart button
-        JButton button = new JButton();
-//        button.setBorder(BorderFactory.createEmptyBorder());
-//        button.setContentAreaFilled(false);
-        try {
-            Image img = ImageIO.read(getClass().getClassLoader().getResource("pie_chart.png"));
-            img = img.getScaledInstance(24, 24, Image.SCALE_SMOOTH);
-            button.setIcon(new ImageIcon(img));
-        } catch (Exception ex) {
-            logger.debug(ex.getMessage());
-        }
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-
-            }
+        JCheckBoxMenuItem jCheckBoxMenuItem2 = new JCheckBoxMenuItem("Hide if insignificant");
+        jCheckBoxMenuItem2.setMnemonic(KeyEvent.VK_H);
+        jCheckBoxMenuItem2.setToolTipText("Hide when value less than " + CHART_SIGNIFICANT_MINIMUM + " BTC");
+        jCheckBoxMenuItem2.addActionListener((ActionEvent event) -> {
+            PreferenceManager.changeHideInsignificantEnabled();
+            jCheckBoxMenuItem2.setState(PreferenceManager.isHideInsignificantEnabled());
         });
+        jCheckBoxMenuItem2.setState(PreferenceManager.isHideInsignificantEnabled());
 
         jMenuBar.add(file);
         jMenuBar.add(settings);
-        jMenuBar.add(button);
+        settings.add(apiSetupMenuItem);
+        settings.add(jCheckBoxMenuItem);
+        settings.add(jCheckBoxMenuItem2);
+        settings.add(emailSetupMenuItem);
+
+        jMenuBar.add(file);
+        jMenuBar.add(settings);
         setJMenuBar(jMenuBar);
     }
 
