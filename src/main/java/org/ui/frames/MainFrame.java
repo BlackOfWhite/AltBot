@@ -3,8 +3,12 @@ package org.ui.frames;
 import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
+import org.logic.models.responses.MarketOrderResponse;
+import org.logic.models.responses.OrderResponse;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
+import org.ui.views.list.ListElementOrder;
+import org.ui.views.list.orders.OrderListCellRenderer;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -15,6 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.List;
 import java.util.Map;
 
 import static org.preferences.Constants.*;
@@ -40,6 +45,7 @@ public class MainFrame extends JFrame {
     private double LEFT_PANE_WIDTH_RATIO = 0.4f;
     private double CENTER_PANE_WIDTH_RATIO = 0.3f;
     private double RIGHT_PANE_WIDTH_RATIO = 0.3f;
+    private ListElementOrder[] listOfOrders = new ListElementOrder[1];
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -49,6 +55,7 @@ public class MainFrame extends JFrame {
         cp.setLayout(bag);
 
         JPanel leftPanel = createLeftPanel();
+        JPanel midPanel = createMidPanel();
 
         // Merge all main column panels. Add grid layout.
         this.setLayout(new GridBagLayout());
@@ -59,11 +66,10 @@ public class MainFrame extends JFrame {
         c.weighty = 1;
         c.gridx = 0;
         this.add(leftPanel, c);
-        JButton empty1 = new JButton("DAAisfiofdsjsdjsdjofsdijsfdoijsiodfjidsfjsdfojidsfoifsdjF");
         JButton empty2 = new JButton("DAidsjijsfdoifsdjoidsfjiosfjsfodijfdsojfdsojfsdodfsjoidsfAF");
         c.gridx = 1;
         c.weightx = 0.3;
-        this.add(empty1, c);
+        this.add(midPanel, c);
         c.gridx = 2;
         this.add(empty2, c);
 
@@ -81,13 +87,14 @@ public class MainFrame extends JFrame {
         leftPanel.setBorder(new TitledBorder(new EtchedBorder()));
         leftPanel.setLayout(new BorderLayout());
         leftPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
+        leftPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
         leftPanel.setMinimumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
 
         JPanel pMain = new JPanel();
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
         pMain.setLayout(new GridLayout(4, 1));
         pMain.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
-        pMain.setMinimumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
+        pMain.setMaximumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
 
         // Status bar
         JPanel statusBar = new JPanel();
@@ -172,6 +179,30 @@ public class MainFrame extends JFrame {
         donationPanel.add(ltcLabel);
         leftPanel.add(donationPanel, BorderLayout.SOUTH);
         return leftPanel;
+    }
+
+    private JPanel createMidPanel() {
+        JPanel midPanel = new JPanel();
+        midPanel.setBorder(new TitledBorder(new EtchedBorder()));
+        midPanel.setLayout(new BorderLayout());
+        midPanel.setPreferredSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
+        midPanel.setMinimumSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
+        midPanel.setMaximumSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
+
+     for (int x= 0; x<= 100; x++) {
+         listOfOrders[x] = new ListElementOrder(x + "", x+"111");
+     }
+        JList jList = new JList(listOfOrders);
+        jList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        jList.setLayoutOrientation(JList.VERTICAL);
+        jList.setVisibleRowCount(-1);
+        jList.setBackground(Color.BLUE);
+        jList.setCellRenderer(new OrderListCellRenderer());
+
+        JScrollPane listScroller = new JScrollPane(jList);
+        listScroller.setPreferredSize(new Dimension(midPanel.getMaximumSize()));
+        midPanel.add(listScroller);
+        return midPanel;
     }
 
     private void createMenuBar() {
@@ -287,6 +318,14 @@ public class MainFrame extends JFrame {
 
     public PieChart getPieChartFrame() {
         return pieChartPanel;
+    }
+
+    public void updateOrdersList(List<MarketOrderResponse> orders) {
+       listOfOrders = new ListElementOrder[orders.size()];
+       int x=  0;
+       for (MarketOrderResponse marketOrderResponse : orders) {
+           listOfOrders[x] = new ListElementOrder(marketOrderResponse.getResult().get(0).)
+       }
     }
 }
 
