@@ -1,7 +1,5 @@
 package org.ui.views.list.orders;
 
-import org.ui.views.list.ListElementOrder;
-
 import javax.swing.*;
 import java.awt.*;
 

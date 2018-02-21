@@ -86,12 +86,9 @@ public class MarketMonitor {
 
                 // Main frame status bar
                 sharedMarketOrders = openMarketOrders;
-                final int totalOrdersCount = openMarketOrders.getResult().size();
-                final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
-                updateMainFrameStatus(totalOrdersCount, buyOrdersCount);
+                updateMainFrameStatus(openMarketOrders);
 
                 MarketBalancesResponse marketBalances = ModelBuilder.buildMarketBalances();
-
                 // Market name - last price map
                 final Map<String, MarketDetails> marketDetailsMap = createMarketDetailsMap(marketBalances, openMarketOrders);
                 if (marketDetailsMap != null) {
@@ -102,7 +99,7 @@ public class MarketMonitor {
                     logger.warn("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
                     mainFrame.getPieChartFrame().setIsConnected(false);
                 }
-                sendNotification(totalOrdersCount);
+                sendNotification(openMarketOrders.getResult().size());
             } catch (Exception e) {
                 logger.error(e.toString());
                 e.printStackTrace();
@@ -150,8 +147,11 @@ public class MarketMonitor {
         }
     }
 
-    private static void updateMainFrameStatus(int totalOrders, int buyOrders) {
-        mainFrame.updateStatusBar(totalOrders, buyOrders);
+    private static void updateMainFrameStatus(MarketOrderResponse openMarketOrders) {
+        final int totalOrdersCount = openMarketOrders.getResult().size();
+        final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
+        mainFrame.updateStatusBar(totalOrdersCount, buyOrdersCount);
+        mainFrame.updateOrdersList(openMarketOrders);
         if (COUNTER % DIALOG_DELAY == 0) {
             mainFrame.updateAPIStatusBar();
         }

@@ -4,10 +4,9 @@ import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.MarketOrderResponse;
-import org.logic.models.responses.OrderResponse;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
-import org.ui.views.list.ListElementOrder;
+import org.ui.views.list.orders.ListElementOrder;
 import org.ui.views.list.orders.OrderListCellRenderer;
 
 import javax.swing.*;
@@ -19,8 +18,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static org.preferences.Constants.*;
 
@@ -45,7 +44,10 @@ public class MainFrame extends JFrame {
     private double LEFT_PANE_WIDTH_RATIO = 0.4f;
     private double CENTER_PANE_WIDTH_RATIO = 0.3f;
     private double RIGHT_PANE_WIDTH_RATIO = 0.3f;
-    private ListElementOrder[] listOfOrders = new ListElementOrder[1];
+    // List of market orders
+    private JList ordersList;
+    // Model to update orders list content
+    private DefaultListModel<ListElementOrder> model = new DefaultListModel<>();
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -189,17 +191,14 @@ public class MainFrame extends JFrame {
         midPanel.setMinimumSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
         midPanel.setMaximumSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
 
-     for (int x= 0; x<= 100; x++) {
-         listOfOrders[x] = new ListElementOrder(x + "", x+"111");
-     }
-        JList jList = new JList(listOfOrders);
-        jList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        jList.setLayoutOrientation(JList.VERTICAL);
-        jList.setVisibleRowCount(-1);
-        jList.setBackground(Color.BLUE);
-        jList.setCellRenderer(new OrderListCellRenderer());
+        ordersList = new JList();
+        ordersList.setModel(model);
+        ordersList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        ordersList.setLayoutOrientation(JList.VERTICAL);
+        ordersList.setVisibleRowCount(-1);
+        ordersList.setCellRenderer(new OrderListCellRenderer());
 
-        JScrollPane listScroller = new JScrollPane(jList);
+        JScrollPane listScroller = new JScrollPane(ordersList);
         listScroller.setPreferredSize(new Dimension(midPanel.getMaximumSize()));
         midPanel.add(listScroller);
         return midPanel;
@@ -320,12 +319,56 @@ public class MainFrame extends JFrame {
         return pieChartPanel;
     }
 
-    public void updateOrdersList(List<MarketOrderResponse> orders) {
-       listOfOrders = new ListElementOrder[orders.size()];
-       int x=  0;
-       for (MarketOrderResponse marketOrderResponse : orders) {
-           listOfOrders[x] = new ListElementOrder(marketOrderResponse.getResult().get(0).)
-       }
+    /**
+     * Update orders list model - is equivalent to right outer join, where right side is model's collection.
+     * Does not update fields that already exist in the model. See equals method of ListElementOrders class.
+     *
+     * @param openMarketOrders Collection of open market orders.
+     */
+    public synchronized void updateOrdersList(final MarketOrderResponse openMarketOrders) {
+        // Remove from model
+        List<ListElementOrder> toRemove = new ArrayList<>();
+        for (int x = 0; x < model.size(); x++) {
+            boolean contains = false;
+            ListElementOrder listElementOrder1 = model.getElementAt(x);
+            for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+                ListElementOrder listElementOrder2 = new ListElementOrder(result.getExchange(), result.getOrderType());
+                if (listElementOrder2.equals(listElementOrder1)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) {
+                toRemove.add(model.getElementAt(x));
+            }
+        }
+        for (ListElementOrder listElementOrder : toRemove) {
+            model.removeElement(listElementOrder);
+        }
+        // Merge
+        for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+            ListElementOrder listElementOrder = new ListElementOrder(result.getExchange(),
+                    result.getOrderType());
+            if (!model.contains(listElementOrder)) {
+                model.addElement(listElementOrder);
+            }
+        }
+        // Sort
+        Comparator comparator = new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                ListElementOrder l1 = (ListElementOrder) o1;
+                ListElementOrder l2 = (ListElementOrder) o2;
+                int cmp = l1.getCoinName().compareTo(l2.getCoinName());
+                if (cmp == 0) {
+                    cmp = l1.getOrderType().compareTo(l2.getOrderType());
+                }
+                return cmp;
+            }
+        };
+        Arrays.sort(new Enumeration[]{model.elements()}, comparator);
+        ordersList.validate();
+        ordersList.repaint();
     }
 }
 
