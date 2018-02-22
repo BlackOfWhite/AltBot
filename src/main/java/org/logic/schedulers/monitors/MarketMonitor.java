@@ -94,6 +94,7 @@ public class MarketMonitor {
                 if (marketDetailsMap != null) {
                     mainFrame.getPieChartFrame().setIsConnected(true);
                     updatePieChart(marketBalances, marketDetailsMap);
+                    mainFrame.updateOrdersList(openMarketOrders, marketDetailsMap);
                     stopLossOrders(openMarketOrders, marketDetailsMap);
                 } else {
                     logger.warn("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
@@ -151,10 +152,13 @@ public class MarketMonitor {
         final int totalOrdersCount = openMarketOrders.getResult().size();
         final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
         mainFrame.updateStatusBar(totalOrdersCount, buyOrdersCount);
-        mainFrame.updateOrdersList(openMarketOrders);
         if (COUNTER % DIALOG_DELAY == 0) {
             mainFrame.updateAPIStatusBar();
         }
+    }
+
+    private static void updateMainFrameStatus(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> marketDetailsMap) {
+        mainFrame.updateOrdersList(openMarketOrders, marketDetailsMap);
     }
 
     /**
@@ -174,7 +178,7 @@ public class MarketMonitor {
             if (marketName.equals("BTC")) {
                 map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
             } else {
-                double last = 0;
+                double last;
                 try {
                     last = marketDetailsMap.get(marketName).getLast();
                 } catch (ValueNotSetException e) {

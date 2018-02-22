@@ -2,8 +2,10 @@ package org.ui.frames;
 
 import javafx.application.Platform;
 import org.apache.log4j.Logger;
+import org.logic.exceptions.ValueNotSetException;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.MarketOrderResponse;
+import org.logic.schedulers.monitors.model.MarketDetails;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 import org.ui.views.list.orders.ListElementOrder;
@@ -325,14 +327,15 @@ public class MainFrame extends JFrame {
      *
      * @param openMarketOrders Collection of open market orders.
      */
-    public synchronized void updateOrdersList(final MarketOrderResponse openMarketOrders) {
+    public synchronized void updateOrdersList(final MarketOrderResponse openMarketOrders, Map<String, MarketDetails> marketDetailsMap) {
         // Remove from model
         List<ListElementOrder> toRemove = new ArrayList<>();
         for (int x = 0; x < model.size(); x++) {
             boolean contains = false;
             ListElementOrder listElementOrder1 = model.getElementAt(x);
             for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
-                ListElementOrder listElementOrder2 = new ListElementOrder(result.getExchange(), result.getOrderType());
+                double last = getLast(marketDetailsMap, result.getExchange());
+                ListElementOrder listElementOrder2 = new ListElementOrder(result.getExchange(), result.getOrderType(), last);
                 if (listElementOrder2.equals(listElementOrder1)) {
                     contains = true;
                     break;
@@ -345,13 +348,19 @@ public class MainFrame extends JFrame {
         for (ListElementOrder listElementOrder : toRemove) {
             model.removeElement(listElementOrder);
         }
-        // Merge
+        // Merge & update
+        int x = -1;
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
+            x++;
+            double last = getLast(marketDetailsMap, result.getExchange());
             ListElementOrder listElementOrder = new ListElementOrder(result.getExchange(),
-                    result.getOrderType());
+                    result.getOrderType(), last);
             if (!model.contains(listElementOrder)) {
                 model.addElement(listElementOrder);
+                continue;
             }
+            // update last value
+            model.getElementAt(x).setLast(last);
         }
         // Sort
         Comparator comparator = new Comparator() {
@@ -363,12 +372,30 @@ public class MainFrame extends JFrame {
                 if (cmp == 0) {
                     cmp = l1.getOrderType().compareTo(l2.getOrderType());
                 }
+                if (cmp == 0) {
+                    if (l1.getLast() < l2.getLast()) {
+                        return -1;
+                    } else if (l1.getLast() > l2.getLast()) {
+                        return 1;
+                    }
+                    return 0;
+                }
                 return cmp;
             }
         };
         Arrays.sort(new Enumeration[]{model.elements()}, comparator);
         ordersList.validate();
         ordersList.repaint();
+    }
+
+    private double getLast(Map<String, MarketDetails> marketDetailsMap, String exchange) {
+        double last;
+        try {
+            last = marketDetailsMap.get(exchange).getLast();
+        } catch (ValueNotSetException e) {
+            return 0.0d;
+        }
+        return last;
     }
 }
 
