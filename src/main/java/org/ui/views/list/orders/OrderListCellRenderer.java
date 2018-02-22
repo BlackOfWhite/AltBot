@@ -42,21 +42,19 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
         JLabel jLabel2 = new JLabel("-5%");
         jLabel2.setHorizontalAlignment(JLabel.LEFT);
         jLabel2.setVerticalAlignment(JLabel.CENTER);
-        JLabel jLabel3 = new JLabel("Last: " + listElementOrder.getLastAsString());
-        jLabel3.setHorizontalAlignment(JLabel.CENTER);
-        jLabel3.setVerticalAlignment(JLabel.CENTER);
         JLabel jLabel4 = new JLabel("0.00000234234");
         jLabel4.setHorizontalAlignment(JLabel.RIGHT);
         jLabel4.setVerticalAlignment(JLabel.CENTER);
 
         row2.add(jLabel2, BorderLayout.WEST);
-        row2.add(jLabel3, BorderLayout.NORTH);
         row2.add(jLabel4, BorderLayout.EAST);
 
         JPanel row3 = new JPanel(new BorderLayout());
         JProgressBar jProgressBar = new JProgressBar();
         jProgressBar.setOpaque(false);
         jProgressBar.setValue(69);
+        jProgressBar.setStringPainted(true);
+        jProgressBar.setString("Last: " + listElementOrder.getLastAsString() + " - 69.0%");
         row3.add(jProgressBar);
 
         jPanel.add(row1);
