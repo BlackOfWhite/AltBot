@@ -60,6 +60,7 @@ public class MainFrame extends JFrame {
 
         JPanel leftPanel = createLeftPanel();
         JPanel midPanel = createMidPanel();
+        JPanel rightPanel = createMidPanel();
 
         // Merge all main column panels. Add grid layout.
         this.setLayout(new GridBagLayout());
@@ -70,12 +71,11 @@ public class MainFrame extends JFrame {
         c.weighty = 1;
         c.gridx = 0;
         this.add(leftPanel, c);
-        JButton empty2 = new JButton("DAidsjijsfdoifsdjoidsfjiosfjsfodijfdsojfdsojfsdodfsjoidsfAF");
         c.gridx = 1;
         c.weightx = 0.3;
         this.add(midPanel, c);
         c.gridx = 2;
-        this.add(empty2, c);
+        this.add(rightPanel, c);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setExtendedState(JFrame.MAXIMIZED_BOTH);
