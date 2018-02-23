@@ -4,7 +4,7 @@ import org.apache.log4j.Logger;
 import org.logic.models.JSONParser;
 import org.logic.models.responses.*;
 import org.logic.models.responses.v2.MarketTicksResponse;
-import org.logic.requests.MarketRequests;
+import org.logic.requests.PrivateRequests;
 import org.logic.requests.PublicRequests;
 import org.logic.schedulers.bots.model.TimeIntervalEnum;
 
@@ -18,7 +18,7 @@ public class ModelBuilder {
     public static MarketBalancesResponse buildMarketBalances() {
         MarketBalancesResponse marketBalances = null;
         try {
-            String response = MarketRequests.getBalances();
+            String response = PrivateRequests.getBalances();
             marketBalances = JSONParser.parseMarketBalances(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketBalancesResponse object");
@@ -32,7 +32,7 @@ public class ModelBuilder {
     public static MarketBalanceResponse buildMarketBalance(final String coinName) {
         MarketBalanceResponse marketBalance = null;
         try {
-            String response = MarketRequests.getBalance(coinName);
+            String response = PrivateRequests.getBalance(coinName);
             marketBalance = JSONParser.parseMarketBalance(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketBalanceResponse object");
@@ -46,7 +46,7 @@ public class ModelBuilder {
     public static MarketOrderResponse buildAllOpenOrders() {
         MarketOrderResponse openMarketOrders = null;
         try {
-            String response = MarketRequests.getOpenOrders();
+            String response = PrivateRequests.getOpenOrders();
             openMarketOrders = JSONParser.parseMarketOrder(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketOrderResponse object");
@@ -60,7 +60,7 @@ public class ModelBuilder {
     public static MarketOrderResponse buildMarketOrderHistory(String coinName) {
         MarketOrderResponse openMarketOrders = null;
         try {
-            String response = MarketRequests.getOrderHistory(coinName);
+            String response = PrivateRequests.getOrderHistory(coinName);
             openMarketOrders = JSONParser.parseMarketOrder(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create MarketOrderResponse object");
@@ -93,7 +93,7 @@ public class ModelBuilder {
     public static OrderResponse buildCancelOrderById(String uuid) {
         OrderResponse orderResponse = null;
         try {
-            String response = MarketRequests.cancelOrder(uuid);
+            String response = PrivateRequests.cancelOrder(uuid);
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
@@ -108,7 +108,7 @@ public class ModelBuilder {
         OrderResponse orderResponse = null;
         rate = rate * SELL_PRICE_RATIO;
         try {
-            String response = MarketRequests.placeOrderSell(marketName, quantity, rate);
+            String response = PrivateRequests.placeOrderSell(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");
@@ -123,7 +123,7 @@ public class ModelBuilder {
         OrderResponse orderResponse = null;
         rate = rate * BUY_PRICE_RATIO;
         try {
-            String response = MarketRequests.placeOrderBuy(marketName, quantity, rate);
+            String response = PrivateRequests.placeOrderBuy(marketName, quantity, rate);
             orderResponse = JSONParser.parseOrderResponse(response);
         } catch (Exception e) {
             logger.error(e.getMessage() + "\nFailed to create OrderResponse object");

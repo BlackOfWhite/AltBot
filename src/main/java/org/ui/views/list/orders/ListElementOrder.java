@@ -1,13 +1,16 @@
 package org.ui.views.list.orders;
 
-public class ListElementOrder {
-    private String coinName, orderType, lastText;
-    private double last;
+import static org.logic.utils.TextUtils.getDoubleAsText;
 
-    public ListElementOrder(String coinName, String orderType, double last) {
+public class ListElementOrder {
+    private String coinName, orderType, lastText, limitText;
+    private double last, limit;
+
+    public ListElementOrder(String coinName, String orderType, double last, double limit) {
         this.coinName = coinName;
         this.orderType = orderType;
         setLast(last);
+        setLimit(limit);
     }
 
     public String getCoinName() {
@@ -31,11 +34,21 @@ public class ListElementOrder {
     }
 
     public void setLast(double last) {
-        this.lastText = String.format("%.8f", last);
-        if (this.lastText.contains(",")) {
-            this.lastText = this.lastText.replace(",", ".");
-        }
+        this.lastText = getDoubleAsText(last);
         this.last = last;
+    }
+
+    public String getLimitAsText() {
+        return limitText;
+    }
+
+    public double getLimit() {
+        return limit;
+    }
+
+    public void setLimit(double limit) {
+        this.limitText = getDoubleAsText(limit);
+        this.limit = limit;
     }
 
     public String getLastAsString() {

@@ -1,8 +1,18 @@
 package org.logic.utils;
 
-import org.logic.models.misc.BalancesSet;
+public class TextUtils {
 
-public class MarketNameUtils {
+    public static String getDoubleAsText(double value, int decimal) {
+        String v = String.format("%." + decimal + "f", value);
+        if (v.contains(",")) {
+            v = v.replace(",", ".");
+        }
+        return v;
+    }
+
+    public static String getDoubleAsText(double value) {
+        return getDoubleAsText(value, 8);
+    }
 
     public static String getMarketNameForCurrency(String currency) {
         if (currency.equalsIgnoreCase("USDT")) {
@@ -21,5 +31,4 @@ public class MarketNameUtils {
             return marketName;
         }
     }
-
 }

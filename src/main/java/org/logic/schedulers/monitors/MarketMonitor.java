@@ -12,8 +12,8 @@ import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;
 import org.logic.transactions.model.stoploss.modes.StopLossMode;
-import org.logic.utils.MarketNameUtils;
 import org.logic.utils.ModelBuilder;
+import org.logic.utils.TextUtils;
 import org.preferences.Params;
 import org.preferences.managers.PreferenceManager;
 import org.ui.frames.MainFrame;
@@ -174,7 +174,7 @@ public class MarketMonitor {
             if (result.getBalance() < BALANCE_MINIMUM) {
                 continue;
             }
-            String marketName = MarketNameUtils.getMarketNameForCurrency(result.getCurrency());
+            String marketName = TextUtils.getMarketNameForCurrency(result.getCurrency());
             if (marketName.equals("BTC")) {
                 map.put(result.getCurrency(), new BalancesSet(result.getBalance(), result.getBalance()));
             } else {

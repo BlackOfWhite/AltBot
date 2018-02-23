@@ -11,14 +11,14 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.net.URLConnection;
 
-import static org.logic.utils.MarketNameUtils.getCoinNameFromMarketName;
+import static org.logic.utils.TextUtils.getCoinNameFromMarketName;
 import static org.preferences.Constants.MSG_REQUEST_TIMEOUT;
 import static org.preferences.Constants.REQUEST_TIMEOUT_SECONDS;
 import static org.preferences.Params.API_KEY;
 
-public class MarketRequests {
+public class PrivateRequests {
 
-    private static Logger logger = Logger.getLogger(MarketRequests.class);
+    private static Logger logger = Logger.getLogger(PrivateRequests.class);
 
     public static String placeOrderBuy(String marketName, double quantity, double rate) throws Exception {
         long nonce = System.currentTimeMillis();
@@ -55,6 +55,7 @@ public class MarketRequests {
     /**
      * Use just a coin name: BTC, XRP, MEO. Do not use market names.
      * Update: can use also market names.
+     *
      * @param coinName
      * @return
      * @throws Exception
@@ -69,6 +70,7 @@ public class MarketRequests {
     /**
      * Use just a coin name: BTC, XRP, MEO. Do not use market names.
      * Update: can use also market names.
+     *
      * @param coinName
      * @return
      * @throws Exception
@@ -92,6 +94,14 @@ public class MarketRequests {
         return sendRequest(url);
     }
 
+    public static String getOrderDetails(final String uuid) throws Exception {
+//        uuid = "c2c9f44e-b27f-4f2d-8b4e-db624e540dcf";
+        long nonce = System.currentTimeMillis();
+        URL url = new URL("https://bittrex.com/api/v1.1/account/getorder?apikey=" + API_KEY + "&nonce=" + nonce + "&uuid=" + uuid);
+        return sendRequest(url);
+    }
+
+
     private static String sendRequest(URL url) throws UnsupportedEncodingException {
         // prepare sign
         String response = "";
@@ -107,7 +117,7 @@ public class MarketRequests {
                             urlConnection.getInputStream()));
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-//                logger.debug(inputLine);
+                logger.debug(inputLine);
                 response = inputLine;
             }
             in.close();

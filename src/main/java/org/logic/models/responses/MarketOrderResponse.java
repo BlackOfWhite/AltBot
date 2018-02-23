@@ -66,6 +66,8 @@ public class MarketOrderResponse extends Response {
         String Exchange;
         @Expose
         double Price;
+        @Expose
+        double Limit;
 
         public Result(double price, double pricePerUnit, String orderType, double quantityRemaining, String orderUuid, String exchange) {
             Price = price;
@@ -84,6 +86,10 @@ public class MarketOrderResponse extends Response {
             return QuantityRemaining;
         }
 
+        public double getLimit() {
+            return Limit;
+        }
+
         @Override
         public String toString() {
             return "Result{" +
@@ -93,6 +99,7 @@ public class MarketOrderResponse extends Response {
                     ", OrderUuid='" + OrderUuid + '\'' +
                     ", Exchange='" + Exchange + '\'' +
                     ", Price=" + Price +
+                    ", Limit='" + Limit + '\'' +
                     '}';
         }
 

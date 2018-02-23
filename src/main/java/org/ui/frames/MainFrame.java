@@ -335,7 +335,7 @@ public class MainFrame extends JFrame {
             ListElementOrder listElementOrder1 = model.getElementAt(x);
             for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
                 double last = getLast(marketDetailsMap, result.getExchange());
-                ListElementOrder listElementOrder2 = new ListElementOrder(result.getExchange(), result.getOrderType(), last);
+                ListElementOrder listElementOrder2 = new ListElementOrder(result.getExchange(), result.getOrderType(), last, result.getLimit());
                 if (listElementOrder2.equals(listElementOrder1)) {
                     contains = true;
                     break;
@@ -354,7 +354,7 @@ public class MainFrame extends JFrame {
             x++;
             double last = getLast(marketDetailsMap, result.getExchange());
             ListElementOrder listElementOrder = new ListElementOrder(result.getExchange(),
-                    result.getOrderType(), last);
+                    result.getOrderType(), last, result.getLimit());
             if (!model.contains(listElementOrder)) {
                 model.addElement(listElementOrder);
                 continue;

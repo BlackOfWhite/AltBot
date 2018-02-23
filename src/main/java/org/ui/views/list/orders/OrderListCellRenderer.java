@@ -1,5 +1,7 @@
 package org.ui.views.list.orders;
 
+import org.logic.utils.TextUtils;
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -38,23 +40,27 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
         row1.add(jLabel, BorderLayout.CENTER);
 
         // 2nd row
+        String minLimit = TextUtils.getDoubleAsText(listElementOrder.getLimit() * 0.9d);
         JPanel row2 = new JPanel(new BorderLayout());
-        JLabel jLabel2 = new JLabel("-5%");
+        JLabel jLabel2 = new JLabel(minLimit + " - 90% of Limit");
         jLabel2.setHorizontalAlignment(JLabel.LEFT);
         jLabel2.setVerticalAlignment(JLabel.CENTER);
-        JLabel jLabel4 = new JLabel("0.00000234234");
+        JLabel jLabel4 = new JLabel("Limit: " + listElementOrder.getLimitAsText());
         jLabel4.setHorizontalAlignment(JLabel.RIGHT);
         jLabel4.setVerticalAlignment(JLabel.CENTER);
 
         row2.add(jLabel2, BorderLayout.WEST);
         row2.add(jLabel4, BorderLayout.EAST);
 
+        double max = listElementOrder.getLimit();
+        double min  = 0.9d * max;
+        double percentValue = ((listElementOrder.getLast() - min) * 100) / (max - min);
         JPanel row3 = new JPanel(new BorderLayout());
         JProgressBar jProgressBar = new JProgressBar();
         jProgressBar.setOpaque(false);
-        jProgressBar.setValue(69);
+        jProgressBar.setValue((int) percentValue);
         jProgressBar.setStringPainted(true);
-        jProgressBar.setString("Last: " + listElementOrder.getLastAsString() + " - 69.0%");
+        jProgressBar.setString("Last: " + listElementOrder.getLastAsString() + " - " + TextUtils.getDoubleAsText(percentValue,2) + "%");
         row3.add(jProgressBar);
 
         jPanel.add(row1);

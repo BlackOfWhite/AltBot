@@ -1,13 +1,9 @@
 package org.logic.transactions;
 
 import org.apache.log4j.Logger;
-import org.logic.models.JSONParser;
 import org.logic.models.responses.OrderResponse;
-import org.logic.requests.MarketRequests;
 import org.logic.utils.ModelBuilder;
 import org.logic.validators.TransactionValidator;
-
-import java.io.IOException;
 
 public class ClassicTransaction {
 
