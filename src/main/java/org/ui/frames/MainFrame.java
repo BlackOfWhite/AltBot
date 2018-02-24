@@ -12,6 +12,7 @@ import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 import org.ui.views.list.orders.open.ListElementOrder;
 import org.ui.views.list.orders.open.OrderListCellRenderer;
+import org.ui.views.list.orders.open.SLOrderListCellRenderer;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -200,14 +201,14 @@ public class MainFrame extends JFrame {
         list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         list.setLayoutOrientation(JList.VERTICAL);
         list.setVisibleRowCount(-1);
-        list.setCellRenderer(new OrderListCellRenderer());
-
 
         JScrollPane listScroller = null;
         if (stopLoss) {
+            list.setCellRenderer(new SLOrderListCellRenderer());
             slOrdersList = list;
             listScroller = new JScrollPane(slOrdersList);
         } else {
+            list.setCellRenderer(new OrderListCellRenderer());
             ordersList = list;
             listScroller = new JScrollPane(ordersList);
         }
@@ -387,18 +388,16 @@ public class MainFrame extends JFrame {
      * @param marketDetailsMap
      */
     public synchronized void updateSLOrdersList(Map<String, MarketDetails> marketDetailsMap) {
-        // Remove from model
         List<StopLossOption> stopLossOptionList = new ArrayList<>(StopLossOptionManager.getInstance().getOptionList());
+        // Remove from model if not present in stop loss options anymore
         List<ListElementOrder> toRemove = new ArrayList<>();
         for (int x = 0; x < slModel.size(); x++) {
             boolean contains = false;
             ListElementOrder listElementOrder1 = slModel.getElementAt(x);
             for (StopLossOption stopLossOption : stopLossOptionList) {
-                double last = getLast(marketDetailsMap, stopLossOption.getMarketName());
-                ListElementOrder listElementOrder2 = new ListElementOrder(stopLossOption.getMarketName(),
-                        stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, -1);
-
-                if (listElementOrder2.equals(listElementOrder1)) {
+                String orderType = stopLossOption.getMode() + " / " + stopLossOption.getCondition();
+                if (stopLossOption.getMarketName().equals(listElementOrder1.getCoinName()) &&
+                        listElementOrder1.getOrderType().equals(orderType)) {
                     contains = true;
                     break;
                 }
@@ -423,7 +422,7 @@ public class MainFrame extends JFrame {
             ListElementOrder listElementOrder = new ListElementOrder(stopLossOption.getMarketName(),
                     stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, max);
             listElementOrder.setMin(stopLossOption.getCancelAt());
-            if (!slModel.contains(listElementOrder)) {
+            if (!slModel.contains(listElementOrder) && last > 0.0d) {
                 slModel.addElement(listElementOrder);
                 continue;
             }
@@ -439,13 +438,13 @@ public class MainFrame extends JFrame {
     private double getLast(Map<String, MarketDetails> marketDetailsMap, String exchange) {
         double last;
         try {
+            if (exchange.equalsIgnoreCase("ALL")) {
+                return pieChartPanel.getBtcSum();
+            }
             last = marketDetailsMap.get(exchange).getLast();
         } catch (ValueNotSetException e) {
             return 0.0d;
         } catch (NullPointerException e) {
-            if (exchange.equalsIgnoreCase("ALL")) {
-                return pieChartPanel.getBtcSum();
-            }
             return 0.0d;
         }
         return last;

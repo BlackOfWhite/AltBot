@@ -17,6 +17,31 @@ public class ListElementOrder {
         setMin(0.0d);
     }
 
+    public static Comparator getComparator() {
+        // Sor
+        Comparator comparator = new Comparator() {
+            @Override
+            public int compare(Object o1, Object o2) {
+                ListElementOrder l1 = (ListElementOrder) o1;
+                ListElementOrder l2 = (ListElementOrder) o2;
+                int cmp = l1.getCoinName().compareTo(l2.getCoinName());
+                if (cmp == 0) {
+                    cmp = l1.getOrderType().compareTo(l2.getOrderType());
+                }
+                if (cmp == 0) {
+                    if (l1.getLast() < l2.getLast()) {
+                        return -1;
+                    } else if (l1.getLast() > l2.getLast()) {
+                        return 1;
+                    }
+                    return 0;
+                }
+                return cmp;
+            }
+        };
+        return comparator;
+    }
+
     public String getCoinName() {
         return coinName;
     }
@@ -76,10 +101,7 @@ public class ListElementOrder {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         ListElementOrder that = (ListElementOrder) o;
-
-        if (Double.compare(that.last, last) != 0) return false;
         if (!coinName.equals(that.coinName)) return false;
         if (!orderType.equals(that.orderType)) return false;
         return lastText.equals(that.lastText);
@@ -89,32 +111,20 @@ public class ListElementOrder {
     public int hashCode() {
         int result = coinName.hashCode();
         result = 31 * result + orderType.hashCode();
-        result = 31 * result + lastText.hashCode();
         return result;
     }
 
-    public static Comparator getComparator() {
-        // Sor
-        Comparator comparator = new Comparator() {
-            @Override
-            public int compare(Object o1, Object o2) {
-                ListElementOrder l1 = (ListElementOrder) o1;
-                ListElementOrder l2 = (ListElementOrder) o2;
-                int cmp = l1.getCoinName().compareTo(l2.getCoinName());
-                if (cmp == 0) {
-                    cmp = l1.getOrderType().compareTo(l2.getOrderType());
-                }
-                if (cmp == 0) {
-                    if (l1.getLast() < l2.getLast()) {
-                        return -1;
-                    } else if (l1.getLast() > l2.getLast()) {
-                        return 1;
-                    }
-                    return 0;
-                }
-                return cmp;
-            }
-        };
-        return comparator;
+    @Override
+    public String toString() {
+        return "ListElementOrder{" +
+                "coinName='" + coinName + '\'' +
+                ", orderType='" + orderType + '\'' +
+                ", lastText='" + lastText + '\'' +
+                ", maxText='" + maxText + '\'' +
+                ", minText='" + minText + '\'' +
+                ", last=" + last +
+                ", min=" + min +
+                ", max=" + max +
+                '}';
     }
 }
