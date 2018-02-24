@@ -103,8 +103,7 @@ public class ListElementOrder {
         if (o == null || getClass() != o.getClass()) return false;
         ListElementOrder that = (ListElementOrder) o;
         if (!coinName.equals(that.coinName)) return false;
-        if (!orderType.equals(that.orderType)) return false;
-        return lastText.equals(that.lastText);
+        return orderType.equals(that.orderType);
     }
 
     @Override
