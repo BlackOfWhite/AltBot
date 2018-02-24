@@ -121,7 +121,7 @@ public class ListElementOrder {
                 ", lastText='" + lastText + '\'' +
                 ", maxText='" + maxText + '\'' +
                 ", minText='" + minText + '\'' +
-                ", last=" + last +
+                ", defaultColor=" + last +
                 ", min=" + min +
                 ", max=" + max +
                 '}';

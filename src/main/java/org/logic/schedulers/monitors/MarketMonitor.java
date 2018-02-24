@@ -21,6 +21,7 @@ import org.ui.views.dialog.box.InfoDialog;
 import org.ui.views.dialog.box.SingleInstanceDialog;
 
 import javax.mail.MessagingException;
+import javax.swing.*;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -94,8 +95,13 @@ public class MarketMonitor {
                 if (marketDetailsMap != null) {
                     mainFrame.getPieChartFrame().setIsConnected(true);
                     updatePieChart(marketBalances, marketDetailsMap);
-                    mainFrame.updateOrdersList(openMarketOrders, marketDetailsMap);
-                    mainFrame.updateSLOrdersList(marketDetailsMap);
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            mainFrame.updateOrdersList(openMarketOrders, marketDetailsMap);
+                            mainFrame.updateSLOrdersList(marketDetailsMap);
+                        }
+                    });
                     stopLossOrders(openMarketOrders, marketDetailsMap);
                 } else {
                     logger.warn("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");

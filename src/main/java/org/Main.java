@@ -1,13 +1,14 @@
 package org;
 
+import de.javasoft.plaf.synthetica.SyntheticaBlackMoonLookAndFeel;
 import org.apache.log4j.Logger;
-import org.logic.schedulers.bots.DeepBot;
 import org.logic.schedulers.monitors.MarketMonitor;
 import org.logic.transactions.model.bots.BotAvgOptionManager;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.ui.frames.MainFrame;
 
 import javax.swing.*;
+import java.text.ParseException;
 
 public class Main {
 
@@ -25,15 +26,18 @@ public class Main {
 
     private static void setLAFStyle() {
         try {
-            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
-        } catch (ClassNotFoundException e) {
-            logger.error(e.getMessage());
-        } catch (InstantiationException e) {
-            logger.error(e.getMessage());
-        } catch (IllegalAccessException e) {
-            logger.error(e.getMessage());
+//            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
+            UIManager.setLookAndFeel(new SyntheticaBlackMoonLookAndFeel());
+//        } catch (ClassNotFoundException e) {
+//            logger.error(e.getMessage());
+//        } catch (InstantiationException e) {
+//            logger.error(e.getMessage());
+//        } catch (IllegalAccessException e) {
+//            logger.error(e.getMessage());
         } catch (UnsupportedLookAndFeelException e) {
             logger.error(e.getMessage());
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
     }
 

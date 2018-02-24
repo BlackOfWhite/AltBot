@@ -3,18 +3,23 @@ package org.ui.views.list.orders.open;
 import org.logic.utils.TextUtils;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.synth.SynthLookAndFeel;
 import java.awt.*;
 
 public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
 
     private static final Color HIGHLIGHT = Color.lightGray;
+    String defaultColor = "nimbusOrange";
     private JPanel jPanel;
+    private UIDefaults defaults;
 
     public OrderListCellRenderer() {
         init();
     }
 
     private void init() {
+        defaults = UIManager.getLookAndFeelDefaults();
         jPanel = new JPanel();
         jPanel.setOpaque(true);
         jPanel.setLayout(new GridLayout(3, 1));
@@ -55,6 +60,7 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
         double max = listElementOrder.getMax();
         double last = listElementOrder.getLast();
         double percentValue = ((last - min) * 100) / (max - min);
+
         JPanel row3 = new JPanel(new BorderLayout());
         JProgressBar jProgressBar = new JProgressBar();
         jProgressBar.setOpaque(false);
@@ -68,23 +74,20 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
         jPanel.add(row1);
         jPanel.add(row2);
         jPanel.add(row3);
+        jPanel.setBorder(new EmptyBorder(1,1, 4, 1));
         return jPanel;
     }
 
     private void setProgressBarColor(JProgressBar jProgressBar, double percent) {
-        if (percent >= 0.9d) {
-            setColor(Color.GREEN);
-        } else if (percent < 0.35d) {
-            setColor(Color.RED);
+        if (percent >= 90d) {
+            jProgressBar.setBackground(Color.GREEN);
+//            defaults.put(defaultColor, defaults.get("nimbusGreen"));
+        } else if (percent < 35d) {
+            jProgressBar.setBackground(Color.RED);
+//            defaults.put(defaultColor, defaults.get("nimbusRed"));
         } else {
-            setColor(Color.ORANGE);
+            jProgressBar.setBackground(Color.ORANGE);
+//            defaults.put(defaultColor, defaults.get("nimbusOrange"));
         }
-    }
-
-    private void setColor(Color color) {
-        UIManager.put("ProgressBar.background", Color.ORANGE);
-        UIManager.put("ProgressBar.foreground", Color.BLUE);
-        UIManager.put("ProgressBar.selectionBackground", Color.RED);
-        UIManager.put("ProgressBar.selectionForeground", Color.GREEN);
     }
 }

@@ -40,6 +40,7 @@ public class MainFrame extends JFrame {
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     int width = (int) screenSize.getWidth();
     int height = (int) screenSize.getHeight();
+    int count = 0;
     private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
     private JButton btnCreateTransaction;
@@ -201,7 +202,6 @@ public class MainFrame extends JFrame {
         list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         list.setLayoutOrientation(JList.VERTICAL);
         list.setVisibleRowCount(-1);
-
         JScrollPane listScroller = null;
         if (stopLoss) {
             list.setCellRenderer(new SLOrderListCellRenderer());
@@ -372,7 +372,6 @@ public class MainFrame extends JFrame {
                 model.addElement(listElementOrder);
                 continue;
             }
-            // update last value
             model.getElementAt(x).setLast(last);
         }
         // Sort
@@ -426,7 +425,6 @@ public class MainFrame extends JFrame {
                 slModel.addElement(listElementOrder);
                 continue;
             }
-            // update last value
             slModel.getElementAt(x).setLast(last);
         }
         Arrays.sort(new Enumeration[]{slModel.elements()}, ListElementOrder.getComparator());
