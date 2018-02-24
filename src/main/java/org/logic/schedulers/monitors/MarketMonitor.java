@@ -95,6 +95,7 @@ public class MarketMonitor {
                     mainFrame.getPieChartFrame().setIsConnected(true);
                     updatePieChart(marketBalances, marketDetailsMap);
                     mainFrame.updateOrdersList(openMarketOrders, marketDetailsMap);
+                    mainFrame.updateSLOrdersList(marketDetailsMap);
                     stopLossOrders(openMarketOrders, marketDetailsMap);
                 } else {
                     logger.warn("Some HTTP responses lost, not updating PieChart and Stop-loss orders!");
@@ -155,10 +156,6 @@ public class MarketMonitor {
         if (COUNTER % DIALOG_DELAY == 0) {
             mainFrame.updateAPIStatusBar();
         }
-    }
-
-    private static void updateMainFrameStatus(MarketOrderResponse openMarketOrders, Map<String, MarketDetails> marketDetailsMap) {
-        mainFrame.updateOrdersList(openMarketOrders, marketDetailsMap);
     }
 
     /**

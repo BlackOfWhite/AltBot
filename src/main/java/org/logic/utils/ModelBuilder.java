@@ -57,6 +57,12 @@ public class ModelBuilder {
         return openMarketOrders;
     }
 
+    /**
+     * Use only coin name.
+     *
+     * @param coinName
+     * @return
+     */
     public static MarketOrderResponse buildMarketOrderHistory(String coinName) {
         MarketOrderResponse openMarketOrders = null;
         try {
@@ -86,7 +92,6 @@ public class ModelBuilder {
     }
 
     /**
-     *
      * @param uuid
      * @return notNull
      */

@@ -6,10 +6,12 @@ import org.logic.exceptions.ValueNotSetException;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.MarketOrderResponse;
 import org.logic.schedulers.monitors.model.MarketDetails;
+import org.logic.transactions.model.stoploss.StopLossOption;
+import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
-import org.ui.views.list.orders.ListElementOrder;
-import org.ui.views.list.orders.OrderListCellRenderer;
+import org.ui.views.list.orders.open.ListElementOrder;
+import org.ui.views.list.orders.open.OrderListCellRenderer;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -32,6 +34,8 @@ public class MainFrame extends JFrame {
 
     private final static String[] ARR_MODES = {"Classic", "Stop-loss", "Buy&Sell"};
     private static Logger logger = Logger.getLogger(MainFrame.class);
+    // List of market orders
+    private static JList ordersList, slOrdersList;
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     int width = (int) screenSize.getWidth();
     int height = (int) screenSize.getHeight();
@@ -43,13 +47,11 @@ public class MainFrame extends JFrame {
     private EmailSetupFrame emailSetupFrame;
     private APISetupFrame apiSetupFrame;
     private PieChart pieChartPanel;
-    private double LEFT_PANE_WIDTH_RATIO = 0.4f;
-    private double CENTER_PANE_WIDTH_RATIO = 0.3f;
-    private double RIGHT_PANE_WIDTH_RATIO = 0.3f;
-    // List of market orders
-    private JList ordersList;
+    private double LEFT_PANEL_WIDTH_RATIO = 0.4f;
+    private double LIST_PANEL_WIDTH_RATIO = 0.3f;
     // Model to update orders list content
     private DefaultListModel<ListElementOrder> model = new DefaultListModel<>();
+    private DefaultListModel<ListElementOrder> slModel = new DefaultListModel<>();
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -59,8 +61,8 @@ public class MainFrame extends JFrame {
         cp.setLayout(bag);
 
         JPanel leftPanel = createLeftPanel();
-        JPanel midPanel = createMidPanel();
-        JPanel rightPanel = createMidPanel();
+        JPanel midPanel = createListPanel(model, false);
+        JPanel rightPanel = createListPanel(slModel, true);
 
         // Merge all main column panels. Add grid layout.
         this.setLayout(new GridBagLayout());
@@ -90,15 +92,15 @@ public class MainFrame extends JFrame {
         JPanel leftPanel = new JPanel();
         leftPanel.setBorder(new TitledBorder(new EtchedBorder()));
         leftPanel.setLayout(new BorderLayout());
-        leftPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
-        leftPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
-        leftPanel.setMinimumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), height));
+        leftPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), height));
+        leftPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), height));
+        leftPanel.setMinimumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), height));
 
         JPanel pMain = new JPanel();
         pMain.setBorder(new TitledBorder(new EtchedBorder()));
         pMain.setLayout(new GridLayout(4, 1));
-        pMain.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
-        pMain.setMaximumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 120));
+        pMain.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
+        pMain.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
 
         // Status bar
         JPanel statusBar = new JPanel();
@@ -160,14 +162,14 @@ public class MainFrame extends JFrame {
         leftPanel.add(pMain, BorderLayout.NORTH);
 
         // Mid view.
-        pieChartPanel = new PieChart((int) (width * LEFT_PANE_WIDTH_RATIO), height);
+        pieChartPanel = new PieChart((int) (width * LEFT_PANEL_WIDTH_RATIO), height);
         leftPanel.add(pieChartPanel, BorderLayout.CENTER);
 
         // Bottom view
         JPanel donationPanel = new JPanel();
         donationPanel.setLayout(new GridLayout(3, 1));
-        donationPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 60));
-        donationPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANE_WIDTH_RATIO), 60));
+        donationPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 60));
+        donationPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 60));
         Border border = LineBorder.createGrayLineBorder();
         JTextField btcLabel = new JTextField("Donate BTC: " + BTC_DONATION_ADDRESS);
         btcLabel.setEditable(false);
@@ -185,25 +187,34 @@ public class MainFrame extends JFrame {
         return leftPanel;
     }
 
-    private JPanel createMidPanel() {
-        JPanel midPanel = new JPanel();
-        midPanel.setBorder(new TitledBorder(new EtchedBorder()));
-        midPanel.setLayout(new BorderLayout());
-        midPanel.setPreferredSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
-        midPanel.setMinimumSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
-        midPanel.setMaximumSize(new Dimension((int) (width * CENTER_PANE_WIDTH_RATIO), height));
+    private JPanel createListPanel(DefaultListModel<ListElementOrder> model, boolean stopLoss) {
+        JPanel panel = new JPanel();
+        panel.setBorder(new TitledBorder(new EtchedBorder()));
+        panel.setLayout(new BorderLayout());
+        panel.setPreferredSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
+        panel.setMinimumSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
+        panel.setMaximumSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
 
-        ordersList = new JList();
-        ordersList.setModel(model);
-        ordersList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        ordersList.setLayoutOrientation(JList.VERTICAL);
-        ordersList.setVisibleRowCount(-1);
-        ordersList.setCellRenderer(new OrderListCellRenderer());
+        JList list = new JList();
+        list.setModel(model);
+        list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        list.setLayoutOrientation(JList.VERTICAL);
+        list.setVisibleRowCount(-1);
+        list.setCellRenderer(new OrderListCellRenderer());
 
-        JScrollPane listScroller = new JScrollPane(ordersList);
-        listScroller.setPreferredSize(new Dimension(midPanel.getMaximumSize()));
-        midPanel.add(listScroller);
-        return midPanel;
+
+        JScrollPane listScroller = null;
+        if (stopLoss) {
+            slOrdersList = list;
+            listScroller = new JScrollPane(slOrdersList);
+        } else {
+            ordersList = list;
+            listScroller = new JScrollPane(ordersList);
+        }
+
+        listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
+        panel.add(listScroller);
+        return panel;
     }
 
     private void createMenuBar() {
@@ -348,6 +359,7 @@ public class MainFrame extends JFrame {
         for (ListElementOrder listElementOrder : toRemove) {
             model.removeElement(listElementOrder);
         }
+
         // Merge & update
         int x = -1;
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
@@ -363,36 +375,77 @@ public class MainFrame extends JFrame {
             model.getElementAt(x).setLast(last);
         }
         // Sort
-        Comparator comparator = new Comparator() {
-            @Override
-            public int compare(Object o1, Object o2) {
-                ListElementOrder l1 = (ListElementOrder) o1;
-                ListElementOrder l2 = (ListElementOrder) o2;
-                int cmp = l1.getCoinName().compareTo(l2.getCoinName());
-                if (cmp == 0) {
-                    cmp = l1.getOrderType().compareTo(l2.getOrderType());
-                }
-                if (cmp == 0) {
-                    if (l1.getLast() < l2.getLast()) {
-                        return -1;
-                    } else if (l1.getLast() > l2.getLast()) {
-                        return 1;
-                    }
-                    return 0;
-                }
-                return cmp;
-            }
-        };
-        Arrays.sort(new Enumeration[]{model.elements()}, comparator);
+        Arrays.sort(new Enumeration[]{model.elements()}, ListElementOrder.getComparator());
         ordersList.validate();
         ordersList.repaint();
     }
+
+    /**
+     * Update orders list model - is equivalent to right outer join, where right side is model's collection.
+     * Does not update fields that already exist in the model. See equals method of ListElementOrders class.
+     *
+     * @param marketDetailsMap
+     */
+    public synchronized void updateSLOrdersList(Map<String, MarketDetails> marketDetailsMap) {
+        // Remove from model
+        List<StopLossOption> stopLossOptionList = new ArrayList<>(StopLossOptionManager.getInstance().getOptionList());
+        List<ListElementOrder> toRemove = new ArrayList<>();
+        for (int x = 0; x < slModel.size(); x++) {
+            boolean contains = false;
+            ListElementOrder listElementOrder1 = slModel.getElementAt(x);
+            for (StopLossOption stopLossOption : stopLossOptionList) {
+                double last = getLast(marketDetailsMap, stopLossOption.getMarketName());
+                ListElementOrder listElementOrder2 = new ListElementOrder(stopLossOption.getMarketName(),
+                        stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, -1);
+
+                if (listElementOrder2.equals(listElementOrder1)) {
+                    contains = true;
+                    break;
+                }
+            }
+            if (!contains) {
+                toRemove.add(slModel.getElementAt(x));
+            }
+        }
+        for (ListElementOrder listElementOrder : toRemove) {
+            slModel.removeElement(listElementOrder);
+        }
+
+        // Merge & update
+        int x = -1;
+        for (StopLossOption stopLossOption : stopLossOptionList) {
+            x++;
+            double last = getLast(marketDetailsMap, stopLossOption.getMarketName());
+            double max = stopLossOption.getCancelAt() * 2;
+            while (max < last) {
+                max *= 2;
+            }
+            ListElementOrder listElementOrder = new ListElementOrder(stopLossOption.getMarketName(),
+                    stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, max);
+            listElementOrder.setMin(stopLossOption.getCancelAt());
+            if (!slModel.contains(listElementOrder)) {
+                slModel.addElement(listElementOrder);
+                continue;
+            }
+            // update last value
+            slModel.getElementAt(x).setLast(last);
+        }
+        Arrays.sort(new Enumeration[]{slModel.elements()}, ListElementOrder.getComparator());
+        slOrdersList.validate();
+        slOrdersList.repaint();
+    }
+
 
     private double getLast(Map<String, MarketDetails> marketDetailsMap, String exchange) {
         double last;
         try {
             last = marketDetailsMap.get(exchange).getLast();
         } catch (ValueNotSetException e) {
+            return 0.0d;
+        } catch (NullPointerException e) {
+            if (exchange.equalsIgnoreCase("ALL")) {
+                return pieChartPanel.getBtcSum();
+            }
             return 0.0d;
         }
         return last;

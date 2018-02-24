@@ -117,7 +117,7 @@ public class PrivateRequests {
                             urlConnection.getInputStream()));
             String inputLine;
             while ((inputLine = in.readLine()) != null) {
-                logger.debug(inputLine);
+//                logger.debug(inputLine);
                 response = inputLine;
             }
             in.close();

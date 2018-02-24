@@ -1,4 +1,4 @@
-package org.ui.views.list.orders;
+package org.ui.views.list.orders.open;
 
 import org.logic.utils.TextUtils;
 
@@ -34,39 +34,57 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
 
         // 1st row
         JPanel row1 = new JPanel(new BorderLayout());
-        JLabel jLabel = new JLabel(listElementOrder.getCoinName() + " - " + listElementOrder.getOrderType());
+        JLabel jLabel = new JLabel(listElementOrder.getCoinName() + " (" + listElementOrder.getOrderType() + ")");
         jLabel.setHorizontalAlignment(JLabel.CENTER);
         jLabel.setVerticalAlignment(JLabel.CENTER);
         row1.add(jLabel, BorderLayout.CENTER);
 
+        double min = listElementOrder.getMin();
         // 2nd row
-        String minLimit = TextUtils.getDoubleAsText(listElementOrder.getLimit() * 0.9d);
         JPanel row2 = new JPanel(new BorderLayout());
-        JLabel jLabel2 = new JLabel(minLimit + " - 90% of Limit");
+        JLabel jLabel2 = new JLabel(min > 0.0d ? ("Stop-loss: " + listElementOrder.getMinText()) : "0%");
         jLabel2.setHorizontalAlignment(JLabel.LEFT);
         jLabel2.setVerticalAlignment(JLabel.CENTER);
-        JLabel jLabel4 = new JLabel("Limit: " + listElementOrder.getLimitAsText());
+        JLabel jLabel4 = new JLabel("Limit: " + listElementOrder.getMaxText());
         jLabel4.setHorizontalAlignment(JLabel.RIGHT);
         jLabel4.setVerticalAlignment(JLabel.CENTER);
-
         row2.add(jLabel2, BorderLayout.WEST);
         row2.add(jLabel4, BorderLayout.EAST);
 
-        double max = listElementOrder.getLimit();
-        double min  = 0.9d * max;
-        double percentValue = ((listElementOrder.getLast() - min) * 100) / (max - min);
+        // 3rd row
+        double max = listElementOrder.getMax();
+        double last = listElementOrder.getLast();
+        double percentValue = ((last - min) * 100) / (max - min);
         JPanel row3 = new JPanel(new BorderLayout());
         JProgressBar jProgressBar = new JProgressBar();
         jProgressBar.setOpaque(false);
         jProgressBar.setValue((int) percentValue);
         jProgressBar.setStringPainted(true);
-        jProgressBar.setString("Last: " + listElementOrder.getLastAsString() + " - " + TextUtils.getDoubleAsText(percentValue,2) + "%");
+        jProgressBar.setBorderPainted(true);
+        setProgressBarColor(jProgressBar, percentValue);
+        jProgressBar.setString("Last: " + listElementOrder.getLastAsString() + " - " + TextUtils.getDoubleAsText(percentValue, 2) + "%");
         row3.add(jProgressBar);
 
         jPanel.add(row1);
         jPanel.add(row2);
         jPanel.add(row3);
-
         return jPanel;
+    }
+
+    private void setProgressBarColor(JProgressBar jProgressBar, double percent) {
+        if (percent >= 0.9d) {
+            setColor(Color.GREEN);
+        } else if (percent < 0.35d) {
+            setColor(Color.RED);
+        } else {
+            setColor(Color.ORANGE);
+        }
+    }
+
+    private void setColor(Color color) {
+        UIManager.put("ProgressBar.background", Color.ORANGE);
+        UIManager.put("ProgressBar.foreground", Color.BLUE);
+        UIManager.put("ProgressBar.selectionBackground", Color.RED);
+        UIManager.put("ProgressBar.selectionForeground", Color.GREEN);
     }
 }
