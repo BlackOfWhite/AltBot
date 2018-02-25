@@ -28,12 +28,6 @@ public class Main {
         try {
 //            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
             UIManager.setLookAndFeel(new SyntheticaBlackMoonLookAndFeel());
-//        } catch (ClassNotFoundException e) {
-//            logger.error(e.getMessage());
-//        } catch (InstantiationException e) {
-//            logger.error(e.getMessage());
-//        } catch (IllegalAccessException e) {
-//            logger.error(e.getMessage());
         } catch (UnsupportedLookAndFeelException e) {
             logger.error(e.getMessage());
         } catch (ParseException e) {

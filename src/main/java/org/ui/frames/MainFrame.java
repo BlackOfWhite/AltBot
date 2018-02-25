@@ -8,6 +8,7 @@ import org.logic.models.responses.MarketOrderResponse;
 import org.logic.schedulers.monitors.model.MarketDetails;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
+import org.logic.transactions.model.stoploss.modes.StopLossCondition;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 import org.ui.views.list.orders.open.ListElementOrder;
@@ -366,8 +367,28 @@ public class MainFrame extends JFrame {
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             x++;
             double last = getLast(marketDetailsMap, result.getExchange());
+            boolean sell = result.getOrderType().equalsIgnoreCase(ORDER_TYPE_SELL) ? true : false;
+            double max = result.getLimit();
+            double min = result.getLimit();
+            if (!sell) {
+                max *= 2;
+                while (max < last) {
+                    max *= 2;
+                }
+            } else {
+                min /= 2;
+                while (min > last) {
+                    min /= 2;
+                }
+            }
             ListElementOrder listElementOrder = new ListElementOrder(result.getExchange(),
-                    result.getOrderType(), last, result.getLimit());
+                    result.getOrderType(), last, max);
+            if (sell) {
+                listElementOrder.setMaxLabel("Sell at:");
+            } else {
+                listElementOrder.setMinLabel("Buy at:");
+                listElementOrder.setMin(min);
+            }
             if (!model.contains(listElementOrder)) {
                 model.addElement(listElementOrder);
                 continue;
@@ -413,14 +434,31 @@ public class MainFrame extends JFrame {
         int x = -1;
         for (StopLossOption stopLossOption : stopLossOptionList) {
             x++;
+            boolean below = stopLossOption.getCondition().equals(StopLossCondition.BELOW) ? true : false;
             double last = getLast(marketDetailsMap, stopLossOption.getMarketName());
-            double max = stopLossOption.getCancelAt() * 2;
-            while (max < last) {
+            double max = stopLossOption.getCancelAt();
+            double min = stopLossOption.getCancelAt();
+            if (below) {
                 max *= 2;
+                while (max < last) {
+                    max *= 2;
+                }
+            } else {
+                min /= 2;
+                while (min > last) {
+                    min /= 2;
+                }
             }
             ListElementOrder listElementOrder = new ListElementOrder(stopLossOption.getMarketName(),
                     stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, max);
-            listElementOrder.setMin(stopLossOption.getCancelAt());
+            listElementOrder.setMin(min);
+            if (below) {
+                listElementOrder.setMaxLabel("High:");
+                listElementOrder.setMinLabel("Stop-loss:");
+            } else {
+                listElementOrder.setMaxLabel("Stop-loss:");
+                listElementOrder.setMinLabel("Low:");
+            }
             if (!slModel.contains(listElementOrder) && last > 0.0d) {
                 slModel.addElement(listElementOrder);
                 continue;

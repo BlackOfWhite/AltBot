@@ -7,6 +7,7 @@ import static org.logic.utils.TextUtils.getDoubleAsText;
 public class ListElementOrder {
     private String coinName, orderType, lastText, maxText, minText;
     private double last, min, max;
+    private String minLabel = "", maxLabel = "";
 
     // Minimum is 0.0 by default
     public ListElementOrder(String coinName, String orderType, double last, double max) {
@@ -113,6 +114,14 @@ public class ListElementOrder {
         return result;
     }
 
+    public String getMinLabel() {
+        return minLabel;
+    }
+
+    public String getMaxLabel() {
+        return maxLabel;
+    }
+
     @Override
     public String toString() {
         return "ListElementOrder{" +
@@ -125,5 +134,14 @@ public class ListElementOrder {
                 ", min=" + min +
                 ", max=" + max +
                 '}';
+
+    }
+
+    public void setMinLabel(String s) {
+        this.minLabel = s;
+    }
+
+    public void setMaxLabel(String s) {
+        this.maxLabel = s;
     }
 }
