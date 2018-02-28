@@ -158,7 +158,8 @@ public class MarketMonitor {
     private static void updateMainFrameStatus(MarketOrderResponse openMarketOrders) {
         final int totalOrdersCount = openMarketOrders.getResult().size();
         final int buyOrdersCount = openMarketOrders.getBuyOrdersCount();
-        mainFrame.updateStatusBar(totalOrdersCount, buyOrdersCount);
+        mainFrame.updateOpenOrdersStatusBar(totalOrdersCount, buyOrdersCount);
+        mainFrame.updateOpenSLOrdersStatusBar();
         if (COUNTER % DIALOG_DELAY == 0) {
             mainFrame.updateAPIStatusBar();
         }

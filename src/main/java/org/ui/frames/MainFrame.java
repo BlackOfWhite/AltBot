@@ -1,5 +1,6 @@
 package org.ui.frames;
 
+import de.javasoft.plaf.synthetica.SyntheticaBlackMoonLookAndFeel;
 import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.logic.exceptions.ValueNotSetException;
@@ -16,10 +17,7 @@ import org.ui.views.list.orders.open.OrderListCellRenderer;
 import org.ui.views.list.orders.open.SLOrderListCellRenderer;
 
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,8 +39,7 @@ public class MainFrame extends JFrame {
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     int width = (int) screenSize.getWidth();
     int height = (int) screenSize.getHeight();
-    int count = 0;
-    private JLabel labelOpenOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
+    private JLabel labelOpenOrdersStatus, labelOpenSLOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
     private JComboBox<String> jComboBoxMode;
     private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
@@ -64,8 +61,8 @@ public class MainFrame extends JFrame {
         cp.setLayout(bag);
 
         JPanel leftPanel = createLeftPanel();
-        JPanel midPanel = createListPanel(model, false);
-        JPanel rightPanel = createListPanel(slModel, true);
+        JPanel midPanel = createOpenOrdersListPanel(model);
+        JPanel rightPanel = createSLOrdersListPanel(slModel);
 
         // Merge all main column panels. Add grid layout.
         this.setLayout(new GridBagLayout());
@@ -91,7 +88,7 @@ public class MainFrame extends JFrame {
     }
 
     private JPanel createLeftPanel() {
-        // Top left panel.
+        // Left panel
         JPanel leftPanel = new JPanel();
         leftPanel.setBorder(new TitledBorder(new EtchedBorder()));
         leftPanel.setLayout(new BorderLayout());
@@ -99,33 +96,22 @@ public class MainFrame extends JFrame {
         leftPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), height));
         leftPanel.setMinimumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), height));
 
-        JPanel pMain = new JPanel();
-        pMain.setBorder(new TitledBorder(new EtchedBorder()));
-        pMain.setLayout(new GridLayout(4, 1));
-        pMain.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
-        pMain.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
+        // All top panels in left panel
+        JPanel statusPanel = new JPanel();
+        statusPanel.setBorder(new TitledBorder(new EtchedBorder()));
+        statusPanel.setLayout(new GridLayout(4, 1));
+        statusPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
+        statusPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
 
-        // Status bar
-        JPanel statusBar = new JPanel();
-        statusBar.setBorder(new TitledBorder(new EtchedBorder()));
-        statusBar.setLayout(new GridLayout(1, 2));
-        labelOpenOrdersStatus = new JLabel();
-        labelOpenOrdersStatus.setText("Open orders: ?");
-        JPanel status1 = new JPanel();
-        status1.setAlignmentX(Component.LEFT_ALIGNMENT);
-        status1.add(labelOpenOrdersStatus);
+        // Email address panel
+        JPanel mailBar = new JPanel();
         labelEmailAddress = new JLabel();
         labelEmailAddress.setText(PreferenceManager.getEmailAddress());
-        JPanel status2 = new JPanel();
-        status2.setAlignmentX(Component.RIGHT_ALIGNMENT);
-        status2.add(labelEmailAddress);
-        statusBar.add(status1);
-        statusBar.add(status2);
-        pMain.add(statusBar);
+        mailBar.add(labelEmailAddress);
+        statusPanel.add(mailBar);
 
         // Api status bar
         JPanel apiStatusBar = new JPanel();
-        apiStatusBar.setBorder(new TitledBorder(new EtchedBorder()));
         apiStatusBar.setLayout(new GridLayout(1, 2));
         labelApi = new JLabel();
         labelApi.setText("API: " + PreferenceManager.getApiKeyObfucate());
@@ -139,7 +125,7 @@ public class MainFrame extends JFrame {
         apiStatusBar2.add(labelApiSecret);
         apiStatusBar.add(apiStatusBar1);
         apiStatusBar.add(apiStatusBar2);
-        pMain.add(apiStatusBar);
+        statusPanel.add(apiStatusBar);
 
         // Combo box
         jComboBoxMode = new JComboBox<>(ARR_MODES);
@@ -160,11 +146,11 @@ public class MainFrame extends JFrame {
                 }
             }
         });
-        pMain.add(jComboBoxMode);
-        pMain.add(btnCreateTransaction);
-        leftPanel.add(pMain, BorderLayout.NORTH);
+        statusPanel.add(jComboBoxMode);
+        statusPanel.add(btnCreateTransaction);
+        leftPanel.add(statusPanel, BorderLayout.NORTH);
 
-        // Mid view.
+        // Mid view - pie chart
         pieChartPanel = new PieChart((int) (width * LEFT_PANEL_WIDTH_RATIO), height);
         leftPanel.add(pieChartPanel, BorderLayout.CENTER);
 
@@ -190,7 +176,42 @@ public class MainFrame extends JFrame {
         return leftPanel;
     }
 
-    private JPanel createListPanel(DefaultListModel<ListElementOrder> model, boolean stopLoss) {
+    private JPanel createOpenOrdersListPanel(DefaultListModel<ListElementOrder> model) {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+        panel.setBorder(new TitledBorder(new EtchedBorder()));
+        panel.setLayout(new BorderLayout());
+        panel.setPreferredSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
+        panel.setMinimumSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
+        panel.setMaximumSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
+
+        // Create status panel
+        JPanel statusBar = new JPanel();
+        statusBar.setLayout(new BorderLayout(10,5));
+        statusBar.setBorder(new TitledBorder(new EtchedBorder()));
+        labelOpenOrdersStatus = new JLabel("Open orders: ?", SwingConstants.CENTER);
+        Font font = new Font("Courier", Font.BOLD,16);
+        labelOpenOrdersStatus.setFont(font);
+        statusBar.add(labelOpenOrdersStatus);
+        JButton newOrderButton = new JButton("ADD");
+        statusBar.add(newOrderButton, BorderLayout.LINE_END);
+
+        ordersList = new JList();
+        ordersList.setModel(model);
+        ordersList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        ordersList.setLayoutOrientation(JList.VERTICAL);
+        ordersList.setVisibleRowCount(-1);
+        ordersList.setCellRenderer(new OrderListCellRenderer());
+
+        JScrollPane listScroller = new JScrollPane(ordersList);
+        listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
+
+        panel.add(statusBar, BorderLayout.NORTH);
+        panel.add(listScroller);
+        return panel;
+    }
+
+    private JPanel createSLOrdersListPanel(DefaultListModel<ListElementOrder> model) {
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(new EtchedBorder()));
         panel.setLayout(new BorderLayout());
@@ -198,23 +219,28 @@ public class MainFrame extends JFrame {
         panel.setMinimumSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
         panel.setMaximumSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
 
-        JList list = new JList();
-        list.setModel(model);
-        list.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        list.setLayoutOrientation(JList.VERTICAL);
-        list.setVisibleRowCount(-1);
-        JScrollPane listScroller = null;
-        if (stopLoss) {
-            list.setCellRenderer(new SLOrderListCellRenderer());
-            slOrdersList = list;
-            listScroller = new JScrollPane(slOrdersList);
-        } else {
-            list.setCellRenderer(new OrderListCellRenderer());
-            ordersList = list;
-            listScroller = new JScrollPane(ordersList);
-        }
+        // Create status panel
+        JPanel statusBar = new JPanel();
+        statusBar.setLayout(new BorderLayout(10,5));
+        statusBar.setBorder(new TitledBorder(new EtchedBorder()));
+        labelOpenSLOrdersStatus = new JLabel("Open stop-loss orders: ?", SwingConstants.CENTER);
+        Font font = new Font("Courier", Font.BOLD,16);
+        labelOpenSLOrdersStatus.setFont(font);
+        statusBar.add(labelOpenSLOrdersStatus);
+        JButton newOrderButton = new JButton("ADD");
+        statusBar.add(newOrderButton, BorderLayout.LINE_END);
 
+        slOrdersList = new JList();
+        slOrdersList.setModel(model);
+        slOrdersList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        slOrdersList.setLayoutOrientation(JList.VERTICAL);
+        slOrdersList.setVisibleRowCount(-1);
+        slOrdersList.setCellRenderer(new SLOrderListCellRenderer());
+
+        JScrollPane listScroller = new JScrollPane(slOrdersList);
         listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
+
+        panel.add(statusBar, BorderLayout.NORTH);
         panel.add(listScroller);
         return panel;
     }
@@ -288,7 +314,13 @@ public class MainFrame extends JFrame {
         setJMenuBar(jMenuBar);
     }
 
-    public void updateStatusBar(int openOrders, int buyOrdersCount) {
+    /**
+     * Update status bar above list of open orders.
+     *
+     * @param openOrders
+     * @param buyOrdersCount
+     */
+    public void updateOpenOrdersStatusBar(int openOrders, int buyOrdersCount) {
         this.labelOpenOrdersStatus.setText("Open orders: " + openOrders + " / Buy: " + buyOrdersCount + " / Sell: " + (openOrders - buyOrdersCount));
         this.labelOpenOrdersStatus.validate();
 
@@ -300,6 +332,15 @@ public class MainFrame extends JFrame {
         }
         this.labelEmailAddress.validate();
         logger.info("Status bar value: " + labelOpenOrdersStatus.getText() + " || " + email);
+    }
+
+    /**
+     * Update status bar above list of open orders.
+     */
+    public void updateOpenSLOrdersStatusBar() {
+        List<StopLossOption> stopLossOptionList = new ArrayList<>(StopLossOptionManager.getInstance().getOptionList());
+        this.labelOpenSLOrdersStatus.setText("Open stop-loss orders: " + stopLossOptionList.size());
+        this.labelOpenSLOrdersStatus.validate();
     }
 
     public void updateAPIStatusBar() {
