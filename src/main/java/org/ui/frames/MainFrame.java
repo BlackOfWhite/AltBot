@@ -11,9 +11,9 @@ import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
-import org.ui.views.list.orders.open.ListElementOrder;
+import org.ui.views.list.orders.ListElementOrder;
 import org.ui.views.list.orders.open.OrderListCellRenderer;
-import org.ui.views.list.orders.open.SLOrderListCellRenderer;
+import org.ui.views.list.orders.stoploss.SLOrderListCellRenderer;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -402,6 +402,9 @@ public class MainFrame extends JFrame {
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             x++;
             double last = getLast(marketDetailsMap, result.getExchange());
+            if (last <= 0.0d) {
+                continue;
+            }
             boolean sell = result.getOrderType().equalsIgnoreCase(ORDER_TYPE_SELL) ? true : false;
             double max = result.getLimit();
             double min = result.getLimit();
@@ -418,17 +421,17 @@ public class MainFrame extends JFrame {
             }
             ListElementOrder listElementOrder = new ListElementOrder(result.getExchange(),
                     result.getOrderType(), last, max);
-            if (sell) {
-                listElementOrder.setMaxLabel("Sell at:");
-            } else {
-                listElementOrder.setMinLabel("Buy at:");
-                listElementOrder.setMin(min);
-            }
             if (!model.contains(listElementOrder)) {
+                if (sell) {
+                    listElementOrder.setMaxLabel("Sell at:");
+                } else {
+                    listElementOrder.setMinLabel("Buy at:");
+                    listElementOrder.setMin(min);
+                }
                 model.addElement(listElementOrder);
-                continue;
+            } else {
+                model.getElementAt(x).setLast(last);
             }
-            model.getElementAt(x).setLast(last);
         }
         // Sort
         Arrays.sort(new Enumeration[]{model.elements()}, ListElementOrder.getComparator());
@@ -468,6 +471,7 @@ public class MainFrame extends JFrame {
         // Merge & update
         int x = -1;
         for (StopLossOption stopLossOption : stopLossOptionList) {
+            logger.error(stopLossOption);
             x++;
             boolean below = stopLossOption.getCondition().equals(StopLossCondition.BELOW) ? true : false;
             double last = getLast(marketDetailsMap, stopLossOption.getMarketName());
@@ -486,19 +490,19 @@ public class MainFrame extends JFrame {
             }
             ListElementOrder listElementOrder = new ListElementOrder(stopLossOption.getMarketName(),
                     stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, max);
-            listElementOrder.setMin(min);
-            if (below) {
-                listElementOrder.setMaxLabel("High:");
-                listElementOrder.setMinLabel("Stop-loss:");
-            } else {
-                listElementOrder.setMaxLabel("Stop-loss:");
-                listElementOrder.setMinLabel("Low:");
-            }
-            if (!slModel.contains(listElementOrder) && last > 0.0d) {
+            if (!slModel.contains(listElementOrder)) {
+                listElementOrder.setMin(min);
+                if (below) {
+                    listElementOrder.setMaxLabel("High:");
+                    listElementOrder.setMinLabel("Stop-loss:");
+                } else {
+                    listElementOrder.setMaxLabel("Stop-loss:");
+                    listElementOrder.setMinLabel("Low:");
+                }
                 slModel.addElement(listElementOrder);
-                continue;
+            } else {
+                slModel.getElementAt(x).setLast(last);
             }
-            slModel.getElementAt(x).setLast(last);
         }
         Arrays.sort(new Enumeration[]{slModel.elements()}, ListElementOrder.getComparator());
         slOrdersList.validate();

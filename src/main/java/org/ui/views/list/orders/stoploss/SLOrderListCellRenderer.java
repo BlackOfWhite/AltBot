@@ -1,12 +1,8 @@
-package org.ui.views.list.orders.open;
+package org.ui.views.list.orders.stoploss;
 
-import javax.swing.*;
-import java.awt.*;
+import org.ui.views.list.orders.open.OrderListCellRenderer;
 
 public class SLOrderListCellRenderer extends OrderListCellRenderer {
-
-    private JPanel jPanel;
-
     public SLOrderListCellRenderer() {
 
     }

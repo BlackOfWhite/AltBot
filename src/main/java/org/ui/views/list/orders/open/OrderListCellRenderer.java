@@ -1,6 +1,7 @@
 package org.ui.views.list.orders.open;
 
 import org.logic.utils.TextUtils;
+import org.ui.views.list.orders.ListElementOrder;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -9,15 +10,32 @@ import java.awt.*;
 public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
 
     private static final Color HIGHLIGHT = Color.lightGray;
+    private static final AlphaComposite ac =
+            AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.6f);
     private JPanel jPanel;
 
-    public OrderListCellRenderer() {
-        init();
-    }
-
-    private void init() {
-        jPanel = new JPanel();
-        jPanel.setOpaque(true);
+    /**
+     * Add transparent overlay if order record is disabled - when last price if negative.
+     *
+     * @param applyOverlay
+     */
+    private void init(boolean applyOverlay) {
+        if (applyOverlay) {
+            jPanel = new JPanel() {
+                @Override
+                public void paintComponent(Graphics g) {
+                    Graphics2D g2d = (Graphics2D) g;
+                    g2d.setRenderingHint(
+                            RenderingHints.KEY_ANTIALIASING,
+                            RenderingHints.VALUE_ANTIALIAS_ON);
+                    g2d.setColor(Color.black);
+                    g2d.fillRect(1, 1, getWidth() - 1, this.getHeight() - 4);
+                    g2d.setComposite(ac);
+                }
+            };
+        } else {
+            jPanel = new JPanel();
+        }
         jPanel.setLayout(new GridLayout(3, 1));
     }
 
@@ -26,8 +44,10 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
         if (value == null) {
             return null;
         }
-        init();
         ListElementOrder listElementOrder = (ListElementOrder) value;
+        double last = listElementOrder.getLast();
+        init(last <= 0.0d);
+
         jPanel.setBackground
                 (isSelected ? HIGHLIGHT : Color.white);
         jPanel.setForeground
@@ -54,12 +74,10 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
 
         // 3rd row
         double max = listElementOrder.getMax();
-        double last = listElementOrder.getLast();
         double percentValue = ((last - min) * 100) / (max - min);
 
         JPanel row3 = new JPanel(new BorderLayout());
         JProgressBar jProgressBar = new JProgressBar();
-        jProgressBar.setOpaque(false);
         jProgressBar.setValue((int) percentValue);
         jProgressBar.setStringPainted(true);
         jProgressBar.setBorderPainted(true);

@@ -1,4 +1,4 @@
-package org.ui.views.list.orders.open;
+package org.ui.views.list.orders;
 
 import java.util.Comparator;
 
