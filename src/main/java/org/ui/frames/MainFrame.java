@@ -1,6 +1,5 @@
 package org.ui.frames;
 
-import de.javasoft.plaf.synthetica.SyntheticaBlackMoonLookAndFeel;
 import javafx.application.Platform;
 import org.apache.log4j.Logger;
 import org.logic.exceptions.ValueNotSetException;
@@ -17,7 +16,10 @@ import org.ui.views.list.orders.open.OrderListCellRenderer;
 import org.ui.views.list.orders.open.SLOrderListCellRenderer;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,7 +34,6 @@ import static org.preferences.Constants.*;
  */
 public class MainFrame extends JFrame {
 
-    private final static String[] ARR_MODES = {"Classic", "Stop-loss", "Buy&Sell"};
     private static Logger logger = Logger.getLogger(MainFrame.class);
     // List of market orders
     private static JList ordersList, slOrdersList;
@@ -40,8 +41,6 @@ public class MainFrame extends JFrame {
     int width = (int) screenSize.getWidth();
     int height = (int) screenSize.getHeight();
     private JLabel labelOpenOrdersStatus, labelOpenSLOrdersStatus, labelEmailAddress, labelApi, labelApiSecret;
-    private JComboBox<String> jComboBoxMode;
-    private JButton btnCreateTransaction;
     private ClassicTransactionFrame classicTransactionFrame;
     private StopLossFrame stopLossFrame;
     private EmailSetupFrame emailSetupFrame;
@@ -99,9 +98,9 @@ public class MainFrame extends JFrame {
         // All top panels in left panel
         JPanel statusPanel = new JPanel();
         statusPanel.setBorder(new TitledBorder(new EtchedBorder()));
-        statusPanel.setLayout(new GridLayout(4, 1));
-        statusPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
-        statusPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
+        statusPanel.setLayout(new GridLayout(2, 1));
+//        statusPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
+//        statusPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
 
         // Email address panel
         JPanel mailBar = new JPanel();
@@ -126,51 +125,34 @@ public class MainFrame extends JFrame {
         apiStatusBar.add(apiStatusBar1);
         apiStatusBar.add(apiStatusBar2);
         statusPanel.add(apiStatusBar);
-
-        // Combo box
-        jComboBoxMode = new JComboBox<>(ARR_MODES);
-        btnCreateTransaction = new JButton("Create transaction");
-        btnCreateTransaction.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int id = jComboBoxMode.getSelectedIndex();
-                switch (id) {
-                    case 0:
-                        openClassicTransactionFrame();
-                        break;
-                    case 1:
-                        openStopLossFrame();
-                        break;
-                    default:
-                        break;
-                }
-            }
-        });
-        statusPanel.add(jComboBoxMode);
-        statusPanel.add(btnCreateTransaction);
         leftPanel.add(statusPanel, BorderLayout.NORTH);
 
         // Mid view - pie chart
         pieChartPanel = new PieChart((int) (width * LEFT_PANEL_WIDTH_RATIO), height);
         leftPanel.add(pieChartPanel, BorderLayout.CENTER);
 
-        // Bottom view
+        // Bottom view - donations
         JPanel donationPanel = new JPanel();
-        donationPanel.setLayout(new GridLayout(3, 1));
+        donationPanel.setLayout(new GridLayout(2, 2));
         donationPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 60));
         donationPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 60));
         Border border = LineBorder.createGrayLineBorder();
-        JTextField btcLabel = new JTextField("Donate BTC: " + BTC_DONATION_ADDRESS);
+        JTextField btcLabel = new JTextField("Donate BTC: " + BTC_DONATION_ADDRESS, SwingConstants.CENTER);
         btcLabel.setEditable(false);
         btcLabel.setBorder(border);
+        btcLabel.setHorizontalAlignment(JTextField.CENTER);
         donationPanel.add(btcLabel);
+
         JTextField ethLabel = new JTextField("Donate ETH: " + ETH_DONATION_ADDRESS);
         ethLabel.setEditable(false);
         ethLabel.setBorder(border);
+        ethLabel.setHorizontalAlignment(JTextField.CENTER);
         donationPanel.add(ethLabel);
+
         JTextField ltcLabel = new JTextField("Donate LTC: " + LTC_DONATION_ADDRESS);
         ltcLabel.setEditable(false);
         ltcLabel.setBorder(border);
+        ltcLabel.setHorizontalAlignment(JTextField.CENTER);
         donationPanel.add(ltcLabel);
         leftPanel.add(donationPanel, BorderLayout.SOUTH);
         return leftPanel;
@@ -178,7 +160,7 @@ public class MainFrame extends JFrame {
 
     private JPanel createOpenOrdersListPanel(DefaultListModel<ListElementOrder> model) {
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(this,BoxLayout.Y_AXIS));
+        panel.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         panel.setBorder(new TitledBorder(new EtchedBorder()));
         panel.setLayout(new BorderLayout());
         panel.setPreferredSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
@@ -187,13 +169,19 @@ public class MainFrame extends JFrame {
 
         // Create status panel
         JPanel statusBar = new JPanel();
-        statusBar.setLayout(new BorderLayout(10,5));
+        statusBar.setLayout(new BorderLayout(10, 5));
         statusBar.setBorder(new TitledBorder(new EtchedBorder()));
         labelOpenOrdersStatus = new JLabel("Open orders: ?", SwingConstants.CENTER);
-        Font font = new Font("Courier", Font.BOLD,16);
+        Font font = new Font("Courier", Font.BOLD, 16);
         labelOpenOrdersStatus.setFont(font);
         statusBar.add(labelOpenOrdersStatus);
-        JButton newOrderButton = new JButton("ADD");
+        JButton newOrderButton = new JButton("Add new");
+        newOrderButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openClassicTransactionFrame();
+            }
+        });
         statusBar.add(newOrderButton, BorderLayout.LINE_END);
 
         ordersList = new JList();
@@ -221,13 +209,19 @@ public class MainFrame extends JFrame {
 
         // Create status panel
         JPanel statusBar = new JPanel();
-        statusBar.setLayout(new BorderLayout(10,5));
+        statusBar.setLayout(new BorderLayout(10, 5));
         statusBar.setBorder(new TitledBorder(new EtchedBorder()));
         labelOpenSLOrdersStatus = new JLabel("Open stop-loss orders: ?", SwingConstants.CENTER);
-        Font font = new Font("Courier", Font.BOLD,16);
+        Font font = new Font("Courier", Font.BOLD, 16);
         labelOpenSLOrdersStatus.setFont(font);
         statusBar.add(labelOpenSLOrdersStatus);
-        JButton newOrderButton = new JButton("ADD");
+        JButton newOrderButton = new JButton("Add new");
+        newOrderButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                openStopLossFrame();
+            }
+        });
         statusBar.add(newOrderButton, BorderLayout.LINE_END);
 
         slOrdersList = new JList();
