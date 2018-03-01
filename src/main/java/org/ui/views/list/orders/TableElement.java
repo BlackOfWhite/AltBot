@@ -4,13 +4,13 @@ import java.util.Comparator;
 
 import static org.logic.utils.TextUtils.getDoubleAsText;
 
-public class ListElementOrder {
+public class TableElement {
     private String coinName, orderType, lastText, maxText, minText;
     private double last, min, max;
     private String minLabel = "", maxLabel = "";
 
     // Minimum is 0.0 by default
-    public ListElementOrder(String coinName, String orderType, double last, double max) {
+    public TableElement(String coinName, String orderType, double last, double max) {
         this.coinName = coinName;
         this.orderType = orderType;
         setLast(last);
@@ -23,8 +23,8 @@ public class ListElementOrder {
         Comparator comparator = new Comparator() {
             @Override
             public int compare(Object o1, Object o2) {
-                ListElementOrder l1 = (ListElementOrder) o1;
-                ListElementOrder l2 = (ListElementOrder) o2;
+                TableElement l1 = (TableElement) o1;
+                TableElement l2 = (TableElement) o2;
                 int cmp = l1.getCoinName().compareTo(l2.getCoinName());
                 if (cmp == 0) {
                     cmp = l1.getOrderType().compareTo(l2.getOrderType());
@@ -102,7 +102,7 @@ public class ListElementOrder {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        ListElementOrder that = (ListElementOrder) o;
+        TableElement that = (TableElement) o;
         if (!coinName.equals(that.coinName)) return false;
         return orderType.equals(that.orderType);
     }
@@ -132,7 +132,7 @@ public class ListElementOrder {
 
     @Override
     public String toString() {
-        return "ListElementOrder{" +
+        return "TableElement{" +
                 "coinName='" + coinName + '\'' +
                 ", orderType='" + orderType + '\'' +
                 ", lastText='" + lastText + '\'' +

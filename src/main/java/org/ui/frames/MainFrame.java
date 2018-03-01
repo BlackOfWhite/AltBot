@@ -11,17 +11,22 @@ import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
-import org.ui.views.list.orders.ListElementOrder;
-import org.ui.views.list.orders.open.OrderListCellRenderer;
-import org.ui.views.list.orders.stoploss.SLOrderListCellRenderer;
+import org.ui.views.list.orders.ButtonColumn;
+import org.ui.views.list.orders.TableElement;
+import org.ui.views.list.orders.open.OrderTableCellRenderer;
+import org.ui.views.list.orders.open.OrderTableModel;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -33,8 +38,6 @@ import static org.preferences.Constants.*;
 public class MainFrame extends JFrame {
 
     private static Logger logger = Logger.getLogger(MainFrame.class);
-    // List of market orders
-    private static JList ordersList, slOrdersList;
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     int width = (int) screenSize.getWidth();
     int height = (int) screenSize.getHeight();
@@ -46,9 +49,8 @@ public class MainFrame extends JFrame {
     private PieChart pieChartPanel;
     private double LEFT_PANEL_WIDTH_RATIO = 0.4f;
     private double LIST_PANEL_WIDTH_RATIO = 0.3f;
-    // Model to update orders list content
-    private DefaultListModel<ListElementOrder> model = new DefaultListModel<>();
-    private DefaultListModel<ListElementOrder> slModel = new DefaultListModel<>();
+    // List of market orders
+    private static JTable ordersTable, slOrdersTable;
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -58,8 +60,8 @@ public class MainFrame extends JFrame {
         cp.setLayout(bag);
 
         JPanel leftPanel = createLeftPanel();
-        JPanel midPanel = createOpenOrdersListPanel(model);
-        JPanel rightPanel = createSLOrdersListPanel(slModel);
+        JPanel midPanel = createOpenOrdersTablePanel();
+        JPanel rightPanel = createSLOrdersTablePanel();
 
         // Merge all main column panels. Add grid layout.
         this.setLayout(new GridBagLayout());
@@ -154,7 +156,7 @@ public class MainFrame extends JFrame {
         return leftPanel;
     }
 
-    private JPanel createOpenOrdersListPanel(DefaultListModel<ListElementOrder> model) {
+    private JPanel createOpenOrdersTablePanel() {
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(new EtchedBorder()));
         panel.setLayout(new BorderLayout());
@@ -179,26 +181,21 @@ public class MainFrame extends JFrame {
         });
         statusBar.add(newOrderButton, BorderLayout.LINE_END);
 
-        ordersList = new JList();
-        ordersList.setModel(model);
-        ordersList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        ordersList.setLayoutOrientation(JList.VERTICAL);
-        ordersList.setVisibleRowCount(-1);
-        ordersList.setCellRenderer(new OrderListCellRenderer());
-
-        // Handle clicks inside list records
-        ordersList.addMouseListener(new MouseAdapter() {
+        ordersTable = new JTable(new OrderTableModel());
+        ordersTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        ordersTable.setDefaultRenderer(TableElement.class, new OrderTableCellRenderer());
+        ordersTable.setFillsViewportHeight(true);
+        ordersTable.setRowHeight(75);
+        //Action when button clicked
+        Action action = new AbstractAction() {
             @Override
-            public void mouseClicked(MouseEvent event) {
-                int index = ordersList.locationToIndex(event.getPoint());
-                ListElementOrder listElementOrder = (ListElementOrder) ordersList.getModel().getElementAt(index);
-                listElementOrder.doCancelClick();
-                logger.debug("Clicked cancel button with position " + index);
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Clicked: " + e.getActionCommand());
             }
-        });
-
-
-        JScrollPane listScroller = new JScrollPane(ordersList);
+        };
+        ButtonColumn buttonColumn = new ButtonColumn(ordersTable, action, 1);
+        buttonColumn.resize();
+        JScrollPane listScroller = new JScrollPane(ordersTable);
         listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
 
         panel.add(statusBar, BorderLayout.NORTH);
@@ -206,7 +203,7 @@ public class MainFrame extends JFrame {
         return panel;
     }
 
-    private JPanel createSLOrdersListPanel(DefaultListModel<ListElementOrder> model) {
+    private JPanel createSLOrdersTablePanel() {
         JPanel panel = new JPanel();
         panel.setBorder(new TitledBorder(new EtchedBorder()));
         panel.setLayout(new BorderLayout());
@@ -231,14 +228,12 @@ public class MainFrame extends JFrame {
         });
         statusBar.add(newOrderButton, BorderLayout.LINE_END);
 
-        slOrdersList = new JList();
-        slOrdersList.setModel(model);
-        slOrdersList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
-        slOrdersList.setLayoutOrientation(JList.VERTICAL);
-        slOrdersList.setVisibleRowCount(-1);
-        slOrdersList.setCellRenderer(new SLOrderListCellRenderer());
-
-        JScrollPane listScroller = new JScrollPane(slOrdersList);
+        slOrdersTable = new JTable(new OrderTableModel());
+        slOrdersTable.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+        slOrdersTable.setDefaultRenderer(TableElement.class, new OrderTableCellRenderer());
+        slOrdersTable.setFillsViewportHeight(true);
+        slOrdersTable.setRowHeight(75);
+        JScrollPane listScroller = new JScrollPane(slOrdersTable);
         listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
 
         panel.add(statusBar, BorderLayout.NORTH);
@@ -384,24 +379,25 @@ public class MainFrame extends JFrame {
      */
     public synchronized void updateOrdersList(final MarketOrderResponse openMarketOrders, Map<String, MarketDetails> marketDetailsMap) {
         // Remove from model
-        List<ListElementOrder> toRemove = new ArrayList<>();
-        for (int x = 0; x < model.size(); x++) {
+        List<TableElement> toRemove = new ArrayList<>();
+        OrderTableModel model = (OrderTableModel) ordersTable.getModel();
+        for (int x = 0; x < model.getRowCount(); x++) {
             boolean contains = false;
-            ListElementOrder listElementOrder1 = model.getElementAt(x);
+            TableElement tableElement1 = model.getValueAt(x, 0);
             for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
                 double last = getLast(marketDetailsMap, result.getExchange());
-                ListElementOrder listElementOrder2 = new ListElementOrder(result.getExchange(), result.getOrderType(), last, result.getLimit());
-                if (listElementOrder2.equals(listElementOrder1)) {
+                TableElement tableElement2 = new TableElement(result.getExchange(), result.getOrderType(), last, result.getLimit());
+                if (tableElement2.equals(tableElement1)) {
                     contains = true;
                     break;
                 }
             }
             if (!contains) {
-                toRemove.add(model.getElementAt(x));
+                toRemove.add(model.getValueAt(x, 0));
             }
         }
-        for (ListElementOrder listElementOrder : toRemove) {
-            model.removeElement(listElementOrder);
+        for (TableElement tableElement : toRemove) {
+            model.removeRow(tableElement);
         }
 
         // Merge & update
@@ -426,24 +422,25 @@ public class MainFrame extends JFrame {
                     min /= 2;
                 }
             }
-            ListElementOrder listElementOrder = new ListElementOrder(result.getExchange(),
+            TableElement tableElement = new TableElement(result.getExchange(),
                     result.getOrderType(), last, max);
-            if (!model.contains(listElementOrder)) {
+            if (!model.rowExists(tableElement)) {
                 if (sell) {
-                    listElementOrder.setMaxLabel("Sell at:");
+                    tableElement.setMaxLabel("Sell at:");
                 } else {
-                    listElementOrder.setMinLabel("Buy at:");
-                    listElementOrder.setMin(min);
+                    tableElement.setMinLabel("Buy at:");
+                    tableElement.setMin(min);
                 }
-                model.addElement(listElementOrder);
+                model.insert(tableElement);
             } else {
-                model.getElementAt(x).setLast(last);
+                TableElement order = model.getValueAt(x, 0);
+                order.setLast(last);
             }
         }
         // Sort
-        Arrays.sort(new Enumeration[]{model.elements()}, ListElementOrder.getComparator());
-        ordersList.validate();
-        ordersList.repaint();
+        model.getOrderList().sort(TableElement.getComparator());
+        ordersTable.validate();
+        ordersTable.repaint();
     }
 
     /**
@@ -455,24 +452,25 @@ public class MainFrame extends JFrame {
     public synchronized void updateSLOrdersList(Map<String, MarketDetails> marketDetailsMap) {
         List<StopLossOption> stopLossOptionList = new ArrayList<>(StopLossOptionManager.getInstance().getOptionList());
         // Remove from model if not present in stop loss options anymore
-        List<ListElementOrder> toRemove = new ArrayList<>();
-        for (int x = 0; x < slModel.size(); x++) {
+        List<TableElement> toRemove = new ArrayList<>();
+        OrderTableModel model = (OrderTableModel) slOrdersTable.getModel();
+        for (int x = 0; x < model.getRowCount(); x++) {
             boolean contains = false;
-            ListElementOrder listElementOrder1 = slModel.getElementAt(x);
+            TableElement tableElement1 = model.getValueAt(x, 0);
             for (StopLossOption stopLossOption : stopLossOptionList) {
                 String orderType = stopLossOption.getMode() + " / " + stopLossOption.getCondition();
-                if (stopLossOption.getMarketName().equals(listElementOrder1.getCoinName()) &&
-                        listElementOrder1.getOrderType().equals(orderType)) {
+                if (stopLossOption.getMarketName().equals(tableElement1.getCoinName()) &&
+                        tableElement1.getOrderType().equals(orderType)) {
                     contains = true;
                     break;
                 }
             }
             if (!contains) {
-                toRemove.add(slModel.getElementAt(x));
+                toRemove.add(model.getValueAt(x, 0));
             }
         }
-        for (ListElementOrder listElementOrder : toRemove) {
-            slModel.removeElement(listElementOrder);
+        for (TableElement tableElement : toRemove) {
+            model.removeRow(tableElement);
         }
 
         // Merge & update
@@ -495,25 +493,25 @@ public class MainFrame extends JFrame {
                     min /= 2;
                 }
             }
-            ListElementOrder listElementOrder = new ListElementOrder(stopLossOption.getMarketName(),
+            TableElement tableElement = new TableElement(stopLossOption.getMarketName(),
                     stopLossOption.getMode() + " / " + stopLossOption.getCondition(), last, max);
-            if (!slModel.contains(listElementOrder)) {
-                listElementOrder.setMin(min);
+            if (!model.rowExists(tableElement)) {
+                tableElement.setMin(min);
                 if (below) {
-                    listElementOrder.setMaxLabel("High:");
-                    listElementOrder.setMinLabel("Stop-loss:");
+                    tableElement.setMaxLabel("High:");
+                    tableElement.setMinLabel("Stop-loss:");
                 } else {
-                    listElementOrder.setMaxLabel("Stop-loss:");
-                    listElementOrder.setMinLabel("Low:");
+                    tableElement.setMaxLabel("Stop-loss:");
+                    tableElement.setMinLabel("Low:");
                 }
-                slModel.addElement(listElementOrder);
+                model.insert(tableElement);
             } else {
-                slModel.getElementAt(x).setLast(last);
+                model.getValueAt(x, 0).setLast(last);
             }
         }
-        Arrays.sort(new Enumeration[]{slModel.elements()}, ListElementOrder.getComparator());
-        slOrdersList.validate();
-        slOrdersList.repaint();
+        model.getOrderList().sort(TableElement.getComparator());
+        slOrdersTable.validate();
+        slOrdersTable.repaint();
     }
 
 
