@@ -102,7 +102,7 @@ public class StopLossFrame extends SingleInstanceFrame {
 
         setSize(Constants.SETUP_FRAME_WIDTH, Constants.SETUP_FRAME_HEIGHT);
         setVisible(true);
-
+        centerPosition();
         logger.debug("StopLossFrame initialized");
     }
 
@@ -111,10 +111,11 @@ public class StopLossFrame extends SingleInstanceFrame {
         StopLossCondition condition = (StopLossCondition) jComboBoxMode.getSelectedItem();
         StopLossMode mode = (StopLossMode) jComboBoxMode2.getSelectedItem();
         boolean selectAll = jCheckBox.isSelected();
+        String dialogMsg = null;
         if (jtfRate.isValidDoubleOrEmpty()) {
             if (!selectAll && !new PatternValidator().isMarketNameValid(marketName)) {
                 logger.debug("Market name is invalid.");
-                new InfoDialog("Market name is invalid.");
+                new InfoDialog(this, "Market name is invalid.");
                 return;
             }
             double rate = jtfRate.getAsDouble();
@@ -122,23 +123,25 @@ public class StopLossFrame extends SingleInstanceFrame {
                 try {
                     execute(new StopLossOption(marketName, rate, condition, mode, selectAll));
                 } catch (IOException e) {
-                    logger.error("Failed to register new stop-loss transaction.");
-                    new InfoDialog("Failed to register new stop-loss transaction.");
+                    dialogMsg = "Failed to register new stop-loss transaction.";
+                    logger.error(dialogMsg);
                 } catch (EntryExistsException e) {
-                    logger.error(e.getMessage());
-                    new InfoDialog(e.getMessage());
+                    dialogMsg = e.getMessage();
+                    logger.error(dialogMsg);
                 } catch (JAXBException e) {
-                    e.printStackTrace();
-                    logger.error(e.getMessage());
-                    new InfoDialog(e.getMessage());
+                    dialogMsg = e.getMessage();
+                    logger.error(dialogMsg);
                 }
             } else {
-                logger.debug("Stop-loss value must be greater than zero.");
-                new InfoDialog("Stop-loss value must be greater than zero.");
+                dialogMsg = "Stop-loss value must be greater than zero.";
+                logger.debug(dialogMsg);
             }
         } else {
-            logger.debug("Stop-loss value must be greater than zero.");
-            new InfoDialog("Stop-loss value must be greater than zero.");
+            dialogMsg = "Stop-loss value must be greater than zero.";
+            logger.debug(dialogMsg);
+        }
+        if (dialogMsg != null) {
+            new InfoDialog(this, dialogMsg);
         }
     }
 
@@ -147,7 +150,7 @@ public class StopLossFrame extends SingleInstanceFrame {
         final String msg = "New stop-loss option {" + stopLossOption.getCondition().toString() + "|" + stopLossOption.getMode().toString() + "} added for market " + stopLossOption.getMarketName() +
                 " Rate was set to " + stopLossOption.getCancelAt() + ".";
         logger.debug(msg);
-        new InfoDialog(msg);
+        new InfoDialog(this, msg);
         closeFrame();
     }
 }

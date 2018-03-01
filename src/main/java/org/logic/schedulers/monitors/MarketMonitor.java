@@ -146,7 +146,7 @@ public class MarketMonitor {
                 } catch (MessagingException e) {
                     logger.error(e.getMessage() + "\n" + e.getStackTrace().toString());
                     if (COUNTER % DIALOG_DELAY == 0) {
-                        new InfoDialog("Failed to authenticate email " + PreferenceManager.getEmailAddress());
+                        new InfoDialog(mainFrame, "Failed to authenticate email " + PreferenceManager.getEmailAddress());
                     }
                 }
                 logger.debug(messageText);

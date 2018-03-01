@@ -1,12 +1,12 @@
 package org.ui.frames.util;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowEvent;
 
 public abstract class SingleInstanceFrame extends JFrame {
 
     private boolean isClosed = true;
-    private JFrame frame;
 
     public SingleInstanceFrame() {
         isClosed = false;
@@ -17,7 +17,7 @@ public abstract class SingleInstanceFrame extends JFrame {
                 isClosed = true;
             }
         });
-        frame = this;
+        centerPosition();
     }
 
     public boolean isClosed() {
@@ -31,5 +31,10 @@ public abstract class SingleInstanceFrame extends JFrame {
         this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
         isClosed = true;
         this.dispose();
+    }
+
+    protected void centerPosition() {
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        this.setLocation(dim.width / 2 - this.getWidth() / 2, dim.height / 2 - this.getHeight() / 2);
     }
 }

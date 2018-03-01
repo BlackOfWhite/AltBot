@@ -39,6 +39,7 @@ public class SingleInstanceDialog extends SingleInstanceFrame {
         this.setSize(400, 200);
         this.setResizable(false);
         this.setVisible(true);
+        centerPosition();
     }
 
     public String getMessage() {

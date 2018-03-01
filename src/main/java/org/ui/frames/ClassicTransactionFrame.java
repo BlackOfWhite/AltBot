@@ -99,7 +99,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
 
         setSize(Constants.SETUP_FRAME_WIDTH, Constants.SETUP_FRAME_HEIGHT);
         setVisible(true);
-
+        centerPosition();
         logger.debug("ClassicTransactionFrame initialized");
     }
 
@@ -152,7 +152,7 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
                 message = "Value of a rate, amount or stop-loss is invalid. Maximum value is " + MAX_INPUT_VALUE + ".";
             }
         }
-        new InfoDialog(message);
+        new InfoDialog(this, message);
         return success;
     }
 }

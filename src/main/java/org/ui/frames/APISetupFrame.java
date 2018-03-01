@@ -57,6 +57,7 @@ public class APISetupFrame extends SingleInstanceFrame {
 
         setSize(Constants.SETUP_FRAME_WIDTH, Constants.SETUP_FRAME_HEIGHT);
         setVisible(true);
+        centerPosition();
         logger.debug("APISetupFrame initialized");
     }
 
@@ -69,7 +70,7 @@ public class APISetupFrame extends SingleInstanceFrame {
             PreferenceManager.setApiSecretKey(apiSecret, true);
             MarketMonitor.COUNTER = -1;
         } else {
-            new InfoDialog("Fields cannot be empty!");
+            new InfoDialog(this, "Fields cannot be empty!");
         }
     }
 }

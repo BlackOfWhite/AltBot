@@ -25,6 +25,7 @@ public class EmailSetupFrame extends SingleInstanceFrame {
     private JButton jbSubmit;
     private JCheckBox jcbEnabled;
     private Logger logger = Logger.getLogger(EmailSetupFrame.class);
+
     public EmailSetupFrame() {
         init();
     }
@@ -77,21 +78,21 @@ public class EmailSetupFrame extends SingleInstanceFrame {
             if (password != null && !password.isEmpty()) {
                 MailSender mailSender = new MailSender();
                 try {
-                    mailSender.sendEmailNotification(address, password,"Mail sender - Test", "This is just a verification email. Please do not reply.");
+                    mailSender.sendEmailNotification(address, password, "Mail sender - Test", "This is just a verification email. Please do not reply.");
                     logger.debug("New email and password setup correctly.");
                     PreferenceManager.setEmailAddress(address);
                     PreferenceManager.setEmailPassword(password, true);
-                    new InfoDialog("Authentication successful. Please check your mailbox for the test email.");
+                    new InfoDialog(this, "Authentication successful. Please check your mailbox for the test email.");
                 } catch (MessagingException e) {
                     e.printStackTrace();
                     logger.debug(e.getMessage() + " " + e.getStackTrace().toString());
-                    new InfoDialog("Authentication error!");
+                    new InfoDialog(this, "Authentication error!");
                 }
             } else {
-                new InfoDialog("Please enter password.");
+                new InfoDialog(this, "Please enter password.");
             }
         } else {
-            new InfoDialog("Invalid email address!");
+            new InfoDialog(this, "Invalid email address!");
         }
     }
 }
