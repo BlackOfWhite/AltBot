@@ -118,8 +118,16 @@ public class ListElementOrder {
         return minLabel;
     }
 
+    public void setMinLabel(String s) {
+        this.minLabel = s;
+    }
+
     public String getMaxLabel() {
         return maxLabel;
+    }
+
+    public void setMaxLabel(String s) {
+        this.maxLabel = s;
     }
 
     @Override
@@ -137,11 +145,7 @@ public class ListElementOrder {
 
     }
 
-    public void setMinLabel(String s) {
-        this.minLabel = s;
-    }
-
-    public void setMaxLabel(String s) {
-        this.maxLabel = s;
+    public void doCancelClick() {
+        System.out.print(">>>" + toString());
     }
 }

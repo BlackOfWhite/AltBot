@@ -21,9 +21,7 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
@@ -99,8 +97,6 @@ public class MainFrame extends JFrame {
         JPanel statusPanel = new JPanel();
         statusPanel.setBorder(new TitledBorder(new EtchedBorder()));
         statusPanel.setLayout(new GridLayout(2, 1));
-//        statusPanel.setPreferredSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
-//        statusPanel.setMaximumSize(new Dimension((int) (width * LEFT_PANEL_WIDTH_RATIO), 120));
 
         // Email address panel
         JPanel mailBar = new JPanel();
@@ -160,7 +156,6 @@ public class MainFrame extends JFrame {
 
     private JPanel createOpenOrdersListPanel(DefaultListModel<ListElementOrder> model) {
         JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         panel.setBorder(new TitledBorder(new EtchedBorder()));
         panel.setLayout(new BorderLayout());
         panel.setPreferredSize(new Dimension((int) (width * LIST_PANEL_WIDTH_RATIO), height));
@@ -190,6 +185,18 @@ public class MainFrame extends JFrame {
         ordersList.setLayoutOrientation(JList.VERTICAL);
         ordersList.setVisibleRowCount(-1);
         ordersList.setCellRenderer(new OrderListCellRenderer());
+
+        // Handle clicks inside list records
+        ordersList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent event) {
+                int index = ordersList.locationToIndex(event.getPoint());
+                ListElementOrder listElementOrder = (ListElementOrder) ordersList.getModel().getElementAt(index);
+                listElementOrder.doCancelClick();
+                logger.debug("Clicked cancel button with position " + index);
+            }
+        });
+
 
         JScrollPane listScroller = new JScrollPane(ordersList);
         listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));

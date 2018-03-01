@@ -1,10 +1,12 @@
 package org.ui.frames.util;
 
 import javax.swing.*;
+import java.awt.event.WindowEvent;
 
 public abstract class SingleInstanceFrame extends JFrame {
 
     private boolean isClosed = true;
+    private JFrame frame;
 
     public SingleInstanceFrame() {
         isClosed = false;
@@ -15,6 +17,7 @@ public abstract class SingleInstanceFrame extends JFrame {
                 isClosed = true;
             }
         });
+        frame = this;
     }
 
     public boolean isClosed() {
@@ -24,4 +27,9 @@ public abstract class SingleInstanceFrame extends JFrame {
         return isClosed;
     }
 
+    protected void closeFrame() {
+        this.dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+        isClosed = true;
+        this.dispose();
+    }
 }

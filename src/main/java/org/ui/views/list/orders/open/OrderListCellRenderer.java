@@ -6,6 +6,8 @@ import org.ui.views.list.orders.ListElementOrder;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
 
@@ -59,6 +61,10 @@ public class OrderListCellRenderer implements javax.swing.ListCellRenderer {
         jLabel.setHorizontalAlignment(JLabel.CENTER);
         jLabel.setVerticalAlignment(JLabel.CENTER);
         row1.add(jLabel, BorderLayout.CENTER);
+        JButton cancelOrderButton = new JButton("Cancel");
+        cancelOrderButton.setEnabled(true);
+        cancelOrderButton.setFocusable(true);
+        row1.add(cancelOrderButton, BorderLayout.LINE_END);
 
         double min = listElementOrder.getMin();
         // 2nd row

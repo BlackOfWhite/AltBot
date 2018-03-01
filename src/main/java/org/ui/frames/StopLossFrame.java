@@ -148,5 +148,6 @@ public class StopLossFrame extends SingleInstanceFrame {
                 " Rate was set to " + stopLossOption.getCancelAt() + ".";
         logger.debug(msg);
         new InfoDialog(msg);
+        closeFrame();
     }
 }
