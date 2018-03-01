@@ -2,15 +2,11 @@ package org.ui.views.list.orders;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 
 /**
  * The ButtonColumn class provides a renderer and an editor that looks like a
@@ -25,7 +21,7 @@ import java.awt.event.MouseListener;
  * the model row number of the button that was clicked.
  */
 public class ButtonColumn extends AbstractCellEditor
-        implements TableCellRenderer, TableCellEditor, ActionListener {
+        implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener {
     private JTable table;
     private Action action;
     private int mnemonic;
@@ -35,7 +31,6 @@ public class ButtonColumn extends AbstractCellEditor
     private JButton renderButton;
     private JButton editButton;
     private Object editorValue;
-    private boolean isButtonColumnEditor;
 
     private static final int MAX_WIDTH = 35;
 
@@ -178,16 +173,18 @@ public class ButtonColumn extends AbstractCellEditor
         return renderButton;
     }
 
-    //
-//  Implement ActionListener interface
-//
     /*
      *	The button has been pressed. Stop editing and invoke the custom Action
 	 */
     public void actionPerformed(ActionEvent e) {
+        Robot r = null;
+        try {
+            r = new Robot();
+        } catch (AWTException e1) {
+            e1.printStackTrace();
+        }
         int row = table.convertRowIndexToModel(table.getEditingRow());
-//        fireEditingStopped();
-
+        fireEditingCanceled();
         //  Invoke the Action
         ActionEvent event = new ActionEvent(
                 table,
@@ -196,33 +193,35 @@ public class ButtonColumn extends AbstractCellEditor
         action.actionPerformed(event);
     }
 
-    //
-//  Implement MouseListener interface
-//
-    /*
-     *  When the mouse is pressed the editor is invoked. If you then then drag
-	 *  the mouse to another cell before releasing it, the editor is still
-	 *  active. Make sure editing is stopped when the mouse is released.
-	 */
-//    public void mousePressed(MouseEvent e) {
-////        if (table.isEditing()
-////                && table.getCellEditor() == this)
-//            isButtonColumnEditor = false;
-//    }
-//
-//    public void mouseReleased(MouseEvent e) {
-////        if (isButtonColumnEditor
-////                && table.isEditing())
-////            table.getCellEditor().stopCellEditing();
-//        isButtonColumnEditor = false;
-//    }
-
+    @Override
     public void mouseClicked(MouseEvent e) {
+
     }
 
+    @Override
+    public void mousePressed(MouseEvent e) {
+
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        Robot r = null;
+        try {
+            r = new Robot();
+        } catch (AWTException e1) {
+            e1.printStackTrace();
+        }
+        r.keyPress(KeyEvent.VK_ESCAPE);
+        r.keyRelease(KeyEvent.VK_ESCAPE);
+    }
+
+    @Override
     public void mouseEntered(MouseEvent e) {
+
     }
 
+    @Override
     public void mouseExited(MouseEvent e) {
+
     }
 }

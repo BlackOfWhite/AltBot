@@ -186,6 +186,7 @@ public class MainFrame extends JFrame {
         ordersTable.setDefaultRenderer(TableElement.class, new OrderTableCellRenderer());
         ordersTable.setFillsViewportHeight(true);
         ordersTable.setRowHeight(75);
+        ordersTable.setTableHeader(null);
         //Action when button clicked
         Action action = new AbstractAction() {
             @Override
@@ -233,6 +234,7 @@ public class MainFrame extends JFrame {
         slOrdersTable.setDefaultRenderer(TableElement.class, new OrderTableCellRenderer());
         slOrdersTable.setFillsViewportHeight(true);
         slOrdersTable.setRowHeight(75);
+        slOrdersTable.setTableHeader(null);
         JScrollPane listScroller = new JScrollPane(slOrdersTable);
         listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
 
@@ -476,7 +478,6 @@ public class MainFrame extends JFrame {
         // Merge & update
         int x = -1;
         for (StopLossOption stopLossOption : stopLossOptionList) {
-            logger.error(stopLossOption);
             x++;
             boolean below = stopLossOption.getCondition().equals(StopLossCondition.BELOW) ? true : false;
             double last = getLast(marketDetailsMap, stopLossOption.getMarketName());
