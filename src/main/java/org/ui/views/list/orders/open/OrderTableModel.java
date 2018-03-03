@@ -1,5 +1,6 @@
 package org.ui.views.list.orders.open;
 
+import org.preferences.managers.PersistenceManager;
 import org.ui.views.list.orders.TableElement;
 
 import javax.swing.table.DefaultTableModel;
@@ -43,9 +44,20 @@ public class OrderTableModel extends DefaultTableModel {
         return true;
     }
 
-    public void removeRow(TableElement row) {
+    public boolean removeRow(TableElement row) {
         if (orderList.contains(row)) {
             orderList.remove(row);
+            return true;
+        }
+        return false;
+    }
+
+    public boolean removeRowById(int id) {
+        try {
+            orderList.remove(id);
+            return true;
+        } catch (IndexOutOfBoundsException e) {
+            return false;
         }
     }
 

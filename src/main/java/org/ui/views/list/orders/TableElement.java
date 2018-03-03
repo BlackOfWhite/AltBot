@@ -8,6 +8,7 @@ public class TableElement {
     private String coinName, orderType, lastText, maxText, minText;
     private double last, min, max;
     private String minLabel = "", maxLabel = "";
+    private String uuid; // used only for real open orders
 
     // Minimum is 0.0 by default
     public TableElement(String coinName, String orderType, double last, double max) {
@@ -19,7 +20,7 @@ public class TableElement {
     }
 
     public static Comparator getComparator() {
-        // Sor
+        // Sort
         Comparator comparator = new Comparator() {
             @Override
             public int compare(Object o1, Object o2) {
@@ -41,6 +42,14 @@ public class TableElement {
             }
         };
         return comparator;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getCoinName() {

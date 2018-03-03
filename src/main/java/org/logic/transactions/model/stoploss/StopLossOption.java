@@ -68,7 +68,6 @@ public class StopLossOption implements Serializable, OptionImpl {
         if (o == null || getClass() != o.getClass()) return false;
 
         StopLossOption that = (StopLossOption) o;
-
         if (!marketName.equals(that.marketName)) return false;
         return condition == that.condition;
     }
@@ -78,5 +77,13 @@ public class StopLossOption implements Serializable, OptionImpl {
         int result = marketName.hashCode();
         result = 31 * result + condition.hashCode();
         return result;
+    }
+
+    public void setMarketName(String marketName) {
+        this.marketName = marketName;
+    }
+
+    public void setMode(StopLossMode mode) {
+        this.mode = mode;
     }
 }

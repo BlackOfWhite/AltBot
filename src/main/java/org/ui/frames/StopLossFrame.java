@@ -49,7 +49,6 @@ public class StopLossFrame extends SingleInstanceFrame {
         pMain.setLayout(new GridLayout(0, 2));
         pMain.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
 
-
         labelMarketName = new JLabel("Market name:");
         jtfMarketName = new HintTextField("BTC-ETH");
         pMain.add(labelMarketName);

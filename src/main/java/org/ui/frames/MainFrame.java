@@ -5,10 +5,13 @@ import org.apache.log4j.Logger;
 import org.logic.exceptions.ValueNotSetException;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.MarketOrderResponse;
+import org.logic.models.responses.OrderResponse;
 import org.logic.schedulers.monitors.model.MarketDetails;
 import org.logic.transactions.model.stoploss.StopLossOption;
 import org.logic.transactions.model.stoploss.StopLossOptionManager;
 import org.logic.transactions.model.stoploss.modes.StopLossCondition;
+import org.logic.transactions.model.stoploss.modes.StopLossMode;
+import org.logic.utils.ModelBuilder;
 import org.preferences.managers.PreferenceManager;
 import org.ui.Constants;
 import org.ui.views.list.orders.ButtonColumn;
@@ -21,14 +24,15 @@ import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
+import javax.xml.bind.JAXBException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.preferences.Constants.*;
 
@@ -38,6 +42,8 @@ import static org.preferences.Constants.*;
 public class MainFrame extends JFrame {
 
     private static Logger logger = Logger.getLogger(MainFrame.class);
+    // List of market orders
+    private static JTable ordersTable, slOrdersTable;
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     int width = (int) screenSize.getWidth();
     int height = (int) screenSize.getHeight();
@@ -49,8 +55,6 @@ public class MainFrame extends JFrame {
     private PieChart pieChartPanel;
     private double LEFT_PANEL_WIDTH_RATIO = 0.4f;
     private double LIST_PANEL_WIDTH_RATIO = 0.3f;
-    // List of market orders
-    private static JTable ordersTable, slOrdersTable;
 
     public MainFrame() {
         this.setTitle("AltBot " + Constants.VERSION);
@@ -191,7 +195,20 @@ public class MainFrame extends JFrame {
         Action action = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                System.out.println("Clicked: " + e.getActionCommand());
+                final int id = Integer.parseInt(e.getActionCommand());
+                logger.debug("Removing item with id: " + id);
+                TableElement tableElement = (TableElement) ordersTable.getModel().getValueAt(id, 0);
+                String orderId = tableElement.getUuid();
+                String coinName = tableElement.getCoinName();
+                boolean success = ((OrderTableModel) ordersTable.getModel()).removeRowById(id);
+                if (success) {
+                    OrderResponse orderResponse = ModelBuilder.buildCancelOrderById(orderId);
+                    if (orderResponse.isSuccess()) {
+                        logger.debug("Successfully cancelled order with id: " + orderId + " for coin " + coinName);
+                    } else {
+                        logger.error("Failed to cancel order with id: " + orderId + " for coin " + coinName);
+                    }
+                }
             }
         };
         ButtonColumn buttonColumn = new ButtonColumn(ordersTable, action, 1);
@@ -235,6 +252,32 @@ public class MainFrame extends JFrame {
         slOrdersTable.setFillsViewportHeight(true);
         slOrdersTable.setRowHeight(75);
         slOrdersTable.setTableHeader(null);
+        //Action when button clicked
+        Action action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                final int id = Integer.parseInt(e.getActionCommand());
+                logger.debug("Removing item with id: " + id);
+                TableElement tableElement = (TableElement) slOrdersTable.getModel().getValueAt(id, 0);
+                boolean success = ((OrderTableModel) slOrdersTable.getModel()).removeRowById(id);
+                String mode = tableElement.getOrderType();
+                mode = mode.substring(0, mode.indexOf(" "));
+                logger.debug("MODE: " + mode);
+                if (success) {
+                    try {
+                        StopLossOptionManager.getInstance().removeOptionByMarketNameAndMode(tableElement.getCoinName(), StopLossMode.valueOf(mode));
+                        logger.debug("Successfully removed stop loss option for market " + tableElement.getCoinName() + " and mode " + mode);
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                        logger.error("Failed to remove stop-loss option with market name " + tableElement.getCoinName() + " and mode " + mode);
+                    } catch (JAXBException e1) {
+                        logger.error("Failed to remove stop-loss option with market name " + tableElement.getCoinName() + " and mode " + mode);
+                    }
+                }
+            }
+        };
+        ButtonColumn buttonColumn = new ButtonColumn(slOrdersTable, action, 1);
+        buttonColumn.resize();
         JScrollPane listScroller = new JScrollPane(slOrdersTable);
         listScroller.setPreferredSize(new Dimension(panel.getMaximumSize()));
 
@@ -402,7 +445,7 @@ public class MainFrame extends JFrame {
             model.removeRow(tableElement);
         }
 
-        // Merge & update
+        // Merge & update & add new
         int x = -1;
         for (MarketOrderResponse.Result result : openMarketOrders.getResult()) {
             x++;
@@ -426,6 +469,7 @@ public class MainFrame extends JFrame {
             }
             TableElement tableElement = new TableElement(result.getExchange(),
                     result.getOrderType(), last, max);
+            tableElement.setUuid(result.getOrderUuid());
             if (!model.rowExists(tableElement)) {
                 if (sell) {
                     tableElement.setMaxLabel("Sell at:");

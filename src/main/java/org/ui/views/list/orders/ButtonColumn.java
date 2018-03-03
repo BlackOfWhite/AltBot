@@ -22,19 +22,16 @@ import java.awt.event.*;
  */
 public class ButtonColumn extends AbstractCellEditor
         implements TableCellRenderer, TableCellEditor, ActionListener, MouseListener {
+    private static final int MAX_WIDTH = 40;
+    private static String TEXT = "X";
     private JTable table;
     private Action action;
     private int mnemonic;
     private Border originalBorder;
     private Border focusBorder;
-
     private JButton renderButton;
     private JButton editButton;
     private Object editorValue;
-
-    private static final int MAX_WIDTH = 35;
-
-    private static String TEXT = "X";
 
     /**
      * Create the ButtonColumn to be used as a renderer and editor. The
@@ -67,7 +64,6 @@ public class ButtonColumn extends AbstractCellEditor
         columnModel.getColumn(column).setMaxWidth(MAX_WIDTH); // new
         columnModel.getColumn(column).setCellRenderer(this);
         columnModel.getColumn(column).setCellEditor(this);
-//        table.addMouseListener(this);
     }
 
     public void resize() {

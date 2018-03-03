@@ -1,14 +1,12 @@
 package org.ui.views.list.orders.open;
 
 import org.logic.utils.TextUtils;
-import org.ui.views.list.orders.ButtonColumn;
 import org.ui.views.list.orders.TableElement;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 
 public class OrderTableCellRenderer implements TableCellRenderer {
 
@@ -20,19 +18,7 @@ public class OrderTableCellRenderer implements TableCellRenderer {
 
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
-        if (value == null) {
-            return null;
-        }
-        if (column ==1) {
-            //Action when button clicked
-            Action action = new AbstractAction() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    System.out.println("Clicked: " + e.getActionCommand());
-                }
-            };
-            ButtonColumn buttonColumn = new ButtonColumn(table, action, 1);
-            buttonColumn.resize();
+        if (value == null || column == 1) {
             return null;
         }
         TableElement tableElement = (TableElement) value;
