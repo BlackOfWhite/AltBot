@@ -113,11 +113,13 @@ public class ClassicTransactionFrame extends SingleInstanceFrame {
                         MarketSummaryResponse marketSummaryResponse = ModelBuilder.buildMarketSummary(marketName);
                         if (marketSummaryResponse.isSuccess()) {
                             labelRate.setText("Rate: (Last: " + marketSummaryResponse.getResult().get(0).getLast() + ")");
+                            jtfRate.setText(marketSummaryResponse.getResult().get(0).getLast() + "");
                         }
                         String coin = marketName.substring(4, marketName.length());
                         MarketBalanceResponse marketBalanceResponse = ModelBuilder.buildMarketBalance(coin);
                         if (marketBalanceResponse.isSuccess()) {
                             labelAmount.setText("Amount: (Available: " + marketBalanceResponse.getResult().getAvailable() + ")");
+                            jtfAmount.setText(marketBalanceResponse.getResult().getAvailable() + "");
                         }
                     }
                 }).start();
