@@ -1,6 +1,5 @@
 package org.ui.views.list.orders.open;
 
-import org.preferences.managers.PersistenceManager;
 import org.ui.views.list.orders.TableElement;
 
 import javax.swing.table.DefaultTableModel;

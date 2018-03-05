@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.logic.exceptions.ValueNotSetException;
 import org.logic.models.misc.BalancesSet;
 import org.logic.models.responses.MarketOrderResponse;
+import org.logic.models.responses.MarketSummaryResponse;
 import org.logic.models.responses.OrderResponse;
 import org.logic.schedulers.monitors.model.MarketDetails;
 import org.logic.transactions.model.stoploss.StopLossOption;
@@ -451,12 +452,22 @@ public class MainFrame extends JFrame {
             x++;
             double last = getLast(marketDetailsMap, result.getExchange());
             if (last <= 0.0d) {
-                continue;
+                // get last price for limit buy
+                if (result.getOrderType().equalsIgnoreCase("LIMIT_BUY")) {
+                    MarketSummaryResponse marketSummaryResponse = ModelBuilder.buildMarketSummary(result.getExchange());
+                    if (marketSummaryResponse.isSuccess()) {
+                        last = marketSummaryResponse.getResult().get(0).getLast();
+                    } else {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
             }
             boolean sell = result.getOrderType().equalsIgnoreCase(ORDER_TYPE_SELL) ? true : false;
             double max = result.getLimit();
             double min = result.getLimit();
-            if (!sell) {
+            if (!sell) {x
                 max *= 2;
                 while (max < last) {
                     max *= 2;
