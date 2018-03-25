@@ -467,7 +467,7 @@ public class MainFrame extends JFrame {
             boolean sell = result.getOrderType().equalsIgnoreCase(ORDER_TYPE_SELL) ? true : false;
             double max = result.getLimit();
             double min = result.getLimit();
-            if (!sell) {x
+            if (!sell) {
                 max *= 2;
                 while (max < last) {
                     max *= 2;

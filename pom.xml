@@ -27,7 +27,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
-                            <finalName>AltCoin</finalName>
+                            <finalName>AltBot</finalName>
                             <archive>
                                 <manifest>
                                     <mainClass>
@@ -92,6 +92,15 @@
             <version>2.3.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>de.synthetica</groupId>
+            <artifactId>synthetica</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>de.synthetica</groupId>
+            <artifactId>syntheticaBM</artifactId>
+            <version>1.0</version>
+        </dependency>
     </dependencies>
-
 </project>
