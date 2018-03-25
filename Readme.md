@@ -5,7 +5,7 @@
 * Shows percentage for every coin.
 * Shows BTC equivalent.
 * Shows total value of wallet.
-![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/WalletPieChart1.png)
+![picture](https://github.com/BlackOfWhite/AltBot/blob/master/images/WalletPieChart1.png)
 
 2. Place Buy/Sell order with **stop-loss** option:
 * Place normal Bittrex buy/sell orders using this application.
@@ -19,11 +19,11 @@
 4. User friendly interface:
 * Main View.
 
-![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/Main.png)
+![picture](https://github.com/BlackOfWhite/AltBot/blob/master/images/Main.png)
 
 * Transaction Creator.
 
-![picture](https://github.com/BlackOfWhite/AltCoin/blob/master/images/ClassicTransactionCreator.png)
+![picture](https://github.com/BlackOfWhite/AltBot/blob/master/images/ClassicTransactionCreator.png)
 
 
 
@@ -39,8 +39,8 @@
 
 2. Download **AltBot**:
 * Git (optional if you don't want to contribute, just download  the repo from github).
-* Go To my Github Repo, Download/Clone It: [AltCoin](https://github.com/BlackOfWhite/AltCoin.git)
-   `git clone https://github.com/BlackOfWhite/AltCoin.git`
+* Go To my Github Repo, Download/Clone It: [AltBot](https://github.com/BlackOfWhite/AltBot.git)
+   `git clone https://github.com/BlackOfWhite/AltBot.git`
 * Go to the location containing **AltBot.jar** file. You can remove all files except this one.
 * Double click **AltBot.jar** file to run application.
 
